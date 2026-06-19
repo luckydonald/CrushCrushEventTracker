@@ -197,8 +197,8 @@ Notes:
 
 ### All code for c) as a single copy pastable one:
 ```shell
-git remote add empty https://luckydonald@github.com/EmptyAAS/empty.git
-git remote add base https://luckydonald@github.com/luckydonald/base.git
+[ "$(git remote get-url empty 2>/dev/null)" = "https://luckydonald@github.com/EmptyAAS/empty.git" ] || printf '\033[31mERROR: remote "empty" is "%s" but should be "https://luckydonald@github.com/EmptyAAS/empty.git" — fix it if you are me, and I forgot.\033[0m\nhttps://github.com/luckydonald/base/blob/base/README.md#fix-remotes\n' "$(git remote get-url empty 2>/dev/null || echo '<not set>')"
+[ "$(git remote get-url base 2>/dev/null)" = "https://luckydonald@github.com/luckydonald/base.git" ] || printf '\033[31mERROR: remote "base" is "%s" but should be "https://luckydonald@github.com/luckydonald/base.git" — fix it if you are me, and I forgot.\033[0m\nhttps://github.com/luckydonald/base/blob/base/README.md#fix-remotes\n' "$(git remote get-url base 2>/dev/null || echo '<not set>')"
 git fetch empty init
 git fetch base base
 git lfs install
@@ -206,6 +206,16 @@ git merge --allow-unrelated-histories --no-verify empty/init
 git merge --no-ff --no-verify base/base
 pre-commit install
 [ "$(git config user.name)" = "Lucky Lucy" ] || printf '\033[31mERROR: git user.name is "%s" is not "Lucky Lucy" — fix it if you are me, and I forgot.\033[0m\nhttps://github.com/luckydonald/base/blob/base/README.md#fix-user\n' "$(git config user.name)"
+```
+
+#### Fix remotes
+_Lol, only do if you are me._
+```shell
+git remote add empty https://luckydonald@github.com/EmptyAAS/empty.git
+git remote add base https://luckydonald@github.com/luckydonald/base.git
+# or if already exist with a wrong URL:
+git remote set-url empty https://luckydonald@github.com/EmptyAAS/empty.git
+git remote set-url base https://luckydonald@github.com/luckydonald/base.git
 ```
 
 #### Fix user
