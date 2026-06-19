@@ -205,7 +205,7 @@ git lfs install
 git merge --allow-unrelated-histories --no-verify empty/init
 git merge --no-ff --no-verify base/base
 pre-commit install
-git config --local user.name "Lucky Lucy"
+[ "$(git config user.name)" = "Lucky Lucy" ] || printf '\033[31mERROR: git user.name is "%s" but must be "Lucky Lucy" — fix it in the block below.\033[0m\n' "$(git config user.name)"
 ```
 
 The name must be `Lucky Lucy`; set the email to whatever matches your account:

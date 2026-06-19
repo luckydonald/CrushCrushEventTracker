@@ -842,3 +842,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ Add the git username config to the README. In the copy block, add as last line that the name should be `Lucky Lucy` - the email can be different and does not need to be checked. Below add a second code block setting the git local vars for email + name, using this repo as values for now.
 
+❯ No, in the first block don't SET it, ASSERT it, calling it out if wrong in red text
+
