@@ -203,7 +203,7 @@ def append_and_commit(
     # `git commit --only` requires the path to be tracked, so make sure the
     # file is in the index first. Idempotent on already-tracked files.
     subprocess.run(["git", "add", "--", relpath], capture_output=True)
-    subprocess.run(["git", "commit", "--only", relpath, "-m", msg], capture_output=True)
+    subprocess.run(["git", "commit", "--no-verify", "--only", relpath, "-m", msg], capture_output=True)
 
     if snap is not None:
         _restore_staged(snap, relpath)

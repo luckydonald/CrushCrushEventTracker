@@ -272,7 +272,7 @@ def _handle_task_notification(
     result_rel = str(result_file.relative_to(cwd))
     subprocess.run(["git", "add", "--", prompt_rel, result_rel], capture_output=True)
     subprocess.run(
-        ["git", "commit", "--only", prompt_rel, result_rel,
+        ["git", "commit", "--no-verify", "--only", prompt_rel, result_rel,
          "-m", base_ai_commit_subject(f"ai: agent {dir_name} results")],
         capture_output=True,
     )
