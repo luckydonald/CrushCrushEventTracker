@@ -65,7 +65,12 @@ def _parse_task_notification(prompt: str) -> dict | None:
 
 
 def _extract_agent_prompt(output_file: str, tool_use_id: str = "") -> str:
-    """Read the agent's JSONL output file and return the Agent prompt string."""
+    """Read the agent's JSONL output file and return the Agent prompt string.
+
+    Supports two layouts:
+    - Parent-session JSONL: prompt is inside a tool_use / name=Agent / input.prompt entry.
+    - Subagent JSONL: prompt is the first type=user message whose message.content is a plain string.
+    """
 
     def _iter_dicts(value):
         if isinstance(value, dict):
@@ -76,7 +81,8 @@ def _extract_agent_prompt(output_file: str, tool_use_id: str = "") -> str:
             for child in value:
                 yield from _iter_dicts(child)
 
-    fallback = ""
+    tool_use_fallback = ""
+    subagent_fallback = ""
     try:
         with open(output_file, encoding="utf-8") as f:
             for line in f:
@@ -84,6 +90,7 @@ def _extract_agent_prompt(output_file: str, tool_use_id: str = "") -> str:
                     obj = json.loads(line)
                 except json.JSONDecodeError:
                     continue
+                # Layout 1: parent-session tool_use Agent entry
                 for item in _iter_dicts(obj):
                     if item.get("type") != "tool_use" or item.get("name") != "Agent":
                         continue
@@ -92,11 +99,16 @@ def _extract_agent_prompt(output_file: str, tool_use_id: str = "") -> str:
                         continue
                     if tool_use_id and item.get("id") == tool_use_id:
                         return prompt
-                    if not fallback:
-                        fallback = prompt
+                    if not tool_use_fallback:
+                        tool_use_fallback = prompt
+                # Layout 2: subagent JSONL — first user message with plain string content
+                if not subagent_fallback and obj.get("type") == "user":
+                    content = obj.get("message", {}).get("content", "")
+                    if isinstance(content, str) and content.strip():
+                        subagent_fallback = content
     except OSError:
         pass
-    return fallback
+    return tool_use_fallback or subagent_fallback
 
 
 def _char_count(path: str) -> int:
