@@ -822,3 +822,11 @@ It claimed to be an 0 bytes query.
 
 ❯ When having the `AI tool settings are out of sync` error, also write how to solve this - i.e. running `./scripts/°base/…`. Note I have fixed to no longer need `--apply`.
 
+❯ The install/start script should check that the two origins base and empty are available.
+
+❯ Actually, add them instead of erroring.
+
+❯ github.com/EmptyAAS/empty.git
+
+❯ In this repo (we are base), yes base and origin will be the same. In the implementing ones, not, obviously. You can skip the check for this (already matching) origin, I guess.
+
