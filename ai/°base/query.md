@@ -830,3 +830,9 @@ It claimed to be an 0 bytes query.
 
 ❯ In this repo (we are base), yes base and origin will be the same. In the implementing ones, not, obviously. You can skip the check for this (already matching) origin, I guess.
 
+❯ Write into the lplp style that it should also consider commits like the following:
+- ai: updated prompt
+- ai: agent 001.ada93802ed45e55f6 results
+- ai: record memory MEMORY
+- ai: record memory feedback_commit_amend_over_reset
+

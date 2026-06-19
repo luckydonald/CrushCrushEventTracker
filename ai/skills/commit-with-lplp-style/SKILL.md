@@ -10,9 +10,15 @@ Adopt these rules for every commit made this session:
 1. **Commit after every completed task.** Never leave work uncommitted.
 
 2. **Check the last 2 commits before committing:**
-   - Last message matches one of the prompt/decision auto-commit patterns — `ai: updated prompt` or `ai: save decision <slug>` → **amend** it.
+   - Last message matches one of the auto-commit patterns below → **amend** it.
    - Otherwise → create a new commit.
-   - If more than one chained past commit is a prompt/decision auto-commit (`ai: updated prompt` and/or `ai: save decision …`), include those too.
+   - If more than one chained past commit is an auto-commit, include those too.
+
+   Auto-commit patterns (fold these into the preceding code commit):
+   - `ai: updated prompt` — user prompt saved to `ai/query.md`
+   - `ai: save decision <slug>` — resolved `AskUserQuestion`
+   - `ai: agent <id> results` — subagent result record
+   - `ai: record memory <slug>` — memory file written (e.g. `ai: record memory MEMORY`, `ai: record memory feedback_commit_amend_over_reset`)
    - Do **not** squash or amend `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>` commits into implementation commits. Plan commits are meaningful revision history for plan files and must remain separate commits.
    - If a `git reset --soft HEAD~N` already included plan commits by mistake, restore them with `git reset --soft <original-hash>` before committing the implementation.
 
@@ -58,6 +64,8 @@ Handles these hook-created commits:
 
 - **`ai: updated prompt`** — one per user prompt; touches only `ai/query.md` or `ai/°base/query.md`.
 - **`ai: save decision <slug>`** — one per resolved `AskUserQuestion`; touches only `ai/query.md` or `ai/°base/query.md`. The slug is derived from the first question's text.
+- **`ai: agent <id> results`** — subagent result record; touches only agent result files.
+- **`ai: record memory <slug>`** — memory file written; touches only files under the memory directory.
 - **Plan commits** — `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>`; touches only `ai/plans/<NNN>_*.md` or `ai/°base/plans/<NNN>_*.md`. Keep these as normal commits.
 
 ### Procedure
@@ -73,7 +81,7 @@ done
 
 **2. Plan groups**
 
-- **`ai: updated prompt`** and **`ai: save decision <slug>`** commits that only touch `ai/query.md` or `ai/°base/query.md` → fix up under the **preceding** code commit. The prompt or decision arrived during or after that work, so it folds backward.
+- **`ai: updated prompt`**, **`ai: save decision <slug>`**, **`ai: agent <id> results`**, and **`ai: record memory <slug>`** commits → fix up under the **preceding** code commit. They arrived during or after that work, so they fold backward.
 - **Plan commits** → leave as normal `pick` commits. Do not drop, squash, fix up, amend into implementation, or reorder them solely to merge them into code commits.
 - **Mislabeled commits** → flag commits whose message does not match the files they actually changed. Rename them as part of the rebase instead of silently folding them the wrong way.
 
@@ -87,6 +95,8 @@ cat > "$1" << 'REBASE'
 pick <code-commit>
 fixup <prompt-commit>          # ai: updated prompt; backward-fold
 fixup <decision-commit>        # ai: save decision <slug>; backward-fold
+fixup <agent-commit>           # ai: agent <id> results; backward-fold
+fixup <memory-commit>          # ai: record memory <slug>; backward-fold
 exec git commit --amend -F ai/git/rebase-msg-<sha>.md
 pick <plan-commit>             # plan history stays separate
 pick <next-code-commit>
