@@ -125,6 +125,7 @@
       "Bash(yarn test:unit:*)",
       "Bash(yarn test:coverage:*)",
       "Bash(cargo test:*)",
+      "Bash(python -m py_compile:*)",
       "Bash(yarn build-check:*)",
       "Bash(yarn run type-check)",
       "Bash(yarn run type-check:*)",
@@ -177,10 +178,10 @@
       "Bash(python3 \"scripts/°base/ai/settings/sync.py\")",
       "Bash(python3 scripts/°base/ai/settings/sync.py:*)",
       "Bash(python scripts/°base/ai/settings/sync.py:*)",
+      "Bash(uv run --directory scripts/°base python -m ai.settings.sync:*)",
       "Bash(echo \"---\")",
       "Bash(echo ---)",
-      "Bash(echo '---')",
-      "Bash(python -m py_compile:*)"
+      "Bash(echo '---')"
     ],
     "deny": [
       "Read(**/.env*)",
