@@ -122,6 +122,8 @@
       "Bash(python3 -m unittest ai.scripts.tests.test_permission_check:*)",
       "Bash(python3 -m unittest ai.scripts.tests.test_permission_check.IntegrationTests.test_git_commit_heredoc_prose_mention_allowed:*)",
       "Bash(python3 -m unittest ai.scripts.tests.test_permission_check.CheckGitCommitTests.test_co_authored_by_heredoc_caught_by_shlex_path:*)",
+      "Bash(npm test:*)",
+      "Bash(yarn test:*)",
       "Bash(yarn test:unit:*)",
       "Bash(yarn test:coverage:*)",
       "Bash(cargo test:*)",
