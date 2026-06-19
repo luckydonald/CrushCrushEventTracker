@@ -848,3 +848,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ It's a TUI app. Ask to fix it.
 
+❯ Add a flag to yes them ahead of time. If they are correct it's a noop.
+

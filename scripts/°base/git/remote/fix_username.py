@@ -1773,6 +1773,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="Only disable Git LFS lock verification for discovered GitHub HTTPS remotes, then exit.",
     )
     parser.add_argument(
+        "--fix-remotes",
+        action="store_true",
+        help="Automatically fix missing or wrong required remotes without prompting.",
+    )
+    parser.add_argument(
         "--theme",
         choices=sorted(THEMES),
         default=DEFAULT_THEME_NAME,
@@ -1781,7 +1786,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def check_and_fix_required_remotes(remotes: list[RemoteSelection], repo_root: Path) -> list[RemoteSelection]:
+def check_and_fix_required_remotes(remotes: list[RemoteSelection], repo_root: Path, *, yes: bool = False) -> list[RemoteSelection]:
     remote_urls = {r.name: r.fetch.original_url for r in remotes}
     problems: list[tuple[str, str, str]] = []  # (name, expected_url, action)
     for name, expected in REQUIRED_REMOTES.items():
@@ -1793,13 +1798,16 @@ def check_and_fix_required_remotes(remotes: list[RemoteSelection], repo_root: Pa
             print(f'\033[31mERROR: remote "{name}" is "{actual}" (should be "{expected}")\033[0m', file=sys.stderr)
             problems.append((name, expected, "set-url"))
 
-    if not problems or not sys.stdin.isatty():
+    if not problems:
         return remotes
 
-    print(f'\nFix {len(problems)} remote(s)? [Y/n] ', end='', flush=True)
-    answer = sys.stdin.readline().strip().lower()
-    if answer not in ('', 'y', 'yes'):
-        return remotes
+    if not yes:
+        if not sys.stdin.isatty():
+            return remotes
+        print(f'\nFix {len(problems)} remote(s)? [Y/n] ', end='', flush=True)
+        answer = sys.stdin.readline().strip().lower()
+        if answer not in ('', 'y', 'yes'):
+            return remotes
 
     for name, url, action in problems:
         cmd = ["git", "remote", "add", name, url] if action == "add" else ["git", "remote", "set-url", name, url]
@@ -1825,7 +1833,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("No git remotes found in this repository.", file=sys.stderr)
         return 1
 
-    remotes = check_and_fix_required_remotes(remotes, repo_root)
+    remotes = check_and_fix_required_remotes(remotes, repo_root, yes=args.fix_remotes)
 
     if args.fix_lfs_locks_only:
         try:
