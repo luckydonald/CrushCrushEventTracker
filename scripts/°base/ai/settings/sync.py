@@ -601,7 +601,7 @@ def main(argv: list[str] | None = None) -> int:
     os.chdir(_git_root())
     dry = args.dry_run or args.check
     apply = not dry
-    if dry:
+    if args.dry_run:
         print("Dry run — no files will be written.")
 
     config_status = _migrate_codex_feature_flag(CODEX_CONFIG, apply, sys.stdin.isatty())
@@ -613,11 +613,15 @@ def main(argv: list[str] | None = None) -> int:
     changed.extend(_sync_skills(apply))
 
     if changed:
+        if args.check:
+            print("AI tool settings are out of sync:")
+            for path in changed:
+                print(f"  {path}")
+            print("Run `./scripts/°base/ai/settings/sync.py` to fix.")
+            return 1
         verb = "Would write" if dry else "Wrote"
         for path in changed:
             print(f"{verb}: {path}")
-        if args.check:
-            return 1
     else:
         print("All files are already in sync.")
 

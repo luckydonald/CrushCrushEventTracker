@@ -820,3 +820,5 @@ Also include a very short section about the base itself using `[base] [optional 
 ❯ Fix it not finding the query to commit in `/tmp/claude-1000/-home-user-git-luckydonald-AnonAddyThunderbirdExtension/1abb04fc-3d31-4211-91c7-489aa39ff26d/tasks/a6b3737b13b9c067c.output` - see the @scripts/°base/ai/hooks/save-prompt/hook.py
 It claimed to be an 0 bytes query.
 
+❯ When having the `AI tool settings are out of sync` error, also write how to solve this - i.e. running `./scripts/°base/…`. Note I have fixed to no longer need `--apply`.
+
