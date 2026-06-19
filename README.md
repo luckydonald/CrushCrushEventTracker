@@ -205,6 +205,14 @@ git lfs install
 git merge --allow-unrelated-histories --no-verify empty/init
 git merge --no-ff --no-verify base/base
 pre-commit install
+git config --local user.name "Lucky Lucy"
+```
+
+The name must be `Lucky Lucy`; set the email to whatever matches your account:
+
+```shell
+git config --local user.name "Lucky Lucy"
+git config --local user.email "fedora-work-2026._.code@luckydonald.de"
 ```
 ## After Adopting The Base
 

@@ -840,3 +840,5 @@ It claimed to be an 0 bytes query.
 Like it's fine to add code and plan, the issue is if the plan is overwritten by a later plan - i.e. loosing the history of plan changes.
 Same goes with merging the prompt file commits etc. If it meaningfully changes the query - or is a totally separate topic altoghether, it should stay separate.
 
+❯ Add the git username config to the README. In the copy block, add as last line that the name should be `Lucky Lucy` - the email can be different and does not need to be checked. Below add a second code block setting the git local vars for email + name, using this repo as values for now.
+
