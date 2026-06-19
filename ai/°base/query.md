@@ -844,3 +844,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ No, in the first block don't SET it, ASSERT it, calling it out if wrong in red text
 
+❯ I reverted that commit. I meant @scripts/°base/git/remote/fix_username.py
+

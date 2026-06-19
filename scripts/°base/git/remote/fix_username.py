@@ -15,6 +15,10 @@ from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 
 PROMPT_TOOLKIT_PACKAGE = "prompt_toolkit"
+REQUIRED_REMOTES: dict[str, str] = {
+    "empty": "https://luckydonald@github.com/EmptyAAS/empty.git",
+    "base": "https://luckydonald@github.com/luckydonald/base.git",
+}
 BOOTSTRAP_ENV = "GIT_REMOTE_FIX_BOOTSTRAPPED"
 DEFAULT_THEME_NAME = "rounded"
 INPUT_WIDTH = 40
@@ -1777,6 +1781,22 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def warn_required_remotes(remotes: Sequence[RemoteSelection]) -> None:
+    remote_urls = {r.name: r.fetch.original_url for r in remotes}
+    for name, expected in REQUIRED_REMOTES.items():
+        actual = remote_urls.get(name)
+        if actual is None:
+            print(
+                f'\033[31mERROR: remote "{name}" is not set but should be "{expected}"\033[0m',
+                file=sys.stderr,
+            )
+        elif actual != expected:
+            print(
+                f'\033[31mERROR: remote "{name}" is "{actual}" but should be "{expected}"\033[0m',
+                file=sys.stderr,
+            )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     try:
@@ -1789,6 +1809,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not remotes:
         print("No git remotes found in this repository.", file=sys.stderr)
         return 1
+
+    warn_required_remotes(remotes)
 
     if args.fix_lfs_locks_only:
         try:
