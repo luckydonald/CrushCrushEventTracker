@@ -836,3 +836,7 @@ It claimed to be an 0 bytes query.
 - ai: record memory MEMORY
 - ai: record memory feedback_commit_amend_over_reset
 
+❯ Actually, _Do **not** squash or amend `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>` commits into implementation commits. Plan commits are meaningful revision history for plan files and must remain separate commits._ could be softened.
+Like it's fine to add code and plan, the issue is if the plan is overwritten by a later plan - i.e. loosing the history of plan changes.
+Same goes with merging the prompt file commits etc. If it meaningfully changes the query - or is a totally separate topic altoghether, it should stay separate.
+

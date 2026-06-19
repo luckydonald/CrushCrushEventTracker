@@ -14,13 +14,19 @@ Adopt these rules for every commit made this session:
    - Otherwise → create a new commit.
    - If more than one chained past commit is an auto-commit, include those too.
 
-   Auto-commit patterns (fold these into the preceding code commit):
+   Auto-commit patterns — fold into the preceding code commit **by default**:
    - `ai: updated prompt` — user prompt saved to `ai/query.md`
    - `ai: save decision <slug>` — resolved `AskUserQuestion`
    - `ai: agent <id> results` — subagent result record
    - `ai: record memory <slug>` — memory file written (e.g. `ai: record memory MEMORY`, `ai: record memory feedback_commit_amend_over_reset`)
-   - Do **not** squash or amend `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>` commits into implementation commits. Plan commits are meaningful revision history for plan files and must remain separate commits.
-   - If a `git reset --soft HEAD~N` already included plan commits by mistake, restore them with `git reset --soft <original-hash>` before committing the implementation.
+   - `ai: Plan …`, `ai: Plan Update …`, `ai: save plan <NNN>_<slug>` — plan files
+
+   **When to keep a commit separate instead of folding:**
+   - A plan commit is followed by one or more `ai: Plan Update …` commits for the same plan number — folding would erase the revision history of the plan. Keep each version as its own commit.
+   - A prompt commit (`ai: updated prompt`) represents a clearly new or unrelated topic — it started a different task, not a continuation of the preceding code commit.
+   - When in doubt, fold. The goal is readable history, not preserving every auto-save.
+
+   If a `git reset --soft HEAD~N` accidentally included commits that should stay separate, restore them with `git reset --soft <original-hash>` before committing.
 
 3. **Always write the message to `ai/git/pending-commit.md` first** like this:
    1. run exactly the whitelisted command `rm ai/git/pending-commit.md || echo 'was gone'`, which makes sure it's not gonna cause "stale unread file" issues.
@@ -66,7 +72,7 @@ Handles these hook-created commits:
 - **`ai: save decision <slug>`** — one per resolved `AskUserQuestion`; touches only `ai/query.md` or `ai/°base/query.md`. The slug is derived from the first question's text.
 - **`ai: agent <id> results`** — subagent result record; touches only agent result files.
 - **`ai: record memory <slug>`** — memory file written; touches only files under the memory directory.
-- **Plan commits** — `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>`; touches only `ai/plans/<NNN>_*.md` or `ai/°base/plans/<NNN>_*.md`. Keep these as normal commits.
+- **Plan commits** — `ai: Plan …`, `ai: Plan Update …`, or `ai: save plan <NNN>_<slug>`; touches only `ai/plans/<NNN>_*.md` or `ai/°base/plans/<NNN>_*.md`. Keep separate when there are multiple versions of the same plan (the sequence records how the plan evolved). A lone plan commit with no follow-up updates may be folded into its implementation.
 
 ### Procedure
 
@@ -81,8 +87,8 @@ done
 
 **2. Plan groups**
 
-- **`ai: updated prompt`**, **`ai: save decision <slug>`**, **`ai: agent <id> results`**, and **`ai: record memory <slug>`** commits → fix up under the **preceding** code commit. They arrived during or after that work, so they fold backward.
-- **Plan commits** → leave as normal `pick` commits. Do not drop, squash, fix up, amend into implementation, or reorder them solely to merge them into code commits.
+- **`ai: updated prompt`**, **`ai: save decision <slug>`**, **`ai: agent <id> results`**, and **`ai: record memory <slug>`** commits → fix up under the **preceding** code commit by default. Exception: a prompt commit that clearly starts a different/unrelated task should stay as its own `pick`.
+- **Plan commits** → fix up into the implementation commit if the plan was never revised (no `ai: Plan Update …` follow-ups for the same plan number). If the plan was revised multiple times, keep each version as a separate `pick` — the sequence is the history.
 - **Mislabeled commits** → flag commits whose message does not match the files they actually changed. Rename them as part of the rebase instead of silently folding them the wrong way.
 
 **3. Write renamed commit messages** to `ai/git/rebase-msg-<sha>.md` for any commits needing a label fix.
@@ -98,7 +104,8 @@ fixup <decision-commit>        # ai: save decision <slug>; backward-fold
 fixup <agent-commit>           # ai: agent <id> results; backward-fold
 fixup <memory-commit>          # ai: record memory <slug>; backward-fold
 exec git commit --amend -F ai/git/rebase-msg-<sha>.md
-pick <plan-commit>             # plan history stays separate
+pick <plan-commit>             # plan with follow-up updates: keep separate
+# fixup <plan-commit>         # lone plan (no updates): may fold into implementation
 pick <next-code-commit>
 fixup <prompt-commit>
 ...
