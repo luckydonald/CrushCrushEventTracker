@@ -179,7 +179,8 @@
       "Bash(python scripts/°base/ai/settings/sync.py:*)",
       "Bash(echo \"---\")",
       "Bash(echo ---)",
-      "Bash(echo '---')"
+      "Bash(echo '---')",
+      "Bash(python -m py_compile:*)"
     ],
     "deny": [
       "Read(**/.env*)",
