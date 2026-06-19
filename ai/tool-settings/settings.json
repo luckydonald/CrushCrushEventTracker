@@ -184,6 +184,7 @@
       "Bash(python3 scripts/°base/ai/settings/sync.py:*)",
       "Bash(python scripts/°base/ai/settings/sync.py:*)",
       "Bash(uv run --directory scripts/°base python -m ai.settings.sync:*)",
+      "Bash(./scripts/°base/ai/settings/sync.py)",
       "Bash(echo \"---\")",
       "Bash(echo ---)",
       "Bash(echo '---')"
