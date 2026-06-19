@@ -1781,20 +1781,35 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def warn_required_remotes(remotes: Sequence[RemoteSelection]) -> None:
+def check_and_fix_required_remotes(remotes: list[RemoteSelection], repo_root: Path) -> list[RemoteSelection]:
     remote_urls = {r.name: r.fetch.original_url for r in remotes}
+    problems: list[tuple[str, str, str]] = []  # (name, expected_url, action)
     for name, expected in REQUIRED_REMOTES.items():
         actual = remote_urls.get(name)
         if actual is None:
-            print(
-                f'\033[31mERROR: remote "{name}" is not set but should be "{expected}"\033[0m',
-                file=sys.stderr,
-            )
+            print(f'\033[31mERROR: remote "{name}" is not set (should be "{expected}")\033[0m', file=sys.stderr)
+            problems.append((name, expected, "add"))
         elif actual != expected:
-            print(
-                f'\033[31mERROR: remote "{name}" is "{actual}" but should be "{expected}"\033[0m',
-                file=sys.stderr,
-            )
+            print(f'\033[31mERROR: remote "{name}" is "{actual}" (should be "{expected}")\033[0m', file=sys.stderr)
+            problems.append((name, expected, "set-url"))
+
+    if not problems or not sys.stdin.isatty():
+        return remotes
+
+    print(f'\nFix {len(problems)} remote(s)? [Y/n] ', end='', flush=True)
+    answer = sys.stdin.readline().strip().lower()
+    if answer not in ('', 'y', 'yes'):
+        return remotes
+
+    for name, url, action in problems:
+        cmd = ["git", "remote", "add", name, url] if action == "add" else ["git", "remote", "set-url", name, url]
+        try:
+            run_command(cmd, cwd=repo_root)
+            print(f'  \033[32mFixed:\033[0m {name} → {url}')
+        except GitCommandError as exc:
+            print(f'  \033[31mFailed to fix "{name}": {exc}\033[0m', file=sys.stderr)
+
+    return discover_remotes(repo_root)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1810,7 +1825,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("No git remotes found in this repository.", file=sys.stderr)
         return 1
 
-    warn_required_remotes(remotes)
+    remotes = check_and_fix_required_remotes(remotes, repo_root)
 
     if args.fix_lfs_locks_only:
         try:
