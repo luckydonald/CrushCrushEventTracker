@@ -844,5 +844,3 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ No, in the first block don't SET it, ASSERT it, calling it out if wrong in red text
 
-❯ Do the same for the fancy script which inserts @luckydonald into the remotes - check that empty and remote are installed (ask) and that the command is correct (ask).
-
