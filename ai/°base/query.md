@@ -871,3 +871,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › The long one shall have `> › Implement the [Plan](./plans/….md). <kbd>cleared</kbd>`, the other one lack the cleared badge as is now.
 
+❯ /init but write it at `ai/°base/AGENTS.md`, and in the root `CLAUDE.md` instruct the AI to only read that file if you are base repo (dir name, git origin, whatever is fastest for you to figure out - i.e. is based on already available metadata - i.e. the system prompt, etc.). Tell immediatly that other projects using this _base_ are expected to overwrite the root `CLAUDE.md`. But as it's an automatic prompt, it shall be lightwight!
+
