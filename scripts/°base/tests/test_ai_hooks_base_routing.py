@@ -219,6 +219,62 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertEqual(result.stderr, "")
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
+    def test_codex_short_plan_prompt_logs_latest_plan_link(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            old_plan = long_plan("Old Session Plan")
+            latest_plan = long_plan("Non Resetting Session Plan")
+            plans_dir = repo / "ai" / "°base" / "plans"
+            plans_dir.mkdir(parents=True)
+            (plans_dir / "001_old-session-plan.md").write_text(old_plan, encoding="utf-8")
+            (plans_dir / "002_non-resetting-session-plan.md").write_text(
+                latest_plan,
+                encoding="utf-8",
+            )
+
+            result = run_hook(repo, PROMPT_HOOK, {"prompt": "Implement the plan."}, "codex")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "> › Implement the [Plan](./plans/002_non-resetting-session-plan.md).\n\n",
+            )
+            self.assertEqual(result.stderr, "")
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_codex_short_plan_prompt_does_not_link_tiny_latest_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            plan_path = repo / "ai" / "°base" / "plans" / "001_tiny-plan.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text("# Tiny Plan\n\nToo small.\n", encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "Implement the plan."}, "codex")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "› Implement the plan.\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_claude_short_plan_prompt_logs_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            plan = long_plan("Claude Short Prompt Plan")
+            plan_path = repo / "ai" / "°base" / "plans" / "001_claude-short-prompt-plan.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(plan, encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "Implement the plan."}, "claude")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "❯ Implement the plan.\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
     def test_claude_prompt_logs_forwarded_plan_text_unchanged(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"

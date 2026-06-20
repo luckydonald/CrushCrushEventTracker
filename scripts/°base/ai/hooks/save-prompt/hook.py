@@ -29,6 +29,7 @@ CODEX_FORWARDED_PLAN_PREFIX = (
 )
 PLAN_LIKE_MIN_BYTES = 1024
 PLAN_LIKE_MIN_NEWLINES = 8
+CODEX_SHORT_PLAN_PROMPT = "Implement the plan."
 
 # Single-command prompts we never want to log: internal tooling invocations
 # and the most common "please commit now" reminders.
@@ -95,6 +96,9 @@ def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> PromptLo
 
     latest_plan = _latest_numbered_plan(plans_dir)
     plan = _read_plan_like_text(latest_plan)
+    if plan and stripped == CODEX_SHORT_PLAN_PROMPT:
+        return _plan_link_entry(latest_plan, "")
+
     if plan:
         plan_at = search_text.find(plan)
         if plan_at >= 0:

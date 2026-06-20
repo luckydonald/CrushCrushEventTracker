@@ -867,3 +867,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 › In fact, if you detect it, instead of ommitting it completely, put (with blockquote)
 > › Implement the [Plan](./plans/….md).
 
+› Attempt to do the same for non-resetting session where the text is just `Implement the plan.` (without quotes), and the plan is _not_ repeated.
+
