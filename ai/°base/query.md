@@ -858,3 +858,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › I want it to also check the last plan file if it is a lengthy block of text (filesize, linebreak count) matching the characteristics of a plan file.
 
+› Only apply the check for codex. Claude is doing fine _here_.
+
