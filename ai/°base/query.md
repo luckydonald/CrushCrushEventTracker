@@ -856,3 +856,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 (blockquote me, not in prompt). Then it repeats the full file we just captured earlier with the `save plan …` commit. That shall be stripped.
 
+› I want it to also check the last plan file if it is a lengthy block of text (filesize, linebreak count) matching the characteristics of a plan file.
+
