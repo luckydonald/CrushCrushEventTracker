@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -44,6 +45,11 @@ SKIP_PROMPTS = {
 }
 
 
+class PromptLogEntry(NamedTuple):
+    text: str
+    preformatted: bool = False
+
+
 def _latest_numbered_plan(plans_dir: Path) -> Path | None:
     latest: tuple[int, Path] | None = None
     if not plans_dir.is_dir():
@@ -72,13 +78,23 @@ def _read_plan_like_text(path: Path | None) -> str:
     return text.strip()
 
 
-def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> str:
+def _plan_link_entry(plan_path: Path, trailing_text: str) -> PromptLogEntry:
+    relpath = f"./plans/{plan_path.name}"
+    content = f"> › Implement the [Plan]({relpath})."
+    trailing_text = trailing_text.strip()
+    if trailing_text:
+        content = f"{content}\n\n› {trailing_text}"
+    return PromptLogEntry(content, preformatted=True)
+
+
+def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> PromptLogEntry:
     """Remove Codex's implementation handoff prompt when it repeats a saved plan."""
     stripped = prompt.strip()
     exact_prefix = stripped.startswith(CODEX_FORWARDED_PLAN_PREFIX)
     search_text = stripped[len(CODEX_FORWARDED_PLAN_PREFIX):].lstrip() if exact_prefix else stripped
 
-    plan = _read_plan_like_text(_latest_numbered_plan(plans_dir))
+    latest_plan = _latest_numbered_plan(plans_dir)
+    plan = _read_plan_like_text(latest_plan)
     if plan:
         plan_at = search_text.find(plan)
         if plan_at >= 0:
@@ -88,11 +104,11 @@ def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> str:
                     "the prompt prefix may have changed and the hook should be updated.",
                     file=sys.stderr,
                 )
-            return search_text[plan_at + len(plan):].strip()
+            return _plan_link_entry(latest_plan, search_text[plan_at + len(plan):])
 
     if exact_prefix and re.match(r"(?s)^#\s+\S.*", search_text):
-        return ""
-    return prompt
+        return PromptLogEntry("")
+    return PromptLogEntry(prompt)
 
 
 def _parse_task_notification(prompt: str) -> dict | None:
@@ -296,8 +312,11 @@ def main() -> int:
         return 0
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
+    preformatted_prompt = False
     if ai_tool == "codex":
-        prompt = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
+        entry = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
+        prompt = entry.text
+        preformatted_prompt = entry.preformatted
         if not prompt.strip():
             return 0
 
@@ -308,9 +327,10 @@ def main() -> int:
     ):
         return 0
 
+    content = f"{prompt}\n\n" if preformatted_prompt else f"{prefix} {prompt}\n\n"
     append_and_commit(
         log_path,
-        f"{prefix} {prompt}\n\n",
+        content,
         commit_template_relpath="ai/commit-templates/prompt.md",
         default_commit_msg="ai: updated prompt",
     )

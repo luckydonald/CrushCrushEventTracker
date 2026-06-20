@@ -864,3 +864,6 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › Implement the plan.
 
+› In fact, if you detect it, instead of ommitting it completely, put (with blockquote)
+> › Implement the [Plan](./plans/….md).
+

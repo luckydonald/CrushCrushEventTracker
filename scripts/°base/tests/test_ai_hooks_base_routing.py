@@ -114,7 +114,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertFalse((repo / "ai" / "query.md").exists())
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
-    def test_codex_prompt_strips_exact_forwarded_plan_without_logging_empty_prompt(self):
+    def test_codex_prompt_logs_plan_link_for_exact_forwarded_plan(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"
             init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
@@ -130,8 +130,11 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "codex",
             )
 
-            self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
-            self.assertEqual(last_subject(repo), "init")
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "> › Implement the [Plan](./plans/001_forwarded-plan.md).\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
     def test_codex_prompt_logs_only_instruction_after_exact_forwarded_plan(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -157,6 +160,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "> › Implement the [Plan](./plans/001_instruction-plan.md).\n\n"
                 "› Also make the warning actionable.\n\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
@@ -187,6 +191,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "> › Implement the [Plan](./plans/002_latest-plan.md).\n\n"
                 "› Keep the fallback Codex-only.\n\n",
             )
             self.assertIn("prompt prefix may have changed", result.stderr)
