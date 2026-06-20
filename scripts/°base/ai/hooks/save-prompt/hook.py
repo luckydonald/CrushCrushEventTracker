@@ -21,6 +21,13 @@ from _lib import append_and_commit, base_ai_commit_subject, read_payload, resolv
 
 PREFIXES = {"claude": "❯", "codex": "›"}
 DEFAULT_PREFIX = "⩼"
+CODEX_FORWARDED_PLAN_PREFIX = (
+    "A previous agent produced the plan below to accomplish the user's task. "
+    "Implement the plan in a fresh context. Treat the plan as the source of user intent, "
+    "re-read files as needed, and carry the work through implementation and verification."
+)
+PLAN_LIKE_MIN_BYTES = 1024
+PLAN_LIKE_MIN_NEWLINES = 8
 
 # Single-command prompts we never want to log: internal tooling invocations
 # and the most common "please commit now" reminders.
@@ -35,6 +42,57 @@ SKIP_PROMPTS = {
     "keep committing", "always commit",
     "continue", "go on",
 }
+
+
+def _latest_numbered_plan(plans_dir: Path) -> Path | None:
+    latest: tuple[int, Path] | None = None
+    if not plans_dir.is_dir():
+        return None
+    for entry in plans_dir.glob("[0-9]*_*.md"):
+        m = re.match(r"^(\d+)_", entry.name)
+        if not m:
+            continue
+        number = int(m.group(1))
+        if latest is None or number > latest[0]:
+            latest = (number, entry)
+    return latest[1] if latest else None
+
+
+def _read_plan_like_text(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    if len(text.encode("utf-8")) < PLAN_LIKE_MIN_BYTES:
+        return ""
+    if text.count("\n") < PLAN_LIKE_MIN_NEWLINES:
+        return ""
+    return text.strip()
+
+
+def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> str:
+    """Remove Codex's implementation handoff prompt when it repeats a saved plan."""
+    stripped = prompt.strip()
+    exact_prefix = stripped.startswith(CODEX_FORWARDED_PLAN_PREFIX)
+    search_text = stripped[len(CODEX_FORWARDED_PLAN_PREFIX):].lstrip() if exact_prefix else stripped
+
+    plan = _read_plan_like_text(_latest_numbered_plan(plans_dir))
+    if plan:
+        plan_at = search_text.find(plan)
+        if plan_at >= 0:
+            if not exact_prefix:
+                print(
+                    "Warning: stripped a Codex forwarded-plan prompt by saved-plan match; "
+                    "the prompt prefix may have changed and the hook should be updated.",
+                    file=sys.stderr,
+                )
+            return search_text[plan_at + len(plan):].strip()
+
+    if exact_prefix and re.match(r"(?s)^#\s+\S.*", search_text):
+        return ""
+    return prompt
 
 
 def _parse_task_notification(prompt: str) -> dict | None:
@@ -238,6 +296,10 @@ def main() -> int:
         return 0
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
+    if ai_tool == "codex":
+        prompt = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
+        if not prompt.strip():
+            return 0
 
     if _handle_task_notification(
         prefix, prompt, log_path,

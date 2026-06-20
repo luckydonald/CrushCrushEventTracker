@@ -862,3 +862,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › The alternative file-comparison shall happen if the prefix is not detected verbatim - likely because a system prompt was updated, etc. In that case (+ a successful file-based detect) also warn the user that an update may be needed.
 
+› Implement the plan.
+

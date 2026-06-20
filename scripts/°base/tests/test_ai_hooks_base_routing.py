@@ -43,7 +43,7 @@ def run_hook(
     payload: dict,
     *args: str,
     extra_env: dict[str, str] | None = None,
-) -> None:
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["CLAUDE_PROJECT_DIR"] = str(repo)
     if extra_env:
@@ -60,10 +60,43 @@ def run_hook(
         raise AssertionError(
             f"hook failed with {result.returncode}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
+    return result
 
 
 def last_subject(repo: Path) -> str:
     return run_git(repo, "log", "-1", "--pretty=%s").stdout.strip()
+
+
+CODEX_FORWARDED_PLAN_PREFIX = (
+    "A previous agent produced the plan below to accomplish the user's task. "
+    "Implement the plan in a fresh context. Treat the plan as the source of user intent, "
+    "re-read files as needed, and carry the work through implementation and verification."
+)
+
+
+def long_plan(title: str = "Saved Plan") -> str:
+    lines = [
+        f"# {title}",
+        "",
+        "## Summary",
+        "This plan is intentionally long enough to look like a real captured plan file.",
+        "",
+        "## Implementation",
+    ]
+    lines.extend(
+        f"- Step {i}: preserve the relevant behavior while avoiding duplicate prompt logging."
+        for i in range(1, 18)
+    )
+    lines.extend(
+        [
+            "",
+            "## Tests",
+            "- Verify exact-prefix stripping.",
+            "- Verify changed-prefix fallback stripping.",
+            "- Verify Claude pass-through.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 class AiHooksBaseRoutingTests(unittest.TestCase):
@@ -79,6 +112,124 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "› Capture this prompt\n\n",
             )
             self.assertFalse((repo / "ai" / "query.md").exists())
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_codex_prompt_strips_exact_forwarded_plan_without_logging_empty_prompt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            plan = long_plan("Forwarded Plan")
+            plan_path = repo / "ai" / "°base" / "plans" / "001_forwarded-plan.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(plan, encoding="utf-8")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {"prompt": f"{CODEX_FORWARDED_PLAN_PREFIX}\n\n{plan}"},
+                "codex",
+            )
+
+            self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
+            self.assertEqual(last_subject(repo), "init")
+
+    def test_codex_prompt_logs_only_instruction_after_exact_forwarded_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            plan = long_plan("Instruction Plan")
+            plan_path = repo / "ai" / "°base" / "plans" / "001_instruction-plan.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(plan, encoding="utf-8")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        f"{CODEX_FORWARDED_PLAN_PREFIX}\n\n"
+                        f"{plan}\n"
+                        "Also make the warning actionable."
+                    )
+                },
+                "codex",
+            )
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "› Also make the warning actionable.\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_codex_prompt_strips_changed_prefix_by_saved_plan_match_and_warns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            old_plan = long_plan("Older Plan")
+            latest_plan = long_plan("Latest Plan")
+            plans_dir = repo / "ai" / "°base" / "plans"
+            plans_dir.mkdir(parents=True)
+            (plans_dir / "001_older-plan.md").write_text(old_plan, encoding="utf-8")
+            (plans_dir / "002_latest-plan.md").write_text(latest_plan, encoding="utf-8")
+
+            result = run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        "A previous agent made a plan. Start from this updated handoff text.\n\n"
+                        f"{latest_plan}\n"
+                        "Keep the fallback Codex-only."
+                    )
+                },
+                "codex",
+            )
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "› Keep the fallback Codex-only.\n\n",
+            )
+            self.assertIn("prompt prefix may have changed", result.stderr)
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_codex_prompt_does_not_file_match_tiny_latest_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            tiny_plan = "# Tiny Plan\n\nToo small.\n"
+            plan_path = repo / "ai" / "°base" / "plans" / "001_tiny-plan.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(tiny_plan, encoding="utf-8")
+            prompt = (
+                "A previous agent made a plan. Start from this updated handoff text.\n\n"
+                f"{tiny_plan}"
+            )
+
+            result = run_hook(repo, PROMPT_HOOK, {"prompt": prompt}, "codex")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                f"› {prompt}\n\n",
+            )
+            self.assertEqual(result.stderr, "")
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_claude_prompt_logs_forwarded_plan_text_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            plan = long_plan("Claude Pass Through")
+            plan_path = repo / "ai" / "°base" / "plans" / "001_claude-pass-through.md"
+            plan_path.parent.mkdir(parents=True)
+            plan_path.write_text(plan, encoding="utf-8")
+            prompt = f"{CODEX_FORWARDED_PLAN_PREFIX}\n\n{plan}"
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": prompt}, "claude")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                f"❯ {prompt}\n\n",
+            )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
     def test_claude_task_notification_writes_agent_files_and_summary_metadata(self):
