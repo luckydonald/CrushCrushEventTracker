@@ -126,6 +126,7 @@ git config --unset-all core.hooksPath 2>/dev/null || true
 # git-lfs install writes its hooks (post-checkout, post-commit, post-merge, pre-push)
 if command -v git-lfs >/dev/null 2>&1; then
   git lfs install --local >/dev/null 2>&1 || true
+  "$REPO_ROOT/scripts/°base/init/git-lfs-full-path.sh" >/dev/null 2>&1 || true
 fi
 repair_git_lfs_hooks_path
 

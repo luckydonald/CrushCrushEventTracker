@@ -875,3 +875,9 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ have the ai hooks commiting stuff skip the hooks. They know what they are doing (I hope, lol).
 
+❯ fix @ai/°base/errors/6.txt
+
+❯ commit this
+
+› For the fix of @ai/°base/errors/6.txt you said to set the full path to make it work. Create a script for that into the `init` script dir of `°base`.
+
