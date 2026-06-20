@@ -132,7 +132,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
-                "> › Implement the [Plan](./plans/001_forwarded-plan.md).\n\n",
+                "> › Implement the [Plan](./plans/001_forwarded-plan.md). <kbd>cleared</kbd>\n\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
@@ -160,7 +160,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
-                "> › Implement the [Plan](./plans/001_instruction-plan.md).\n\n"
+                "> › Implement the [Plan](./plans/001_instruction-plan.md). <kbd>cleared</kbd>\n\n"
                 "› Also make the warning actionable.\n\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
@@ -191,7 +191,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
-                "> › Implement the [Plan](./plans/002_latest-plan.md).\n\n"
+                "> › Implement the [Plan](./plans/002_latest-plan.md). <kbd>cleared</kbd>\n\n"
                 "› Keep the fallback Codex-only.\n\n",
             )
             self.assertIn("prompt prefix may have changed", result.stderr)

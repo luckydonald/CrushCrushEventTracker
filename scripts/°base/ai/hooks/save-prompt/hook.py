@@ -79,9 +79,11 @@ def _read_plan_like_text(path: Path | None) -> str:
     return text.strip()
 
 
-def _plan_link_entry(plan_path: Path, trailing_text: str) -> PromptLogEntry:
+def _plan_link_entry(plan_path: Path, trailing_text: str, *, cleared: bool = False) -> PromptLogEntry:
     relpath = f"./plans/{plan_path.name}"
     content = f"> › Implement the [Plan]({relpath})."
+    if cleared:
+        content = f"{content} <kbd>cleared</kbd>"
     trailing_text = trailing_text.strip()
     if trailing_text:
         content = f"{content}\n\n› {trailing_text}"
@@ -108,7 +110,7 @@ def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> PromptLo
                     "the prompt prefix may have changed and the hook should be updated.",
                     file=sys.stderr,
                 )
-            return _plan_link_entry(latest_plan, search_text[plan_at + len(plan):])
+            return _plan_link_entry(latest_plan, search_text[plan_at + len(plan):], cleared=True)
 
     if exact_prefix and re.match(r"(?s)^#\s+\S.*", search_text):
         return PromptLogEntry("")

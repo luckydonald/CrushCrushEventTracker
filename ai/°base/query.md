@@ -869,3 +869,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › Attempt to do the same for non-resetting session where the text is just `Implement the plan.` (without quotes), and the plan is _not_ repeated.
 
+› The long one shall have `> › Implement the [Plan](./plans/….md). <kbd>cleared</kbd>`, the other one lack the cleared badge as is now.
+
