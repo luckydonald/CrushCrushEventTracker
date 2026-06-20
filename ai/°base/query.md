@@ -850,3 +850,9 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 ❯ Add a flag to yes them ahead of time. If they are correct it's a noop.
 
+› Codex likes to submit the implementations start after planning as full prompt, starting with the prefix:
+
+> A previous agent produced the plan below to accomplish the user's task. Implement the plan in a fresh context. Treat the plan as the source of user intent, re-read files as needed, and carry the work through implementation and verification.
+
+(blockquote me, not in prompt). Then it repeats the full file we just captured earlier with the `save plan …` commit. That shall be stripped.
+
