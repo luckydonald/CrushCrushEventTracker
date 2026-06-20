@@ -17,16 +17,17 @@ TOOL_PATH_PREFIX="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.pyenv/shims:/opt/home
 export PATH="$TOOL_PATH_PREFIX:$PATH"
 
 # ─── 0. Ensure required git origins are configured ──────────────────────────
-declare -A REQUIRED_ORIGINS=(
-  [base]="https://github.com/luckydonald/base.git"
-  [empty]="https://github.com/EmptyAAS/empty.git"
+REQUIRED_ORIGINS=(
+  "base https://github.com/luckydonald/base.git"
+  "empty https://github.com/EmptyAAS/empty.git"
 )
 
 ensure_required_origins() {
-  local name url origin_url
+  local name url origin_url remote
   origin_url="$(git remote get-url origin 2>/dev/null || true)"
-  for name in "${!REQUIRED_ORIGINS[@]}"; do
-    url="${REQUIRED_ORIGINS[$name]}"
+  for remote in "${REQUIRED_ORIGINS[@]}"; do
+    name="${remote%% *}"
+    url="${remote#* }"
     # Skip if origin already covers this URL (e.g. in the base repo itself)
     [ "$origin_url" = "$url" ] && continue
     if ! git remote get-url "$name" >/dev/null 2>&1; then

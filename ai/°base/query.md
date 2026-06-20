@@ -881,3 +881,5 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › For the fix of @ai/°base/errors/6.txt you said to set the full path to make it work. Create a script for that into the `init` script dir of `°base`.
 
+› Fix ai/°base/errors/7.txt
+
