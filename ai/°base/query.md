@@ -883,3 +883,9 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 
 › Fix ai/°base/errors/7.txt
 
+❯ From `../AllMyStorage`, "cherry pick" commits 72aebb66ba6fe50a300ea0b4a4790194ee33d599 427426a27c6f71fa201142798801a7624f61f07f 2891f5f924551e8d52629ea177874b5c8435cca0, please.
+> › we modified the ai query hook to ignore long codex plans being repeated.
+> We need something similar for claude's online worker having a big standard "system" prompt added to it's working.
+> See luckydonald/AllMyStorage@3a1b1b8 or luckydonald/AllMyStorage@95c46b1.
+>
+> › i already cleaned that up into a previous commit.

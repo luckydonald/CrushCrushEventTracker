@@ -30,6 +30,11 @@ CODEX_FORWARDED_PLAN_PREFIX = (
 PLAN_LIKE_MIN_BYTES = 1024
 PLAN_LIKE_MIN_NEWLINES = 8
 CODEX_SHORT_PLAN_PROMPT = "Implement the plan."
+CLAUDE_GITHUB_WORKER_PREFIX = (
+    "You are Claude, an AI assistant designed to help with GitHub issues and pull requests. "
+    "Think carefully as you analyze the context and respond appropriately. "
+    "Here's the context for your current task:"
+)
 
 # Single-command prompts we never want to log: internal tooling invocations
 # and the most common "please commit now" reminders.
@@ -115,6 +120,54 @@ def _strip_codex_forwarded_plan_prompt(prompt: str, plans_dir: Path) -> PromptLo
     if exact_prefix and re.match(r"(?s)^#\s+\S.*", search_text):
         return PromptLogEntry("")
     return PromptLogEntry(prompt)
+
+
+def _xmlish_tag_text(prompt: str, tag: str) -> str:
+    m = re.search(rf"<{re.escape(tag)}>(.*?)</{re.escape(tag)}>", prompt, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def _context_field_text(prompt: str, field: str) -> str:
+    m = re.search(rf"(?m)^{re.escape(field)}:\s*(.*?)\s*$", prompt)
+    return m.group(1).strip() if m else ""
+
+
+def _remove_trigger_phrase(text: str, trigger_phrase: str) -> str:
+    if not trigger_phrase:
+        return text.strip()
+    escaped = re.escape(trigger_phrase.strip())
+    text = re.sub(rf"(?im)^\s*{escaped}\s*$", "", text)
+    text = re.sub(rf"(?i)^\s*{escaped}\s+", "", text).lstrip()
+    text = re.sub(rf"(?i)\s*{escaped}\s*$", "", text).rstrip()
+    return text.strip()
+
+
+def _strip_claude_github_worker_prompt(prompt: str) -> PromptLogEntry:
+    """Collapse Claude GitHub action's stock worker prompt to the user request."""
+    stripped = prompt.strip()
+    if not stripped.startswith(CLAUDE_GITHUB_WORKER_PREFIX):
+        return PromptLogEntry(prompt)
+
+    trigger_phrase = _xmlish_tag_text(stripped, "trigger_phrase") or "@claude"
+    trigger_comment = _xmlish_tag_text(stripped, "trigger_comment")
+    issue_body = _xmlish_tag_text(stripped, "pr_or_issue_body")
+    issue_title = _context_field_text(stripped, "Issue Title")
+    issue_number = _xmlish_tag_text(stripped, "issue_number")
+
+    request = _remove_trigger_phrase(trigger_comment, trigger_phrase)
+    if not request:
+        request = _remove_trigger_phrase(issue_body, trigger_phrase)
+    if not request:
+        return PromptLogEntry("")
+
+    if issue_title or issue_number:
+        label = "GitHub"
+        if issue_number:
+            label = f"{label} #{issue_number}"
+        if issue_title:
+            label = f"{label}: {issue_title}"
+        request = f"{label}\n\n{request}"
+    return PromptLogEntry(request)
 
 
 def _parse_task_notification(prompt: str) -> dict | None:
@@ -321,6 +374,12 @@ def main() -> int:
     preformatted_prompt = False
     if ai_tool == "codex":
         entry = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
+        prompt = entry.text
+        preformatted_prompt = entry.preformatted
+        if not prompt.strip():
+            return 0
+    elif ai_tool == "claude":
+        entry = _strip_claude_github_worker_prompt(prompt)
         prompt = entry.text
         preformatted_prompt = entry.preformatted
         if not prompt.strip():

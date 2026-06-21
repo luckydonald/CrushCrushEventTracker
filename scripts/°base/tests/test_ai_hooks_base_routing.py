@@ -99,6 +99,48 @@ def long_plan(title: str = "Saved Plan") -> str:
     return "\n".join(lines) + "\n"
 
 
+def claude_github_worker_prompt(
+    *,
+    title: str,
+    body: str,
+    issue_number: int = 3,
+    trigger_comment: str = "",
+) -> str:
+    trigger_block = (
+        f"<trigger_comment>\n{trigger_comment}\n</trigger_comment>\n"
+        if trigger_comment
+        else ""
+    )
+    return (
+        "You are Claude, an AI assistant designed to help with GitHub issues and pull requests. "
+        "Think carefully as you analyze the context and respond appropriately. "
+        "Here's the context for your current task:\n\n"
+        "<formatted_context>\n"
+        f"Issue Title: {title}\n"
+        "Issue Author: luckydonald\n"
+        "Issue State: OPEN\n"
+        "Issue Labels: none\n"
+        "</formatted_context>\n\n"
+        f"<pr_or_issue_body>\n{body}\n</pr_or_issue_body>\n\n"
+        "<event_type>ISSUE_CREATED</event_type>\n"
+        "<is_pr>false</is_pr>\n"
+        "<trigger_context>new issue with '@claude' in body</trigger_context>\n"
+        "<repository>luckydonald/AllMyStorage</repository>\n\n"
+        f"<issue_number>{issue_number}</issue_number>\n"
+        "<claude_comment_id>4756572381</claude_comment_id>\n"
+        "<trigger_username>luckydonald</trigger_username>\n"
+        "<trigger_display_name>Lucky Lucy</trigger_display_name>\n"
+        "<trigger_phrase>@claude</trigger_phrase>\n"
+        f"{trigger_block}"
+        "IMPORTANT: Use the mcp__github_comment__update_claude_comment tool to update your comment.\n\n"
+        "Your task is to analyze the context, understand the request, and provide helpful responses "
+        "and/or implement code changes as needed.\n\n"
+        "Before taking any action, conduct your analysis inside <analysis> tags:\n"
+        "a. Summarize the event type and context\n"
+        "b. Determine if this is a request for code review feedback or for implementation\n"
+    )
+
+
 class AiHooksBaseRoutingTests(unittest.TestCase):
     def test_codex_prompt_in_base_repo_with_only_origin_routes_and_prefixes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -290,6 +332,63 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
                 f"❯ {prompt}\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_claude_github_worker_prompt_logs_issue_request_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            body = (
+                "It seems the issue is that the API uses a get request.\n\n"
+                "Maybe that flow is not yet fully implemented in the barcode add overlay?\n\n"
+                "@claude"
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": claude_github_worker_prompt(
+                        title="Can't add barcodes",
+                        body=body,
+                        issue_number=3,
+                    )
+                },
+                "claude",
+            )
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "❯ GitHub #3: Can't add barcodes\n\n"
+                "It seems the issue is that the API uses a get request.\n\n"
+                "Maybe that flow is not yet fully implemented in the barcode add overlay?\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_claude_github_worker_prompt_prefers_trigger_comment_request(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": claude_github_worker_prompt(
+                        title="Page does not install as app on ios",
+                        body="It should not open in the normal safari browser.",
+                        issue_number=4,
+                        trigger_comment="@claude\nPlease check the PWA manifest only.",
+                    )
+                },
+                "claude",
+            )
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "❯ GitHub #4: Page does not install as app on ios\n\n"
+                "Please check the PWA manifest only.\n\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
