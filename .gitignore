@@ -879,7 +879,7 @@ install-state.gz
 .cache/
 
 # AI stuff
-.playwright-mcp/page-*.yml
+.playwright-mcp/
 
 # AI folder
 ai/git/pending-commit.md
