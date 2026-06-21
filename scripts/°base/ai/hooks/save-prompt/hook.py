@@ -54,6 +54,7 @@ SKIP_PROMPTS = {
 class PromptLogEntry(NamedTuple):
     text: str
     preformatted: bool = False
+    extra_paths: tuple[Path, ...] = ()
 
 
 def _latest_numbered_plan(plans_dir: Path) -> Path | None:
@@ -142,7 +143,55 @@ def _remove_trigger_phrase(text: str, trigger_phrase: str) -> str:
     return text.strip()
 
 
-def _strip_claude_github_worker_prompt(prompt: str) -> PromptLogEntry:
+def _quote_lines(text: str) -> str:
+    return "\n".join(f"> {line}" if line else ">" for line in text.splitlines())
+
+
+def _online_query_issue_url(repository: str, issue_number: str) -> str:
+    if not repository or not issue_number:
+        return ""
+    return f"https://github.com/{repository}/issues/{issue_number}"
+
+
+def _online_query_artifact_text(
+    *,
+    issue_title: str,
+    issue_number: str,
+    issue_url: str,
+    event_type: str,
+    trigger_username: str,
+    trigger_display_name: str,
+    trigger_phrase: str,
+    trigger_comment: str,
+    request: str,
+) -> str:
+    lines = [
+        "# Online Query",
+        "",
+        f"Issue: #{issue_number} {issue_title}".rstrip(),
+    ]
+    if issue_url:
+        lines.append(f"URL: {issue_url}")
+    lines.extend(
+        [
+            f"Event type: {event_type or 'unknown'}",
+            f"Trigger: @{trigger_username or 'unknown'}"
+            f" ({trigger_display_name or 'unknown'}) via {trigger_phrase or 'unknown'}",
+            "",
+            "## Trigger Comment",
+            "",
+            trigger_comment or "(none)",
+            "",
+            "## Query",
+            "",
+            request,
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def _strip_claude_github_worker_prompt(prompt: str, log_path: Path) -> PromptLogEntry:
     """Collapse Claude GitHub action's stock worker prompt to the user request."""
     stripped = prompt.strip()
     if not stripped.startswith(CLAUDE_GITHUB_WORKER_PREFIX):
@@ -153,6 +202,10 @@ def _strip_claude_github_worker_prompt(prompt: str) -> PromptLogEntry:
     issue_body = _xmlish_tag_text(stripped, "pr_or_issue_body")
     issue_title = _context_field_text(stripped, "Issue Title")
     issue_number = _xmlish_tag_text(stripped, "issue_number")
+    event_type = _xmlish_tag_text(stripped, "event_type")
+    repository = _xmlish_tag_text(stripped, "repository")
+    trigger_username = _xmlish_tag_text(stripped, "trigger_username")
+    trigger_display_name = _xmlish_tag_text(stripped, "trigger_display_name")
 
     request = _remove_trigger_phrase(trigger_comment, trigger_phrase)
     if not request:
@@ -160,14 +213,36 @@ def _strip_claude_github_worker_prompt(prompt: str) -> PromptLogEntry:
     if not request:
         return PromptLogEntry("")
 
-    if issue_title or issue_number:
-        label = "GitHub"
-        if issue_number:
-            label = f"{label} #{issue_number}"
-        if issue_title:
-            label = f"{label}: {issue_title}"
-        request = f"{label}\n\n{request}"
-    return PromptLogEntry(request)
+    artifact_path = log_path.parent / "plans" / "000_online_query.md"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    issue_url = _online_query_issue_url(repository, issue_number)
+    artifact_path.write_text(
+        _online_query_artifact_text(
+            issue_title=issue_title,
+            issue_number=issue_number,
+            issue_url=issue_url,
+            event_type=event_type,
+            trigger_username=trigger_username,
+            trigger_display_name=trigger_display_name,
+            trigger_phrase=trigger_phrase,
+            trigger_comment=trigger_comment,
+            request=request,
+        ),
+        encoding="utf-8",
+    )
+
+    issue_link = f"#{issue_number}" if issue_number else "unknown issue"
+    if issue_url:
+        issue_link = f"[#{issue_number}]({issue_url})"
+    summary = (
+        f"❯ [query](./plans/{artifact_path.name}) for issue {issue_link}:\n"
+        f"type: `{event_type or 'unknown'}`\n"
+        f"trigger: @{trigger_username or 'unknown'} ({trigger_display_name or 'unknown'}) "
+        f"via _{trigger_phrase}_.\n"
+        f"comment: {trigger_comment or '(none)'}\n"
+        f"{request}"
+    )
+    return PromptLogEntry(_quote_lines(summary), preformatted=True, extra_paths=(artifact_path,))
 
 
 def _parse_task_notification(prompt: str) -> dict | None:
@@ -372,6 +447,7 @@ def main() -> int:
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     preformatted_prompt = False
+    entry = PromptLogEntry(prompt)
     if ai_tool == "codex":
         entry = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
         prompt = entry.text
@@ -379,7 +455,7 @@ def main() -> int:
         if not prompt.strip():
             return 0
     elif ai_tool == "claude":
-        entry = _strip_claude_github_worker_prompt(prompt)
+        entry = _strip_claude_github_worker_prompt(prompt, log_path)
         prompt = entry.text
         preformatted_prompt = entry.preformatted
         if not prompt.strip():
@@ -398,6 +474,7 @@ def main() -> int:
         content,
         commit_template_relpath="ai/commit-templates/prompt.md",
         default_commit_msg="ai: updated prompt",
+        extra_paths=entry.extra_paths,
     )
     return 0
 

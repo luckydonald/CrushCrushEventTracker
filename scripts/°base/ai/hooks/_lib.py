@@ -190,10 +190,12 @@ def append_and_commit(
     *,
     commit_template_relpath: str,
     default_commit_msg: str,
+    extra_paths: tuple[Path, ...] = (),
 ) -> None:
-    """Append ``content`` to ``log_path``, commit only that file, then re-apply
-    any user-staged edits to the same file on top of the new HEAD."""
+    """Append ``content`` to ``log_path``, commit only those AI artifact files,
+    then re-apply any user-staged edits to the log on top of the new HEAD."""
     relpath = str(log_path.relative_to(Path.cwd()))
+    extra_relpaths = [str(path.relative_to(Path.cwd())) for path in extra_paths]
     snap = _staged_snapshot(relpath)
 
     with log_path.open("a", encoding="utf-8") as f:
@@ -202,8 +204,11 @@ def append_and_commit(
     msg = _commit_message(commit_template_relpath, default_commit_msg)
     # `git commit --only` requires the path to be tracked, so make sure the
     # file is in the index first. Idempotent on already-tracked files.
-    subprocess.run(["git", "add", "--", relpath], capture_output=True)
-    subprocess.run(["git", "commit", "--no-verify", "--only", relpath, "-m", msg], capture_output=True)
+    subprocess.run(["git", "add", "--", relpath, *extra_relpaths], capture_output=True)
+    subprocess.run(
+        ["git", "commit", "--no-verify", "--only", relpath, *extra_relpaths, "-m", msg],
+        capture_output=True,
+    )
 
     if snap is not None:
         _restore_staged(snap, relpath)

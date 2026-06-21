@@ -889,3 +889,14 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 > See luckydonald/AllMyStorage@3a1b1b8 or luckydonald/AllMyStorage@95c46b1.
 >
 > › i already cleaned that up into a previous commit.
+>
+> > › The result shall be a quoted section again:
+> > ❯ [query](./plans/NNN_….md) for issue [#$issue_nzmber](https://...fill-me.../issues/$issue_number):
+> > type: `$event-type`
+> > trigger: @$trigger_username ($trigger_display_name) via _$trigger_phrase_.
+> > comment: $trigger_comment
+> > $trigger_comment
+>
+> etc.
+>
+> Write the resulting "almost the same" part to `ai/plans/000_online_query.md` (including `°base` if needed.), and include in the commit. Having diffs there is fine.

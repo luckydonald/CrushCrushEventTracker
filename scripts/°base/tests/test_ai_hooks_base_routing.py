@@ -360,9 +360,29 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
-                "❯ GitHub #3: Can't add barcodes\n\n"
+                "> ❯ [query](./plans/000_online_query.md) for issue "
+                "[#3](https://github.com/luckydonald/AllMyStorage/issues/3):\n"
+                "> type: `ISSUE_CREATED`\n"
+                "> trigger: @luckydonald (Lucky Lucy) via _@claude_.\n"
+                "> comment: (none)\n"
+                "> It seems the issue is that the API uses a get request.\n"
+                ">\n"
+                "> Maybe that flow is not yet fully implemented in the barcode add overlay?\n\n",
+            )
+            self.assertEqual(
+                (repo / "ai" / "°base" / "plans" / "000_online_query.md").read_text(
+                    encoding="utf-8",
+                ),
+                "# Online Query\n\n"
+                "Issue: #3 Can't add barcodes\n"
+                "URL: https://github.com/luckydonald/AllMyStorage/issues/3\n"
+                "Event type: ISSUE_CREATED\n"
+                "Trigger: @luckydonald (Lucky Lucy) via @claude\n\n"
+                "## Trigger Comment\n\n"
+                "(none)\n\n"
+                "## Query\n\n"
                 "It seems the issue is that the API uses a get request.\n\n"
-                "Maybe that flow is not yet fully implemented in the barcode add overlay?\n\n",
+                "Maybe that flow is not yet fully implemented in the barcode add overlay?\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
@@ -387,8 +407,28 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             self.assertEqual(
                 (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
-                "❯ GitHub #4: Page does not install as app on ios\n\n"
-                "Please check the PWA manifest only.\n\n",
+                "> ❯ [query](./plans/000_online_query.md) for issue "
+                "[#4](https://github.com/luckydonald/AllMyStorage/issues/4):\n"
+                "> type: `ISSUE_CREATED`\n"
+                "> trigger: @luckydonald (Lucky Lucy) via _@claude_.\n"
+                "> comment: @claude\n"
+                "> Please check the PWA manifest only.\n"
+                "> Please check the PWA manifest only.\n\n",
+            )
+            self.assertEqual(
+                (repo / "ai" / "°base" / "plans" / "000_online_query.md").read_text(
+                    encoding="utf-8",
+                ),
+                "# Online Query\n\n"
+                "Issue: #4 Page does not install as app on ios\n"
+                "URL: https://github.com/luckydonald/AllMyStorage/issues/4\n"
+                "Event type: ISSUE_CREATED\n"
+                "Trigger: @luckydonald (Lucky Lucy) via @claude\n\n"
+                "## Trigger Comment\n\n"
+                "@claude\n"
+                "Please check the PWA manifest only.\n\n"
+                "## Query\n\n"
+                "Please check the PWA manifest only.\n",
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
