@@ -27,6 +27,7 @@ Adopt these rules for every commit made this session:
    - When in doubt, fold. The goal is readable history, not preserving every auto-save.
 
    If a `git reset --soft HEAD~N` accidentally included commits that should stay separate, restore them with `git reset --soft <original-hash>` before committing.
+   Prefer `--amend` over `HEAD~1`.
 
 3. **Always write the message to `ai/git/pending-commit.md` first** like this:
    1. run exactly the whitelisted command `rm ai/git/pending-commit.md || echo 'was gone'`, which makes sure it's not gonna cause "stale unread file" issues.
@@ -44,7 +45,7 @@ Adopt these rules for every commit made this session:
    Good examples:
    - `[frontend] admin: ai: Run: Implemented user deletion UI.`
    - `[backend] models: ai: Run: Added models for cool feature.`
-   - `[backend] cool feature: ai: Run: Added the models.`
+   - <code>[backend] cool feature: ai: Run: Added the `cool` model.</code>
    - `[git] ignore rules: ai: Run: Ignored generated cache files.`
    Bad examples:
    - `[frontend] fix: ai: Run: Implement user deletion UI`
