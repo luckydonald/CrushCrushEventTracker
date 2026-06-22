@@ -967,3 +967,4 @@ Activate /commit-with-lplp-style when executing the plan.
    E.g. in this repo/prompt (blockquote me):
    > Change the output dir for agent stuff to `ai/output/agents/NNN.task-id/` (+`output`)
 
+❯ For implementing `/compact`, see @ai/°base/errors/10.md and @ai/°base/errors/10.expected.md
