@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +18,7 @@ from _lib import (  # noqa: E402
 
 
 def _encoded_project_dir(subproject: Path) -> Path:
-    encoded = str(subproject).replace("/", "-")
+    encoded = re.sub(r"[^a-zA-Z0-9]", "-", str(subproject))
     return Path.home() / ".claude" / "projects" / encoded
 
 

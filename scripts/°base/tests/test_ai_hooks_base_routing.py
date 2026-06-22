@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -11,6 +12,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[3]
+
+
+def _encode_project_path(p: Path) -> str:
+    """Replicate Claude Code's project-dir encoding: all non-alphanumeric chars → '-'."""
+    return re.sub(r"[^a-zA-Z0-9]", "-", str(p))
 PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-prompt" / "hook.py"
 PLAN_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-plan" / "hook.py"
 MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-memory" / "hook.py"
@@ -45,7 +51,7 @@ def run_hook(
     extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
-    env["CLAUDE_PROJECT_DIR"] = str(repo)
+    env["CLAUDE_PROJECT_DIR"] = str(repo.resolve())
     if extra_env:
         env.update(extra_env)
     result = subprocess.run(
@@ -650,7 +656,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             repo = Path(tmp) / "base"
             home = Path(tmp) / "home"
             init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
-            encoded = str(repo).replace("/", "-")
+            encoded = _encode_project_path(repo.resolve())
             src_dir = home / ".claude" / "projects" / encoded / "memory"
             src_dir.mkdir(parents=True)
             (src_dir / "note.md").write_text("remember this\n", encoding="utf-8")
@@ -687,7 +693,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 extra_env={"HOME": str(home)},
             )
 
-            encoded = str(repo).replace("/", "-")
+            encoded = _encode_project_path(repo.resolve())
             src_file = home / ".claude" / "projects" / encoded / "memory" / "note.md"
             self.assertEqual(src_file.read_text(encoding="utf-8"), "repo is durable\n")
             self.assertEqual(last_subject(repo), "seed memory")
@@ -711,7 +717,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "-m",
                 "Deleted Memory: old.md",
             )
-            encoded = str(repo).replace("/", "-")
+            encoded = _encode_project_path(repo.resolve())
             src_file = home / ".claude" / "projects" / encoded / "memory" / "old.md"
             src_file.parent.mkdir(parents=True)
             src_file.write_text("stale local memory\n", encoding="utf-8")
@@ -726,6 +732,38 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertFalse(memory_file.exists())
             self.assertFalse(src_file.exists())
             self.assertEqual(last_subject(repo), "ai: delete memory old")
+
+    def test_memory_posttooluse_write_with_underscore_in_project_path(self):
+        """PostToolUse(Write) must commit memory files when the project dir
+        contains underscores — the encoded Claude state path uses hyphens
+        for all non-alphanumeric chars, not just slashes."""
+        with tempfile.TemporaryDirectory() as tmp:
+            # Repo dir name contains an underscore (the bug trigger).
+            repo = Path(tmp) / "my_project"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://github.com/user/my_project.git")
+
+            encoded = _encode_project_path(repo.resolve())
+            src_dir = home / ".claude" / "projects" / encoded / "memory"
+            src_dir.mkdir(parents=True)
+            src_file = src_dir / "tip.md"
+            src_file.write_text("useful tip\n", encoding="utf-8")
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Write",
+                    "tool_input": {"file_path": str(src_file)},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            dst = repo / "ai" / "memory" / "tip.md"
+            self.assertTrue(dst.exists(), "memory file was not synced to repo")
+            self.assertEqual(dst.read_text(encoding="utf-8"), "useful tip\n")
+            self.assertEqual(last_subject(repo), "ai: record memory tip")
 
     # ------------------------------------------------------------------
     # save-plan: Stop false-positive and ExitPlanMode fixes

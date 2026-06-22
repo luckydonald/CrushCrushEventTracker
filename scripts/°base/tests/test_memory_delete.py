@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -105,13 +106,13 @@ class MemoryDeleteTests(unittest.TestCase):
             home = Path(tmp) / "home"
             init_repo(repo)
             path = add_memory(repo, "note.md")
-            encoded = str(repo).replace("/", "-")
+            encoded = re.sub(r"[^a-zA-Z0-9]", "-", str(repo.resolve()))
             src = home / ".claude" / "projects" / encoded / "memory" / "note.md"
             src.parent.mkdir(parents=True)
             src.write_text("source copy\n", encoding="utf-8")
             env = os.environ.copy()
             env["HOME"] = str(home)
-            env["CLAUDE_PROJECT_DIR"] = str(repo)
+            env["CLAUDE_PROJECT_DIR"] = str(repo.resolve())
 
             result = subprocess.run(
                 [sys.executable, str(DELETE_HELPER), "note.md"],

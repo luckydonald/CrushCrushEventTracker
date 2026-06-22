@@ -19,6 +19,7 @@ Bind mounts are skipped — they only make sense at directory granularity.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -35,8 +36,9 @@ from _lib import (  # noqa: E402
 
 def _encoded_project_dir(subproject: Path) -> Path:
     """Claude Code stores per-project state at ~/.claude/projects/<encoded>/,
-    where <encoded> is the absolute project path with `/` replaced by `-`."""
-    encoded = str(subproject).replace("/", "-")
+    where <encoded> is the absolute project path with all non-alphanumeric
+    characters (including `/` and `_`) replaced by `-`."""
+    encoded = re.sub(r"[^a-zA-Z0-9]", "-", str(subproject))
     return Path.home() / ".claude" / "projects" / encoded
 
 

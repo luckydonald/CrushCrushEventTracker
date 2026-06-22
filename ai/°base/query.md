@@ -933,3 +933,11 @@ Note, it's from claude at `/Users/user/Documents/programming/Shell/archive_apps`
 
 ❯ Again, don't attepmt to fix `archive_apps`, the fix will land there eventually. Fix it here.
 
+❯ /plan Back to that other claude session at `/Users/user/Documents/programming/Shell/archive_apps/`, in commit `ff301248d9cc1dbebd8d4d0a09dbf90b7b20a991` we asked claude to `❯ document your learnings.`, and it did so.
+I can see the following writes, but it never seem to have triggered commits mirroring those to the local git, as the hooks should. Please investigate. The commands it triggered:
+- `Write(/Users/user/.claude/projects/-Users-user-Documents-programming-Shell-archive-apps/memory/feedback_testing_archive_apps.md)`
+- `Write(/Users/user/.claude/projects/-Users-user-Documents-programming-Shell-archive-apps/memory/project_ditto_zip_cp437.md)`
+- `Write(/Users/user/.claude/projects/-Users-user-Documents-programming-Shell-archive-apps/memory/project_checksums_locale_sort.md)`
+- `Write(/Users/user/.claude/projects/-Users-user-Documents-programming-Shell-archive-apps/memory/MEMORY.md)`
+You should fix the issue only in this base repo, the fixes will be merged there eventually.
+
