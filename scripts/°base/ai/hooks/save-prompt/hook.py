@@ -51,6 +51,10 @@ SKIP_PROMPTS = {
     "keep committing", "always commit",
     # bumping the AI to continue
     "continue", "go on", "bump",
+    # confirmations
+    "yes", "ok", "okay",
+    # fix it
+    "yes, fix this", "fix", "fix this", "fix it"
     # misc commands
     "/rename",
     "/compact",
