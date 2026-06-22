@@ -462,6 +462,92 @@ def _usage_summary(info: dict) -> str:
     return f"> - `{tool_uses}` tools, `{tokens}` tokens, `{duration} s`\n"
 
 
+def _parse_compact_autoloads(prompt: str) -> str:
+    """Parse ⎿ lines from a compact prompt into a markdown autoload list."""
+    lines = []
+    for line in prompt.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("⎿"):  # ⎿
+            continue
+        item = stripped[1:].strip()
+        if item.lower() == "compacted":
+            continue
+        m = re.match(r"^Read (.+?) \((\d+) lines?\)$", item)
+        if m:
+            lines.append(f"- Read `{m.group(1)}` (`{m.group(2)}` lines)")
+            continue
+        m = re.match(r"^Referenced file (.+)$", item)
+        if m:
+            lines.append(f"- Referenced file `{m.group(1)}`")
+            continue
+        m = re.match(r"^Plan file referenced \((.+)\)$", item)
+        if m:
+            lines.append(f"- Plan file referenced (`{m.group(1)}`)")
+            continue
+        m = re.match(r"^Skills restored \((.+)\)$", item)
+        if m:
+            lines.append(f"- Skills restored (`{m.group(1)}`)")
+            continue
+        lines.append(f"- {item}")
+    return "\n".join(lines) + "\n" if lines else ""
+
+
+def _handle_compact_prompt(
+    prefix: str,
+    prompt: str,
+    log_path: Path,
+    commit_template_relpath: str,
+    default_commit_msg: str,
+) -> bool:
+    """If prompt is a /compact result with ⎿ lines, write autoloads and a summary entry."""
+    stripped = prompt.strip()
+    if not stripped.startswith("/compact") or "⎿" not in stripped:
+        return False
+
+    compact_dir = log_path.parent / "output" / "compact"
+    # Sequential numbering for compact dirs (plain NNN, no task-id suffix)
+    if not compact_dir.exists():
+        num = 1
+    else:
+        nums = [
+            int(m.group(1))
+            for d in compact_dir.iterdir()
+            if d.is_dir() and (m := re.match(r"^(\d+)$", d.name))
+        ]
+        num = max(nums, default=0) + 1
+    dir_name = f"{num:03d}"
+    result_dir = compact_dir / dir_name
+    result_dir.mkdir(parents=True, exist_ok=True)
+
+    autoloads_text = _parse_compact_autoloads(prompt)
+    autoloads_file = result_dir / "autoloads.md"
+    autoloads_file.write_text(autoloads_text, encoding="utf-8")
+
+    cwd = Path.cwd()
+    autoloads_rel = str(autoloads_file.relative_to(cwd))
+    subprocess.run(["git", "add", "--", autoloads_rel], capture_output=True)
+    subprocess.run(
+        ["git", "commit", "--no-verify", "--only", autoloads_rel,
+         "-m", base_ai_commit_subject(f"ai: compact {dir_name} autoloads")],
+        capture_output=True,
+    )
+
+    rel_autoloads = f"output/compact/{dir_name}/autoloads.md"
+    autoload_chars = len(autoloads_text)
+    content = (
+        f"{prefix} Conversation compacted:\n"
+        f"> - {_markdown_file_link('Autoload', autoload_chars, _human_size(str(autoloads_file)), rel_autoloads)}\n"
+        "\n"
+    )
+    append_and_commit(
+        log_path,
+        content,
+        commit_template_relpath=commit_template_relpath,
+        default_commit_msg=default_commit_msg,
+    )
+    return True
+
+
 def _next_agent_number(agents_dir: Path) -> int:
     """Return the next sequential 1-based agent number."""
     if not agents_dir.exists():
@@ -623,6 +709,13 @@ def main() -> int:
         preformatted_prompt = entry.preformatted
         if not prompt.strip():
             return 0
+
+    if _handle_compact_prompt(
+        prefix, prompt, log_path,
+        commit_template_relpath="ai/commit-templates/prompt.md",
+        default_commit_msg="ai: updated prompt",
+    ):
+        return 0
 
     remaining_after_task = ""
     if "<task-notification>" in prompt:

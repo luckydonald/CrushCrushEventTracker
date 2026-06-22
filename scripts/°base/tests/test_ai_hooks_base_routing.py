@@ -1095,6 +1095,65 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertEqual(written.get("prompt"), "base debug")
             self.assertFalse((repo / "ai" / "output" / "debug").exists(), "should NOT write to ai/output/debug/")
 
+    def test_compact_prompt_writes_autoloads_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            compact_prompt = (
+                "/compact\n"
+                "  ⎿  Compacted\n"
+                "  ⎿  Read ai/git/pending-commit.md (18 lines)\n"
+                "  ⎿  Referenced file archive_apps.sh\n"
+                "  ⎿  Plan file referenced (~/.claude/plans/my-plan.md)\n"
+                "  ⎿  Skills restored (commit-with-lplp-style)\n"
+            )
+            run_hook(repo, PROMPT_HOOK, {"prompt": compact_prompt}, "claude")
+
+            autoloads_file = repo / "ai" / "°base" / "output" / "compact" / "001" / "autoloads.md"
+            self.assertTrue(autoloads_file.exists(), "autoloads.md should be created")
+            autoloads = autoloads_file.read_text(encoding="utf-8")
+            self.assertIn("- Read `ai/git/pending-commit.md` (`18` lines)", autoloads)
+            self.assertIn("- Referenced file `archive_apps.sh`", autoloads)
+            self.assertIn("- Plan file referenced (`~/.claude/plans/my-plan.md`)", autoloads)
+            self.assertIn("- Skills restored (`commit-with-lplp-style`)", autoloads)
+            self.assertNotIn("Compacted", autoloads)
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("❯ Conversation compacted:\n", query)
+            self.assertIn("output/compact/001/autoloads.md", query)
+
+    def test_compact_autoloads_skips_compacted_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            compact_prompt = (
+                "/compact\n"
+                "  ⎿  Compacted\n"
+                "  ⎿  Read notes.md (5 lines)\n"
+            )
+            run_hook(repo, PROMPT_HOOK, {"prompt": compact_prompt}, "claude")
+
+            autoloads = (
+                repo / "ai" / "°base" / "output" / "compact" / "001" / "autoloads.md"
+            ).read_text(encoding="utf-8")
+            self.assertNotIn("Compacted", autoloads)
+            self.assertIn("- Read `notes.md` (`5` lines)", autoloads)
+
+    def test_compact_sequential_numbering(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            compact_prompt = "/compact\n  ⎿  Compacted\n  ⎿  Read a.md (1 lines)\n"
+            run_hook(repo, PROMPT_HOOK, {"prompt": compact_prompt}, "claude")
+            run_hook(repo, PROMPT_HOOK, {"prompt": compact_prompt}, "claude")
+
+            compact_dir = repo / "ai" / "°base" / "output" / "compact"
+            self.assertTrue((compact_dir / "001").is_dir(), "first compact → 001")
+            self.assertTrue((compact_dir / "002").is_dir(), "second compact → 002")
+
 
 if __name__ == "__main__":
     unittest.main()
