@@ -277,9 +277,9 @@ def _parse_task_notification(prompt: str) -> dict | None:
         "summary": _text("summary"),
         "result": _text("result"),
         "output_file": _text("output-file"),
-        "subagent_tokens": _text("usage/subagent_tokens"),
-        "tool_uses": _text("usage/tool_uses"),
-        "duration_ms": _text("usage/duration_ms"),
+        "subagent_tokens": _text("usage/subagent_tokens") or _text("usage/subagent-tokens"),
+        "tool_uses": _text("usage/tool_uses") or _text("usage/tool-uses"),
+        "duration_ms": _text("usage/duration_ms") or _text("usage/duration-ms"),
     }
 
 

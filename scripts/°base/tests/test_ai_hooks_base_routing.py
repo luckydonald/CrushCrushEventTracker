@@ -503,6 +503,37 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
+    def test_claude_task_notification_usage_line_with_hyphen_tags(self):
+        """<usage> children with hyphenated tag names (production format) still produce the usage line."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            output_file = Path(tmp) / "agent.output"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            output_file.write_text("", encoding="utf-8")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        "<task-notification>\n"
+                        "<task-id>hyphen_task_001</task-id>\n"
+                        "<tool-use-id>toolu_hyphen</tool-use-id>\n"
+                        f"<output-file>{output_file}</output-file>\n"
+                        "<status>completed</status>\n"
+                        "<summary>Hyphen usage test</summary>\n"
+                        "<result>OK.</result>\n"
+                        "<usage><subagent-tokens>12345</subagent-tokens>"
+                        "<tool-uses>4</tool-uses><duration-ms>30000</duration-ms></usage>\n"
+                        "</task-notification>"
+                    )
+                },
+                "claude",
+            )
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("> - `4` tools, `12345` tokens, `0.5 s`\n", query)
+
     def test_claude_explore_notification_writes_result_and_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"
