@@ -922,3 +922,7 @@ You should now check that the updated plan has a commit as well.
 Afterwards we need to check option **1**, that it commits to the query as well, something about starting the implementation, and once more linking the plan. Obviously that can't be done in planning mode.
 
 ❯ Exiting again to give you another check round. Also please activte the lplp-commit-style skill when implementing the fix.
+❯ /plan test plan for what we just implemented. Please tell me how to best test.
+
+❯ I feel like this should have been plan #11, as it's too different?
+

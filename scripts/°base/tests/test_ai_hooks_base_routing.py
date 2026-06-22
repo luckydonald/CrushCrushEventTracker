@@ -727,6 +727,149 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertFalse(src_file.exists())
             self.assertEqual(last_subject(repo), "ai: delete memory old")
 
+    # ------------------------------------------------------------------
+    # save-plan: Stop false-positive and ExitPlanMode fixes
+    # ------------------------------------------------------------------
+
+    def test_claude_stop_ignores_string_tool_response(self):
+        """Stop event with a plain-string tool_response must produce no commit."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "Stop",
+                    "session_id": f"test-{uuid.uuid4()}",
+                    "tool_name": "",
+                    "tool_input": {},
+                    "tool_response": "Exit code: 0\nWall time: 0.2 seconds\nSuccess.",
+                },
+                "claude",
+            )
+
+            self.assertEqual(last_subject(repo), "init")
+            self.assertFalse((repo / "ai" / "°base" / "plans").exists())
+            self.assertFalse((repo / "ai" / "plans").exists())
+
+    def test_claude_stop_ignores_dict_tool_response_without_plan(self):
+        """Stop event with a dict tool_response that has no plan/filePath → no commit."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "Stop",
+                    "session_id": f"test-{uuid.uuid4()}",
+                    "tool_name": "",
+                    "tool_input": {},
+                    "tool_response": {"status": "ok", "duration_ms": 120},
+                },
+                "claude",
+            )
+
+            self.assertEqual(last_subject(repo), "init")
+            self.assertFalse((repo / "ai" / "°base" / "plans").exists())
+
+    def test_claude_exit_plan_mode_captures_plan_from_file_path(self):
+        """ExitPlanMode with tool_response.filePath still commits the plan."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            plan_file = Path(tmp) / "harness-plan.md"
+            plan_file.write_text("# My Test Plan\n\nStep 1.\nStep 2.\n", encoding="utf-8")
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "session_id": f"test-{uuid.uuid4()}",
+                    "tool_name": "ExitPlanMode",
+                    "tool_input": {},
+                    "tool_response": {"filePath": str(plan_file)},
+                },
+                "claude",
+            )
+
+            plan_files = list((repo / "ai" / "°base" / "plans").glob("001_*.md"))
+            self.assertEqual(len(plan_files), 1, plan_files)
+            self.assertIn("Step 1.", plan_files[0].read_text(encoding="utf-8"))
+            self.assertEqual(last_subject(repo), "[base] ai: save plan 001_my-test-plan")
+
+    def test_new_plan_in_same_session_gets_fresh_prefix(self):
+        """A second /plan in the same session gets prefix 002, not 001 again."""
+        import tempfile as _tempfile
+        state_file = Path(_tempfile.gettempdir()) / "save-plan-state.json"
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            session_id = f"test-{uuid.uuid4()}"
+            fake_plan_path = f"/home/user/.claude/plans/session-plan.md"
+
+            # Step 1: Write trigger → plan A → prefix 001
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "session_id": session_id,
+                    "tool_name": "Write",
+                    "tool_input": {
+                        "file_path": fake_plan_path,
+                        "content": "# Plan Alpha\n\nDo thing A.\n",
+                    },
+                },
+                "claude",
+            )
+            self.assertTrue((repo / "ai" / "°base" / "plans" / "001_plan-alpha.md").exists())
+
+            # Step 2: ExitPlanMode → sets done=True in state
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "session_id": session_id,
+                    "tool_name": "ExitPlanMode",
+                    "tool_input": {},
+                    "tool_response": {"plan": "# Plan Alpha\n\nDo thing A."},
+                },
+                "claude",
+            )
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+            self.assertTrue(state.get(session_id, {}).get("done"), "done flag not set after ExitPlanMode")
+
+            # Step 3: Write trigger with a different plan → must allocate 002
+            run_hook(
+                repo,
+                PLAN_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "session_id": session_id,
+                    "tool_name": "Write",
+                    "tool_input": {
+                        "file_path": fake_plan_path,
+                        "content": "# Plan Beta\n\nDo thing B.\n",
+                    },
+                },
+                "claude",
+            )
+            self.assertTrue(
+                (repo / "ai" / "°base" / "plans" / "002_plan-beta.md").exists(),
+                "second plan must get prefix 002",
+            )
+            self.assertTrue(
+                (repo / "ai" / "°base" / "plans" / "001_plan-alpha.md").exists(),
+                "first plan must still exist",
+            )
+
     def test_prompt_in_repo_named_base_with_different_origin_is_unprefixed(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"

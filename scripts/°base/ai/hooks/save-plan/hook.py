@@ -224,6 +224,7 @@ def main() -> int:
     tool_name = payload.get("tool_name", "")
     tool_input = payload.get("tool_input") or {}
 
+    plan = ""
     if ai_tool == "codex":
         plan = _plan_from_codex_sources(payload)
     elif tool_name == "Write":
@@ -244,7 +245,12 @@ def main() -> int:
     state = _load_state()
     session = state.get(session_id) if session_id else None
     # session shape: {"prefix": "004", "relpath": "ai/°base/plans/004_slug.md",
-    #                 "source": "sprightly-mixing-iverson.md"}
+    #                 "source": "sprightly-mixing-iverson.md", "done": bool}
+
+    # When Write fires after ExitPlanMode committed the previous plan (same session),
+    # treat it as a brand-new plan and allocate a fresh prefix.
+    if session and tool_name == "Write" and session.get("done"):
+        session = None
 
     new_slug = slugify(plan, fallback="plan")
 
@@ -255,6 +261,9 @@ def main() -> int:
 
         # Skip identical content.
         if old_path.is_file() and old_path.read_text(encoding="utf-8").strip() == plan:
+            if tool_name == "ExitPlanMode" and session_id and session_id in state:
+                state[session_id]["done"] = True
+                _save_state(state)
             return 0
 
         new_relpath = str((plans_dir / f"{prefix}_{new_slug}.md").relative_to(Path.cwd()))
@@ -288,6 +297,12 @@ def main() -> int:
             source = Path(tool_input.get("file_path") or "").name
             state[session_id] = {"prefix": prefix, "relpath": relpath, "source": source}
             _save_state(state)
+
+    # After ExitPlanMode fires, mark this plan session done so that a subsequent
+    # Write (new /plan command in the same Claude session) allocates a fresh prefix.
+    if tool_name == "ExitPlanMode" and session_id and session_id in state:
+        state[session_id]["done"] = True
+        _save_state(state)
 
     return 0
 
