@@ -903,7 +903,7 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 ❯ /plan the claude hooks for plan mode are no longer triggering commits & adding the files to the correct folder it seems.
 
 ❯ I am now telling you to change something in that plan. Doing so should result in two changes:
-1. Immediatly this very prompt is added at the end of `ai/°base/query.md`, and 
+1. Immediatly this very prompt is added at the end of `ai/°base/query.md`, and
 2. after you wrote the new plan, `ai/°base/plans/010_*.md` should be updated by the file access or some relevant hook.
 You can inspect **1.** right away, so you can see if that already needs fixing.
 For **2.** we will see that after you update the plan. You will ask me to start implementing, and I will have to reject again, so you are given a chance to inspect the result before going into actual implementation phase.
@@ -926,7 +926,7 @@ Afterwards we need to check option **1**, that it commits to the query as well, 
 
 ❯ I feel like this should have been plan #11, as it's too different?
 
-❯ Check if the following is correct: @ai/°base/errors/8.md 
+❯ Check if the following is correct: @ai/°base/errors/8.md
 Note, it's from claude at `/Users/user/Documents/programming/Shell/archive_apps`.
 
 ❯ But query and answer shouldn't be `0 chars`?
@@ -944,7 +944,7 @@ You should fix the issue only in this base repo, the fixes will be merged there 
 ❯ /plan I want to have explore commands written to the prompt log, similar to `Task Notification:`.
 Claude CLI writes:
 ```log
-Explore(Explore record-memory hook and commit logic)                                                                                                                                                                                                               
+Explore(Explore record-memory hook and commit logic)
   ⎿  Done (33 tool uses · 46.9k tokens · 1m 41s)
 ```
 I think we could write it like this:
@@ -952,4 +952,8 @@ I think we could write it like this:
 @ai/°base/errors/9.expected.md
 
 Activate /commit-with-lplp-style when executing the plan.
+
+❯ Change the output dir for agent stuff to `ai/output/agents/NNN.task-id/` (+`output`)
+
+❯ do not squash for this single time, I'll do it myself.
 

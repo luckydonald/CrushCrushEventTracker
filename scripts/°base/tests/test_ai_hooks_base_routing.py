@@ -482,7 +482,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "claude",
             )
 
-            agent_dir = repo / "ai" / "°base" / "agents" / "001.a6f364ce63ffebb84"
+            agent_dir = repo / "ai" / "°base" / "output" / "agents" / "001.a6f364ce63ffebb84"
             self.assertEqual(
                 (agent_dir / "prompt.md").read_text(encoding="utf-8"),
                 "Inspect the compose window.",
@@ -494,8 +494,8 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "> - Task `a6f364ce63ffebb84` <kbd>completed</kbd>\n"
                 "> - Tool `toolu_test`\n"
                 "> - > Agent came to rest\n"
-                "> - [Query (`27` chars, `27 B`)](agents/001.a6f364ce63ffebb84/prompt.md)\n"
-                "> - [Answer (`5` chars, `5 B`)](agents/001.a6f364ce63ffebb84/result.md)\n"
+                "> - [Query (`27` chars, `27 B`)](output/agents/001.a6f364ce63ffebb84/prompt.md)\n"
+                "> - [Answer (`5` chars, `5 B`)](output/agents/001.a6f364ce63ffebb84/result.md)\n"
                 f"> - [Raw log (`{len(output_file.read_text(encoding='utf-8'))}` chars, "
                 f"`{output_file.stat().st_size} B`)]({output_file})\n"
                 "> - `6` tools, `67643` tokens, `1.16395 s`\n"

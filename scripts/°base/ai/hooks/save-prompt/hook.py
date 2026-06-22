@@ -536,7 +536,7 @@ def _handle_task_notification(
         )
         return True
 
-    agents_dir = log_path.parent / "agents"
+    agents_dir = log_path.parent / "output" / "agents"
     num = _next_agent_number(agents_dir)
     dir_name = f"{num:03d}.{info['task_id']}"
     agent_dir = agents_dir / dir_name
@@ -567,8 +567,8 @@ def _handle_task_notification(
         capture_output=True,
     )
 
-    rel_prompt = f"agents/{dir_name}/prompt.md"
-    rel_result = f"agents/{dir_name}/result.md"
+    rel_prompt = f"output/agents/{dir_name}/prompt.md"
+    rel_result = f"output/agents/{dir_name}/result.md"
     query_chars = len(agent_prompt)
     result_chars = len(result_text)
     log_chars = _char_count(info["output_file"])
