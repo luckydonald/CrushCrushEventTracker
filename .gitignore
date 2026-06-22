@@ -922,6 +922,10 @@ coverage/
 # # Opera
 **/*.nex
 
+# local AI scripting config stuff
+ai/.debug
+ai/°base/.debug
+
 
 ######################################
 ##### END OF base's `.gitignore` #####
