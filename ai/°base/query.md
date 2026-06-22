@@ -900,3 +900,25 @@ Same goes with merging the prompt file commits etc. If it meaningfully changes t
 > etc.
 >
 > Write the resulting "almost the same" part to `ai/plans/000_online_query.md` (including `°base` if needed.), and include in the commit. Having diffs there is fine.
+❯ /plan the claude hooks for plan mode are no longer triggering commits & adding the files to the correct folder it seems.
+
+❯ I am now telling you to change something in that plan. Doing so should result in two changes:
+1. Immediatly this very prompt is added at the end of `ai/°base/query.md`, and 
+2. after you wrote the new plan, `ai/°base/plans/010_*.md` should be updated by the file access or some relevant hook.
+You can inspect **1.** right away, so you can see if that already needs fixing.
+For **2.** we will see that after you update the plan. You will ask me to start implementing, and I will have to reject again, so you are given a chance to inspect the result before going into actual implementation phase.
+
+❯ Thanks. I got the following options to choose from, where I exited out with number **4**:
+> Claude has written up a plan and is ready to execute. Would you like to proceed?
+>
+>   1. Yes, and use auto mode
+>   2. Yes, manually approve edits
+>   3. No, refine with plan on Claude Code on the web
+> ❯ 4. Tell Claude what to change
+>      shift+tab to approve with this feedback
+>
+> ctrl+g to edit in  Vim  · ~/.claude/plans/toasty-crafting-origami.md
+You should now check that the updated plan has a commit as well.
+Afterwards we need to check option **1**, that it commits to the query as well, something about starting the implementation, and once more linking the plan. Obviously that can't be done in planning mode.
+
+❯ Exiting again to give you another check round. Also please activte the lplp-commit-style skill when implementing the fix.

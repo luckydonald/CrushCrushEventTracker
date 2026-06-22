@@ -228,10 +228,11 @@ def main() -> int:
         plan = _plan_from_codex_sources(payload)
     elif tool_name == "Write":
         plan = _plan_from_write(tool_input)
-    else:
+    elif tool_name == "ExitPlanMode":
         plan = (tool_input.get("plan") or "").strip()
         if not plan:
             plan = _plan_from_response(payload.get("tool_response"))
+    # Stop for Claude: no plan extraction — Write/ExitPlanMode already handled it.
 
     if not plan:
         return 0

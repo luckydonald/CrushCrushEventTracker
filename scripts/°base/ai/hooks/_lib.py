@@ -112,8 +112,8 @@ def resolve_log_path(default_relpath: str, base_relpath: str) -> Path:
     ``PROJ-1234``, every path is routed through
     ``ai[/°base]/by-issue/PROJ-1234/…`` instead of ``ai[/°base]/…``."""
     subproject = _subproject_root()
-    _chdir_to_git_root()
-    is_base = _is_inside_base_repo(subproject)
+    git_root = _chdir_to_git_root()
+    is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
     ai_prefix = "ai/°base" if is_base else "ai"
     relpath = base_relpath if is_base else default_relpath
 
