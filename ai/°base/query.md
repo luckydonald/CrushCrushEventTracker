@@ -959,3 +959,11 @@ Activate /commit-with-lplp-style when executing the plan.
 
 ❯ /plan If `ai/.debug` file exists, all AI hooks shall write their payload to `ai/output/debug/`. Adapt paths for `°base` as usual.
 
+❯ Here's some more stuff to do, they should all be commited separately, following the lplp style skill.
+1. `.debug` as above.
+2. Record `/compact` results, too.
+3. For the `Task Notification:` prompt update, from [5.expected.md](./errors/5.expected.md), the last line (tools, tokens, time) is missing. Implement it.
+4. Fix prompts-while-running for claude being lost.
+   E.g. in this repo/prompt (blockquote me):
+   > Change the output dir for agent stuff to `ai/output/agents/NNN.task-id/` (+`output`)
+
