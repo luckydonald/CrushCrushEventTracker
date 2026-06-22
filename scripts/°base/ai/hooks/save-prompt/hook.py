@@ -4,8 +4,8 @@
 Usage: hook.py [ai_tool_name]   (default: unknown)
 
 Task notifications (<task-notification> XML) are intercepted and written as a
-compact markdown summary block. The agent prompt and result are saved to
-ai/agents/NNN.task-id/ (or the °base equivalent) and linked from query.md.
+compact markdown summary block. Agent results are saved to ai/agents/NNN.task-id/
+and Explore results to ai/output/explore/NNN.task-id/ (or °base equivalents).
 """
 from __future__ import annotations
 
@@ -272,6 +272,7 @@ def _parse_task_notification(prompt: str) -> dict | None:
     return {
         "task_id": _text("task-id"),
         "tool_use_id": _text("tool-use-id"),
+        "subagent_type": _text("subagent-type"),
         "status": _text("status"),
         "summary": _text("summary"),
         "result": _text("result"),
@@ -327,6 +328,72 @@ def _extract_agent_prompt(output_file: str, tool_use_id: str = "") -> str:
     except OSError:
         pass
     return tool_use_fallback or subagent_fallback
+
+
+def _extract_explore_description(output_file: str, tool_use_id: str = "") -> str:
+    """Return the description string if the task is an Explore subagent, else ''."""
+
+    def _iter_dicts(value):
+        if isinstance(value, dict):
+            yield value
+            for child in value.values():
+                yield from _iter_dicts(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from _iter_dicts(child)
+
+    fallback = ""
+    try:
+        with open(output_file, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                for item in _iter_dicts(obj):
+                    if item.get("type") != "tool_use":
+                        continue
+                    name = item.get("name", "")
+                    inp = item.get("input", {})
+                    if name == "Explore":
+                        desc = inp.get("description", "")
+                        if tool_use_id and item.get("id") == tool_use_id:
+                            return desc
+                        if not fallback:
+                            fallback = desc
+                    elif name == "Agent" and inp.get("subagent_type", "").lower() == "explore":
+                        desc = inp.get("description", "") or inp.get("prompt", "")[:120]
+                        if tool_use_id and item.get("id") == tool_use_id:
+                            return desc
+                        if not fallback:
+                            fallback = desc
+    except OSError:
+        pass
+    return fallback
+
+
+def _human_tokens(n_str: str) -> str:
+    try:
+        n = int(n_str)
+    except ValueError:
+        return n_str
+    if n < 1000:
+        return str(n)
+    return f"{n / 1000:.3g}k"
+
+
+def _human_duration_ms(ms_str: str) -> str:
+    try:
+        ms = int(ms_str)
+    except ValueError:
+        return ms_str
+    s = ms // 1000
+    m, s = divmod(s, 60)
+    if m and s:
+        return f"{m}m {s}s"
+    if m:
+        return f"{m}m"
+    return f"{s}s"
 
 
 def _char_count(path: str) -> int:
@@ -421,6 +488,53 @@ def _handle_task_notification(
     info = _parse_task_notification(prompt)
     if not info or not info["task_id"]:
         return False
+
+    explore_description = _extract_explore_description(info["output_file"], info["tool_use_id"])
+    is_explore = bool(explore_description or info.get("subagent_type", "").lower() == "explore")
+
+    if is_explore:
+        explore_dir = log_path.parent / "output" / "explore"
+        num = _next_agent_number(explore_dir)
+        dir_name = f"{num:03d}.{info['task_id']}"
+        result_dir = explore_dir / dir_name
+        result_dir.mkdir(parents=True, exist_ok=True)
+
+        result_file = result_dir / "result.md"
+        result_file.write_text(info["result"], encoding="utf-8")
+
+        cwd = Path.cwd()
+        result_rel_abs = str(result_file.relative_to(cwd))
+        subprocess.run(["git", "add", "--", result_rel_abs], capture_output=True)
+        subprocess.run(
+            ["git", "commit", "--no-verify", "--only", result_rel_abs,
+             "-m", base_ai_commit_subject(f"ai: explore {dir_name} result")],
+            capture_output=True,
+        )
+
+        rel_result = f"output/explore/{dir_name}/result.md"
+        result_chars = len(info["result"])
+        log_chars = _char_count(info["output_file"])
+        log_size = _human_size(info["output_file"])
+        usage = (
+            f"> - `{info['tool_uses']}` tools"
+            f" · `{_human_tokens(info['subagent_tokens'])}` tokens"
+            f" · `{_human_duration_ms(info['duration_ms'])}`\n"
+        )
+        content = (
+            f"{prefix} Exploration <kbd>finished</kbd>:\n"
+            f"> - > {explore_description}\n"
+            f"> - {_markdown_file_link('Answer', result_chars, _human_size(str(result_file)), rel_result)}\n"
+            f"> - {_markdown_file_link('Raw log', log_chars, log_size, info['output_file'])}\n"
+            f"{usage}"
+            "\n"
+        )
+        append_and_commit(
+            log_path,
+            content,
+            commit_template_relpath=commit_template_relpath,
+            default_commit_msg=default_commit_msg,
+        )
+        return True
 
     agents_dir = log_path.parent / "agents"
     num = _next_agent_number(agents_dir)

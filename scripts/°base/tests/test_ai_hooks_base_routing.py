@@ -503,6 +503,72 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             )
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
+    def test_claude_explore_notification_writes_result_and_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            output_file = Path(tmp) / "explore.output"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            output_file.write_text(
+                json.dumps(
+                    {
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "toolu_explore",
+                                    "name": "Agent",
+                                    "input": {
+                                        "subagent_type": "Explore",
+                                        "description": "Explore record-memory hook and commit logic",
+                                        "prompt": "Search for...",
+                                    },
+                                }
+                            ]
+                        }
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        "<task-notification>\n"
+                        "<task-id>b5dyyqcfr</task-id>\n"
+                        "<tool-use-id>toolu_explore</tool-use-id>\n"
+                        f"<output-file>{output_file}</output-file>\n"
+                        "<status>completed</status>\n"
+                        "<summary>Explore agent came to rest</summary>\n"
+                        "<result>Done.</result>\n"
+                        "<usage><subagent_tokens>46900</subagent_tokens>"
+                        "<tool_uses>33</tool_uses><duration_ms>101000</duration_ms></usage>\n"
+                        "</task-notification>"
+                    )
+                },
+                "claude",
+            )
+
+            result_dir = repo / "ai" / "°base" / "output" / "explore" / "001.b5dyyqcfr"
+            self.assertEqual(
+                (result_dir / "result.md").read_text(encoding="utf-8"),
+                "Done.",
+            )
+            self.assertFalse((repo / "ai" / "°base" / "agents").exists())
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "❯ Exploration <kbd>finished</kbd>:\n"
+                "> - > Explore record-memory hook and commit logic\n"
+                "> - [Answer (`5` chars, `5 B`)](output/explore/001.b5dyyqcfr/result.md)\n"
+                f"> - [Raw log (`{len(output_file.read_text(encoding='utf-8'))}` chars, "
+                f"`{output_file.stat().st_size} B`)]({output_file})\n"
+                "> - `33` tools · `46.9k` tokens · `1m 41s`\n"
+                "\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
     def test_codex_plan_in_base_repo_routes_and_prefixes(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"

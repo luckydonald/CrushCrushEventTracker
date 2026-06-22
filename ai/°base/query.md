@@ -941,3 +941,15 @@ I can see the following writes, but it never seem to have triggered commits mirr
 - `Write(/Users/user/.claude/projects/-Users-user-Documents-programming-Shell-archive-apps/memory/MEMORY.md)`
 You should fix the issue only in this base repo, the fixes will be merged there eventually.
 
+❯ /plan I want to have explore commands written to the prompt log, similar to `Task Notification:`.
+Claude CLI writes:
+```log
+Explore(Explore record-memory hook and commit logic)                                                                                                                                                                                                               
+  ⎿  Done (33 tool uses · 46.9k tokens · 1m 41s)
+```
+I think we could write it like this:
+
+@ai/°base/errors/9.expected.md
+
+Activate /commit-with-lplp-style when executing the plan.
+
