@@ -40,14 +40,20 @@ CLAUDE_GITHUB_WORKER_PREFIX = (
 # and the most common "please commit now" reminders.
 # Claude uses /skill-name, Codex $skill-name.
 SKIP_PROMPTS = {
+    # skills
     "/commit-with-lplp-style",
     "$commit-with-lplp-style",
-    "/rename",
+    # common textual phrases for that skill.
     "commit", "Commit", "yes commit",
     "commit please", "commit pls", "commit plz",
     "please commit", "pls commit", "plz commit",
+    "commit now", "now commit",
     "keep committing", "always commit",
-    "continue", "go on",
+    # bumping the AI to continue
+    "continue", "go on", "bump",
+    # misc commands
+    "/rename",
+    "/compact",
 }
 
 
