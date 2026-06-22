@@ -30,6 +30,7 @@ from _lib import (  # noqa: E402
     _is_inside_base_repo,
     _subproject_root,
     base_ai_commit_subject,
+    dump_debug_payload,
     read_payload,
 )
 
@@ -307,6 +308,7 @@ def main() -> int:
     dst_dir_rel = str(dst_dir.relative_to(Path.cwd()))
 
     payload = read_payload()
+    dump_debug_payload(payload, "record-memory")
     event = payload.get("hook_event_name") or ""
 
     if event == "PostToolUse":

@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import append_and_commit, read_payload, resolve_log_path, slugify  # noqa: E402
+from _lib import append_and_commit, dump_debug_payload, read_payload, resolve_log_path, slugify  # noqa: E402
 
 
 def _flatten_answer(tool_response) -> str:
@@ -64,6 +64,7 @@ def _render_block(tool_input: dict, answer: str) -> str:
 
 def main() -> int:
     payload = read_payload()
+    dump_debug_payload(payload, "save-decision")
     tool_input = payload.get("tool_input") or {}
     if not tool_input and isinstance(payload.get("questions"), list):
         tool_input = {"questions": payload.get("questions") or []}

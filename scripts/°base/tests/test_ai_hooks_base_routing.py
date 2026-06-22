@@ -988,6 +988,51 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
             self.assertEqual(last_subject(repo), "ai: updated prompt")
 
+    def test_debug_payload_written_when_flag_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "myproject"
+            init_repo(repo, "https://github.com/example/consumer.git")
+            (repo / "ai").mkdir(parents=True, exist_ok=True)
+            (repo / "ai" / ".debug").touch()
+            payload = {"prompt": "debug me", "session_id": "abc123"}
+
+            run_hook(repo, PROMPT_HOOK, payload, "claude")
+
+            debug_dir = repo / "ai" / "output" / "debug"
+            self.assertTrue(debug_dir.is_dir(), "debug dir should be created")
+            files = list(debug_dir.glob("*-save-prompt.json"))
+            self.assertEqual(len(files), 1, f"expected 1 debug file, got {files}")
+            written = json.loads(files[0].read_text(encoding="utf-8"))
+            self.assertEqual(written.get("prompt"), "debug me")
+            self.assertEqual(written.get("session_id"), "abc123")
+
+    def test_debug_payload_not_written_without_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "myproject"
+            init_repo(repo, "https://github.com/example/consumer.git")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "no debug"}, "claude")
+
+            self.assertFalse((repo / "ai" / "output" / "debug").exists())
+
+    def test_debug_payload_routes_to_base_prefix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            (repo / "ai" / "°base").mkdir(parents=True, exist_ok=True)
+            (repo / "ai" / "°base" / ".debug").touch()
+            payload = {"prompt": "base debug", "session_id": "xyz789"}
+
+            run_hook(repo, PROMPT_HOOK, payload, "claude")
+
+            base_debug_dir = repo / "ai" / "°base" / "output" / "debug"
+            self.assertTrue(base_debug_dir.is_dir(), "debug dir should be under ai/°base/")
+            files = list(base_debug_dir.glob("*-save-prompt.json"))
+            self.assertEqual(len(files), 1, f"expected 1 debug file in base prefix, got {files}")
+            written = json.loads(files[0].read_text(encoding="utf-8"))
+            self.assertEqual(written.get("prompt"), "base debug")
+            self.assertFalse((repo / "ai" / "output" / "debug").exists(), "should NOT write to ai/output/debug/")
+
 
 if __name__ == "__main__":
     unittest.main()

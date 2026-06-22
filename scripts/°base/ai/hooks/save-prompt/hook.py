@@ -18,7 +18,7 @@ from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import append_and_commit, base_ai_commit_subject, read_payload, resolve_log_path  # noqa: E402
+from _lib import append_and_commit, base_ai_commit_subject, dump_debug_payload, read_payload, resolve_log_path  # noqa: E402
 
 PREFIXES = {"claude": "❯", "codex": "›"}
 DEFAULT_PREFIX = "⩼"
@@ -599,6 +599,7 @@ def main() -> int:
     prefix = PREFIXES.get(ai_tool, DEFAULT_PREFIX)
 
     payload = read_payload()
+    dump_debug_payload(payload, "save-prompt")
     prompt = payload.get("prompt") or payload.get("user_prompt") or ""
     if not prompt and isinstance(payload.get("tool_input"), dict):
         prompt = payload["tool_input"].get("prompt") or ""

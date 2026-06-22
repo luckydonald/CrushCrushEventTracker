@@ -7,6 +7,7 @@ edits to the same file via :mod:`merge_staged`.
 """
 from __future__ import annotations
 
+import datetime
 import json
 import os
 import re
@@ -27,6 +28,23 @@ def read_payload() -> dict:
         return json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
         return {}
+
+
+def dump_debug_payload(payload: dict, hook_name: str) -> None:
+    """If ai[/°base]/.debug exists, write payload JSON to ai[/°base]/output/debug/."""
+    subproject = _subproject_root()
+    git_root_str = _git_text("rev-parse", "--show-toplevel")
+    git_root = Path(git_root_str) if git_root_str else subproject
+    is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
+    ai_prefix = "ai/°base" if is_base else "ai"
+    if not (subproject / ai_prefix / ".debug").is_file():
+        return
+    ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S_%f")
+    debug_dir = subproject / ai_prefix / "output" / "debug"
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    (debug_dir / f"{ts}-{hook_name}.json").write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def slugify(text: str, *, max_len: int = 60, fallback: str = "untitled") -> str:
