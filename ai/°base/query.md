@@ -957,3 +957,5 @@ Activate /commit-with-lplp-style when executing the plan.
 
 ❯ do not squash for this single time, I'll do it myself.
 
+❯ /plan If `ai/.debug` file exists, all AI hooks shall write their payload to `ai/output/debug/`. Adapt paths for `°base` as usual.
+
