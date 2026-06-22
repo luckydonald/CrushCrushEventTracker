@@ -1,5 +1,9 @@
 # Fix: save-plan hook — Stop false positive and routing
 
+## Session setup
+
+Activate `/commit-with-lplp-style` before implementing. The test artifact commit `7ab548f` is a nearby `ai:` auto-commit that must be folded into the fix commit.
+
 ## Context
 
 `save-plan/hook.py` fires on three triggers: `Write` (plan file written), `ExitPlanMode` (user approves), and `Stop` (session end — originally a Codex fallback). Two bugs were found:
@@ -55,8 +59,14 @@ is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
 
 Commit `7ab548f [base] ai: save plan 009_test-plan` is a test artifact. As part of implementing this fix, amend/fold that commit into the fix commit (lplp style). Also delete `ai/°base/plans/009_test-plan.md` from the working tree and index before the fix commit.
 
+## Hook status (confirmed during planning)
+
+- **save-prompt**: ✓ appended this session's prompt to `ai/°base/query.md`
+- **save-plan (Write trigger)**: ✓ fired when plan file was written → `ai/°base/plans/010_*.md` committed
+- **save-plan (Stop trigger)**: ✗ the bug — can commit garbage content as plans
+
 ## Verification
 
-1. After fix, write a plan in this session → confirm hook commits to `ai/°base/plans/010_*.md` (not `ai/plans/`)
-2. End a non-plan-mode session → confirm no spurious plan commit is created
-3. `git log --oneline -5 -- ai/°base/plans/` shows a new entry; `git log --oneline -5 -- ai/plans/` shows nothing new
+1. End a non-plan-mode session → confirm no spurious plan commit is created (Stop no longer calls `_plan_from_response`)
+2. `git log --oneline -5 -- ai/plans/` shows nothing new after a normal session
+3. Plan-mode session → Write trigger commits `ai/°base/plans/NNN_*.md` (already confirmed working)
