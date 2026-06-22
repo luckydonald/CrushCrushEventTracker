@@ -624,11 +624,24 @@ def main() -> int:
         if not prompt.strip():
             return 0
 
+    remaining_after_task = ""
+    if "<task-notification>" in prompt:
+        remaining_after_task = re.sub(
+            r"<task-notification>.*?</task-notification>", "", prompt, flags=re.DOTALL
+        ).strip()
+
     if _handle_task_notification(
         prefix, prompt, log_path,
         commit_template_relpath="ai/commit-templates/prompt.md",
         default_commit_msg="ai: updated prompt",
     ):
+        if remaining_after_task:
+            append_and_commit(
+                log_path,
+                f"{prefix} {remaining_after_task}\n\n",
+                commit_template_relpath="ai/commit-templates/prompt.md",
+                default_commit_msg="ai: updated prompt",
+            )
         return 0
 
     content = f"{prompt}\n\n" if preformatted_prompt else f"{prefix} {prompt}\n\n"

@@ -534,6 +534,37 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
             self.assertIn("> - `4` tools, `12345` tokens, `0.5 s`\n", query)
 
+    def test_claude_task_notification_trailing_prompt_logged_separately(self):
+        """Text typed while an agent runs (after </task-notification>) is logged as its own entry."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            output_file = Path(tmp) / "agent.output"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            output_file.write_text("", encoding="utf-8")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        "<task-notification>\n"
+                        "<task-id>trailing_task_001</task-id>\n"
+                        "<tool-use-id>toolu_trailing</tool-use-id>\n"
+                        f"<output-file>{output_file}</output-file>\n"
+                        "<status>completed</status>\n"
+                        "<summary>Some agent work</summary>\n"
+                        "<result>Done.</result>\n"
+                        "</task-notification>\n"
+                        "Change the output dir to ai/output/agents/"
+                    )
+                },
+                "claude",
+            )
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("❯ Task Notification:\n", query)
+            self.assertIn("❯ Change the output dir to ai/output/agents/\n", query)
+
     def test_claude_explore_notification_writes_result_and_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"
