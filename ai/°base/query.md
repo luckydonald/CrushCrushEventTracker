@@ -926,3 +926,10 @@ Afterwards we need to check option **1**, that it commits to the query as well, 
 
 ❯ I feel like this should have been plan #11, as it's too different?
 
+❯ Check if the following is correct: @ai/°base/errors/8.md 
+Note, it's from claude at `/Users/user/Documents/programming/Shell/archive_apps`.
+
+❯ But query and answer shouldn't be `0 chars`?
+
+❯ Again, don't attepmt to fix `archive_apps`, the fix will land there eventually. Fix it here.
+

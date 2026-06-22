@@ -336,6 +336,35 @@ def _char_count(path: str) -> int:
         return 0
 
 
+def _is_raw_bash_log(path: str) -> bool:
+    """Return True if the file is raw shell output rather than a JSONL conversation log."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    json.loads(line)
+                    return False
+                except json.JSONDecodeError:
+                    return True
+    except OSError:
+        pass
+    return False
+
+
+def _tail_text(path: str, max_chars: int = 3000) -> str:
+    """Return the last max_chars characters of a file, with a leading ellipsis if truncated."""
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    return "…\n" + text[-max_chars:]
+
+
 def _human_size(path: str) -> str:
     """Return file size as a human-readable string, e.g. '2.1 MB', '47 KB', '512 B'."""
     try:
@@ -400,10 +429,19 @@ def _handle_task_notification(
     agent_dir.mkdir(parents=True, exist_ok=True)
 
     agent_prompt = _extract_agent_prompt(info["output_file"], info["tool_use_id"])
+    result_text = info["result"]
+
+    # Background bash tasks produce raw stdout, not JSONL — _extract_agent_prompt returns "".
+    # Fall back to the summary as the query and the log tail as the result.
+    if not agent_prompt and info["output_file"] and _is_raw_bash_log(info["output_file"]):
+        agent_prompt = info["summary"]
+        if not result_text:
+            result_text = _tail_text(info["output_file"])
+
     prompt_file = agent_dir / "prompt.md"
     result_file = agent_dir / "result.md"
     prompt_file.write_text(agent_prompt, encoding="utf-8")
-    result_file.write_text(info["result"], encoding="utf-8")
+    result_file.write_text(result_text, encoding="utf-8")
 
     cwd = Path.cwd()
     prompt_rel = str(prompt_file.relative_to(cwd))
@@ -418,7 +456,7 @@ def _handle_task_notification(
     rel_prompt = f"agents/{dir_name}/prompt.md"
     rel_result = f"agents/{dir_name}/result.md"
     query_chars = len(agent_prompt)
-    result_chars = len(info["result"])
+    result_chars = len(result_text)
     log_chars = _char_count(info["output_file"])
     log_size = _human_size(info["output_file"])
 
