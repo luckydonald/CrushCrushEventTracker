@@ -6,7 +6,6 @@ Usage: hook.py [ai_tool_name]   (currently unused; accepted for parity with save
 """
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -14,50 +13,165 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import append_and_commit, dump_debug_payload, read_payload, resolve_log_path, slugify  # noqa: E402
 
 
-def _flatten_answer(tool_response) -> str:
-    """Best-effort flatten of ``tool_response`` to a human-readable string.
+def _parse_multi_answer(answer: str, options: list[dict]) -> tuple[list[str], str]:
+    """Greedy left-to-right match of option labels against the answer string.
 
-    Accepts:
-      - a bare string (used verbatim),
-      - a ``{answers: {q: a}}`` shape (newline-joined values),
-      - any other shape (JSON-serialised fallback).
+    Returns (click_order, custom_text) where click_order lists matched labels
+    in the order they appear in answer, and custom_text is the leftover.
     """
-    if tool_response is None:
-        return ""
-    if isinstance(tool_response, str):
-        return tool_response
-    if isinstance(tool_response, dict):
-        answers = tool_response.get("answers")
-        if isinstance(answers, dict):
-            return "\n".join(str(v) for v in answers.values())
-    return json.dumps(tool_response, ensure_ascii=False)
+    available = [o.get("label", "") for o in options]
+    remaining = answer
+    click_order: list[str] = []
+    while remaining:
+        matched = False
+        for label in available:
+            if not label:
+                continue
+            if remaining == label or remaining.startswith(label + ", "):
+                click_order.append(label)
+                available.remove(label)
+                remaining = remaining[len(label):]
+                if remaining.startswith(", "):
+                    remaining = remaining[2:]
+                matched = True
+                break
+        if not matched:
+            break
+    return click_order, remaining
 
 
-def _render_block(tool_input: dict, answer: str) -> str:
+def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
+    """Append a fenced code block for a preview field inside a blockquote list."""
+    out.append(f">   - ```{lang}\n")
+    for line in preview.splitlines():
+        if line:
+            out.append(f">     {line}\n")
+        else:
+            out.append(">\n")
+    out.append(">     ```\n")
+
+
+def _render_block(tool_input: dict, tool_response: dict) -> str:
     questions = tool_input.get("questions") or []
+    answers = tool_response.get("answers") or {}
+    annotations = tool_response.get("annotations") or {}
+    total = len(questions)
+
     out: list[str] = []
+    out.append("❯ Question answered.\n")
+    out.append("> <details><summary>\n")
+    out.append(">\n")
 
-    for i, q in enumerate(questions):
-        if i > 0:
-            out.append("> \n")
-        out.append(f"> {q.get('question', '')}\n")
-        for opt in q.get("options") or []:
-            label = opt.get("label", "")
-            if label:
-                out.append(f"> - {label}\n")
+    # --- Summary ---
+    for i, q in enumerate(questions, 1):
+        qtext = q.get("question", "")
+        ann = annotations.get(qtext, {})
+        answer = answers.get(qtext, "")
+        indent = len(str(i)) + 3
 
-    if answer:
-        lines = answer.splitlines() or [""]
-        out.append(f"> → {lines[0]}\n")
-        for cont in lines[1:]:
-            out.append(f">   {cont}\n")
+        out.append(f">> {i}. {qtext}\n")
 
-    out.append("> ```json\n")
-    pretty = json.dumps(tool_input, indent=2, ensure_ascii=False)
-    for line in pretty.splitlines():
-        out.append(f"> {line}\n")
-    out.append("> ```\n")
-    out.append("> \n")
+        display = ann["notes"] if ann.get("notes") else answer
+        out.append(f">>{'':>{indent}}- {display}\n")
+
+        if ann.get("preview"):
+            pi = indent + 2
+            out.append(f">>{'':>{pi}}```text\n")
+            for pline in ann["preview"].splitlines():
+                out.append(f">>{'':>{pi}}{pline}\n")
+            out.append(f">>{'':>{pi}}```\n")
+
+    out.append(">\n")
+    out.append("> (click to expand)\n")
+    out.append(">\n")
+    out.append("> </summary>\n")
+    out.append(">\n")
+
+    # --- Details ---
+    for i, q in enumerate(questions, 1):
+        if i > 1:
+            out.append(">\n")
+
+        qtext = q.get("question", "")
+        header = q.get("header", "")
+        opts = q.get("options") or []
+        multi = q.get("multiSelect", False)
+        answer = answers.get(qtext, "")
+        ann = annotations.get(qtext, {})
+
+        select_type = "Multi Select" if multi else "Single Select"
+        out.append(f">> **{header}** ({i}/{total}) <kbd>{select_type}</kbd><br>\n")
+        out.append(f">> {qtext}\n")
+
+        has_any_preview = any(o.get("preview") for o in opts)
+        last_idx = len(opts) - 1
+
+        if multi:
+            click_order, custom_text = _parse_multi_answer(answer, opts)
+            rank_map = {label: rank for rank, label in enumerate(click_order, 1)}
+
+            for n, opt in enumerate(opts, 1):
+                label = opt.get("label", "")
+                desc = opt.get("description", "")
+                preview = opt.get("preview", "")
+                rank = rank_map.get(label)
+                check = "[x]" if rank else "[ ]"
+                badge = f" <sup><sub><kbd>#{rank}</kbd></sub></sup>" if rank else ""
+                out.append(f"> - {check} {n}\\. {label}{badge}\n")
+                if desc:
+                    out.append(f">   - _{desc}_\n")
+                if preview:
+                    lang = "text" if (n - 1) == last_idx else ""
+                    _render_preview_block(preview, lang, out)
+
+            other_n = len(opts) + 1
+            if custom_text:
+                other_check = "[ ]" if custom_text.endswith("?") else "[x]"
+                other_label = "_Type something:_"
+            else:
+                other_check = "[ ]"
+                other_label = "_Type something._"
+            out.append(f"> - {other_check} {other_n}\\. {other_label}\n")
+            if custom_text:
+                out.append(f">   - > {custom_text}\n")
+
+        else:
+            notes_only = answer == "(notes only)"
+            has_preview_ann = bool(ann.get("preview"))
+            selected_label = None if (notes_only or has_preview_ann) else answer
+
+            for n, opt in enumerate(opts, 1):
+                label = opt.get("label", "")
+                desc = opt.get("description", "")
+                preview = opt.get("preview", "")
+                check = "[x]" if label == selected_label else "[ ]"
+                out.append(f"> - {check} {n}\\. {label}\n")
+                if desc:
+                    out.append(f">   - _{desc}_\n")
+                if preview:
+                    lang = "text" if (n - 1) == last_idx else ""
+                    _render_preview_block(preview, lang, out)
+
+            other_n = len(opts) + 1
+            if notes_only:
+                other_check = "[x]"
+                other_label = "_Notes:_"
+                other_text = ann.get("notes", "")
+            elif has_any_preview:
+                other_check = "[ ]"
+                other_label = "_Notes: Add notes on this design._"
+                other_text = ""
+            else:
+                other_check = "[ ]"
+                other_label = "_Type something._"
+                other_text = ""
+            out.append(f"> - {other_check} {other_n}\\. {other_label}\n")
+            if other_text:
+                out.append(f">   - > {other_text}\n")
+
+    out.append(">\n")
+    out.append("> </details>\n")
+    out.append(">\n")
     out.append("\n")
     return "".join(out)
 
@@ -72,8 +186,7 @@ def main() -> int:
     if not questions:
         return 0
 
-    answer = _flatten_answer(payload.get("tool_response"))
-    block = _render_block(tool_input, answer)
+    block = _render_block(tool_input, payload.get("tool_response") or {})
 
     first_question = questions[0].get("question", "") if isinstance(questions[0], dict) else ""
     slug = slugify(first_question, fallback="decision")
