@@ -1177,3 +1177,43 @@ Activate /commit-with-lplp-style when executing the plan.
 > ```
 > 
 
+❯ Alright, can you repeat the `Pick a logging approach:` one, please? Can you omit the example for some option? Or did you already for the _No logging_ choice, which I got `# nothing emitted here` for?
+
+> Pick a logging approach (one option has no preview):
+> - Structured JSON
+> - Plain text
+> - No logging
+> → No logging
+> ```json
+> {
+>   "questions": [
+>     {
+>       "question": "Pick a logging approach (one option has no preview):",
+>       "header": "Logging",
+>       "options": [
+>         {
+>           "label": "Structured JSON",
+>           "description": "Machine-readable log lines.",
+>           "preview": "logger.info(\"user.login\", extra={\n    \"user_id\": uid,\n    \"ip\": request.remote_addr,\n})"
+>         },
+>         {
+>           "label": "Plain text",
+>           "description": "Human-readable, simple.",
+>           "preview": "logger.info(f\"User {uid} logged in from {ip}\")"
+>         },
+>         {
+>           "label": "No logging",
+>           "description": "Silence — caller decides. (no preview set for this one)"
+>         }
+>       ],
+>       "multiSelect": false
+>     }
+>   ],
+>   "answers": {
+>     "Pick a logging approach (one option has no preview):": "No logging"
+>   },
+>   "annotations": {}
+> }
+> ```
+> 
+
