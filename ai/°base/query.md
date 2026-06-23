@@ -1226,3 +1226,5 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 
 ❯ /plan uuuuh... now adopt the implementation, lol
 
+❯ But it is still compatible with the codex one, yes?
+

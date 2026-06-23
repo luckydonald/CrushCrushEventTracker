@@ -186,7 +186,9 @@ def main() -> int:
     if not questions:
         return 0
 
-    block = _render_block(tool_input, payload.get("tool_response") or {})
+    raw_response = payload.get("tool_response")
+    tool_response = raw_response if isinstance(raw_response, dict) else {}
+    block = _render_block(tool_input, tool_response)
 
     first_question = questions[0].get("question", "") if isinstance(questions[0], dict) else ""
     slug = slugify(first_question, fallback="decision")
