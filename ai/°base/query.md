@@ -974,18 +974,18 @@ Activate /commit-with-lplp-style when executing the plan.
 > - 3.12 (Recommended)
 > - 3.11
 > - 3.10
-> 
+>
 > Which testing libraries do you want included?
 > - pytest
 > - hypothesis
 > - coverage.py
 > - pytest-asyncio
-> 
+>
 > How should errors be surfaced to the caller?
 > - Exceptions (Recommended)
 > - Result type
 > - Optional + logging
-> 
+>
 > Which areas of the codebase are in scope for this change?
 > - Core library
 > - CLI
@@ -1099,7 +1099,7 @@ Activate /commit-with-lplp-style when executing the plan.
 >   }
 > }
 > ```
-> 
+>
 
 ❯ Gimme a multi-select with 5 items, just the english number names, I need to test order. And gimme another of those code ones, I need to test what happens if you don't type anything in the notes thingo.
 
@@ -1108,7 +1108,7 @@ Activate /commit-with-lplp-style when executing the plan.
 > - Two
 > - Three
 > - Four
-> 
+>
 > Pick a logging approach:
 > - Structured JSON
 > - Plain text
@@ -1175,7 +1175,7 @@ Activate /commit-with-lplp-style when executing the plan.
 >   }
 > }
 > ```
-> 
+>
 
 ❯ Alright, can you repeat the `Pick a logging approach:` one, please? Can you omit the example for some option? Or did you already for the _No logging_ choice, which I got `# nothing emitted here` for?
 
@@ -1215,11 +1215,11 @@ Activate /commit-with-lplp-style when executing the plan.
 >   "annotations": {}
 > }
 > ```
-> 
+>
 
 ❯ Alright, let's modernize the question prompt log.
-Currently, we have question output to `query.md` like @ai/°base/errors/12.md 
-Instead I want it changed to @ai/°base/errors/12.expected.md 
+Currently, we have question output to `query.md` like @ai/°base/errors/12.md
+Instead I want it changed to @ai/°base/errors/12.expected.md
 
 Construct a unittest using `12.expected.md`'s `json` under **Input JSON (Claude)** as input and asserting the markdown under **`query.md` addition** as output.
 For implementing, the sections **Summary of format options** and **Notes** may be helpful.
@@ -1227,4 +1227,6 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 ❯ /plan uuuuh... now adopt the implementation, lol
 
 ❯ But it is still compatible with the codex one, yes?
+
+❯ alright, extract the codex questions from `/Users/user/Documents/programming/LUA/GrandMA2/GMA2ColorPicker/ai/query.md` to `./ai/°base/errors/13.md` and reconstruct the original payloads of the call to `13.expected.md`, similar to the `12.md` variants.
 
