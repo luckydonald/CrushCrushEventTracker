@@ -1230,3 +1230,326 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 
 ❯ alright, extract the codex questions from `/Users/user/Documents/programming/LUA/GrandMA2/GMA2ColorPicker/ai/query.md` to `./ai/°base/errors/13.md` and reconstruct the original payloads of the call to `13.expected.md`, similar to the `12.md` variants.
 
+› Hey, I want to test a question hook, please ask me one of each question type, 3 times, so I can select something or none or such.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. For this hook test, pick a simple yes/no-style option.
+>>    -
+>> 2. Choose a priority level for the test response.
+>>    -
+>> 3. Choose how the next step should be represented.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Binary** (1/3) <kbd>Single Select</kbd><br>
+>> For this hook test, pick a simple yes/no-style option.
+> - [ ] 1\. Yes (Recommended)
+>   - _Confirms the positive path in the selection UI._
+> - [ ] 2\. No
+>   - _Confirms the negative path in the selection UI._
+> - [ ] 3\. Skip
+>   - _Confirms an explicit no-selection-style answer._
+> - [ ] 4\. _Type something._
+>
+>> **Priority** (2/3) <kbd>Single Select</kbd><br>
+>> Choose a priority level for the test response.
+> - [ ] 1\. Medium (Recommended)
+>   - _Uses the default balanced priority._
+> - [ ] 2\. High
+>   - _Marks the response as urgent or important._
+> - [ ] 3\. Low
+>   - _Marks the response as non-urgent._
+> - [ ] 4\. _Type something._
+>
+>> **Mode** (3/3) <kbd>Single Select</kbd><br>
+>> Choose how the next step should be represented.
+> - [ ] 1\. Plan (Recommended)
+>   - _Keeps the result as a planning-style response._
+> - [ ] 2\. Action
+>   - _Treats the result as an implementation-style response._
+> - [ ] 3\. None
+>   - _Leaves the next-step mode unset._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Please instead give me a multiple choice one now, with many options.
+
+› Lol that was only text. Sorry, I guess I have to switch to plan mode first?
+
+› go ahead, hit me with those questions
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. What should this hook test prove?
+>>    -
+>> 2. How many choices should each prompt show?
+>>    -
+>> 3. How should I handle your response to each prompt?
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Goal** (1/3) <kbd>Single Select</kbd><br>
+>> What should this hook test prove?
+> - [ ] 1\. Selection flow (Recommended)
+>   - _Test ordinary single-choice selection behavior._
+> - [ ] 2\. No selection
+>   - _Test the user choosing none of the options._
+> - [ ] 3\. Custom text
+>   - _Test a free-form answer path._
+> - [ ] 4\. _Type something._
+>
+>> **Shape** (2/3) <kbd>Single Select</kbd><br>
+>> How many choices should each prompt show?
+> - [ ] 1\. Few (Recommended)
+>   - _Use a small set of options._
+> - [ ] 2\. Many
+>   - _Use a wider set of options._
+> - [ ] 3\. Mixed
+>   - _Vary the number of options across prompts._
+> - [ ] 4\. _Type something._
+>
+>> **Interaction** (3/3) <kbd>Single Select</kbd><br>
+>> How should I handle your response to each prompt?
+> - [ ] 1\. One pick each (Recommended)
+>   - _Select exactly one option per prompt._
+> - [ ] 2\. Pick multiple
+>   - _Allow several selections where possible._
+> - [ ] 3\. Pick none
+>   - _Leave some prompts unanswered or explicitly none._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Pick one option from this longer list.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Wide Set** (1/1) <kbd>Single Select</kbd><br>
+>> Pick one option from this longer list.
+> - [ ] 1\. Option 1 (Recommended)
+>   - _Baseline choice._
+> - [ ] 2\. Option 2
+>   - _Alternate choice._
+> - [ ] 3\. Option 3
+>   - _Alternate choice._
+> - [ ] 4\. Option 4
+>   - _Alternate choice._
+> - [ ] 5\. Option 5
+>   - _Alternate choice._
+> - [ ] 6\. Option 6
+>   - _Alternate choice._
+> - [ ] 7\. Option 7
+>   - _Alternate choice._
+> - [ ] 8\. Option 8
+>   - _Alternate choice._
+> - [ ] 9\. Option 9
+>   - _Alternate choice._
+> - [ ] 10\. Option 10
+>   - _Alternate choice._
+> - [ ] 11\. None
+>   - _Explicitly choose none of these._
+> - [ ] 12\. Other
+>   - _Use a custom free-form answer._
+> - [ ] 13\. _Type something._
+>
+> </details>
+>
+
+› Continue with the other types now, add one question each
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Pick one option for the single-choice test.
+>>    -
+>> 2. Pick any options that apply for the multi-select test.
+>>    -
+>> 3. Choose an option or use `Other` to add your own text.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Single** (1/3) <kbd>Single Select</kbd><br>
+>> Pick one option for the single-choice test.
+> - [ ] 1\. Red (Recommended)
+>   - _Baseline single selection._
+> - [ ] 2\. Green
+>   - _Alternate single selection._
+> - [ ] 3\. Blue
+>   - _Alternate single selection._
+> - [ ] 4\. _Type something._
+>
+>> **Multi** (2/3) <kbd>Single Select</kbd><br>
+>> Pick any options that apply for the multi-select test.
+> - [ ] 1\. Apple (Recommended)
+>   - _One possible selection._
+> - [ ] 2\. Banana
+>   - _One possible selection._
+> - [ ] 3\. Cherry
+>   - _One possible selection._
+> - [ ] 4\. Date
+>   - _One possible selection._
+> - [ ] 5\. None
+>   - _Select none of these._
+> - [ ] 6\. _Type something._
+>
+>> **Free** (3/3) <kbd>Single Select</kbd><br>
+>> Choose an option or use `Other` to add your own text.
+> - [ ] 1\. Cat (Recommended)
+>   - _Example canned choice._
+> - [ ] 2\. Dog
+>   - _Example canned choice._
+> - [ ] 3\. Other
+>   - _Provide a custom answer instead._
+> - [ ] 4\. None
+>   - _Leave this unanswered on purpose._
+> - [ ] 5\. _Type something._
+>
+> </details>
+>
+
+› Check out your own typing at @ai/references/https/github.com/openai/codex/blob/49614a0391d83eec442ffeca1d4aa0fdeb119818/codex-rs/protocol/src/request_user_input.rs for the planing prompts and ask me one of every type except the standard single choice one, so I can check my question-response hook.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Provide any short phrase in the free-text Other field so I can verify that path.
+>>    -
+>> 2. Enter a short secret value so I can verify the secret-input path.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Other** (1/2) <kbd>Single Select</kbd><br>
+>> Provide any short phrase in the free-text Other field so I can verify that path.
+> - [ ] 1\. Alpha
+>   - _Placeholder choice A._
+> - [ ] 2\. Beta
+>   - _Placeholder choice B._
+> - [ ] 3\. _Type something._
+>
+>> **Secret** (2/2) <kbd>Single Select</kbd><br>
+>> Enter a short secret value so I can verify the secret-input path.
+> - [ ] 1\. Visible
+>   - _Placeholder visible choice._
+> - [ ] 2\. _Type something._
+>
+> </details>
+>
+
+› Yes, single secret is a good idea. And try the timeout of like 5s for a second answer.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Enter one secret value for the 5-second timeout test.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Secret** (1/1) <kbd>Single Select</kbd><br>
+>> Enter one secret value for the 5-second timeout test.
+> - [ ] 1\. Reveal
+>   - _Visible test option._
+> - [ ] 2\. _Type something._
+>
+> </details>
+>
+
+› repeat the explainer for the question prompt tool.
+
+› what is the mcp tool definition for request_user_input? Please repeat verbatim.
+
+› do you have information about the output, too?
+
+› Alright, for hook testing, hit me with an 5s expiring question.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which hook test should I run?
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Hook test** (1/1) <kbd>Single Select</kbd><br>
+>> Which hook test should I run?
+> - [ ] 1\. A
+>   - _Use the first branch._
+> - [ ] 2\. B
+>   - _Use the second branch._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+› do it again
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Pick one option for the retry.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Hook test** (1/1) <kbd>Single Select</kbd><br>
+>> Pick one option for the retry.
+> - [ ] 1\. A
+>   - _First path._
+> - [ ] 2\. B
+>   - _Second path._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Pick one option for the retry.
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Hook test** (1/1) <kbd>Single Select</kbd><br>
+>> Pick one option for the retry.
+> - [ ] 1\. A
+>   - _First path._
+> - [ ] 2\. B
+>   - _Second path._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
