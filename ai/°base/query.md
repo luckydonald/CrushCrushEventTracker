@@ -1101,3 +1101,79 @@ Activate /commit-with-lplp-style when executing the plan.
 > ```
 > 
 
+❯ Gimme a multi-select with 5 items, just the english number names, I need to test order. And gimme another of those code ones, I need to test what happens if you don't type anything in the notes thingo.
+
+> Select some numbers (testing order) — first batch:
+> - One
+> - Two
+> - Three
+> - Four
+> 
+> Pick a logging approach:
+> - Structured JSON
+> - Plain text
+> - No logging
+> → Four, Two, Three, I will select first the extra option, then four, two, three. Yes yes.
+>   No logging
+> ```json
+> {
+>   "questions": [
+>     {
+>       "question": "Select some numbers (testing order) — first batch:",
+>       "header": "Numbers 1-4",
+>       "options": [
+>         {
+>           "label": "One",
+>           "description": "The first."
+>         },
+>         {
+>           "label": "Two",
+>           "description": "The second."
+>         },
+>         {
+>           "label": "Three",
+>           "description": "The third."
+>         },
+>         {
+>           "label": "Four",
+>           "description": "The fourth."
+>         }
+>       ],
+>       "multiSelect": true
+>     },
+>     {
+>       "question": "Pick a logging approach:",
+>       "header": "Logging",
+>       "options": [
+>         {
+>           "label": "Structured JSON",
+>           "description": "Machine-readable log lines.",
+>           "preview": "logger.info(\"user.login\", extra={\n    \"user_id\": uid,\n    \"ip\": request.remote_addr,\n})"
+>         },
+>         {
+>           "label": "Plain text",
+>           "description": "Human-readable, simple.",
+>           "preview": "logger.info(f\"User {uid} logged in from {ip}\")"
+>         },
+>         {
+>           "label": "No logging",
+>           "description": "Silence — caller decides.",
+>           "preview": "# nothing emitted here"
+>         }
+>       ],
+>       "multiSelect": false
+>     }
+>   ],
+>   "answers": {
+>     "Select some numbers (testing order) — first batch:": "Four, Two, Three, I will select first the extra option, then four, two, three. Yes yes.",
+>     "Pick a logging approach:": "No logging"
+>   },
+>   "annotations": {
+>     "Pick a logging approach:": {
+>       "preview": "# nothing emitted here"
+>     }
+>   }
+> }
+> ```
+> 
+
