@@ -37,3 +37,14 @@ E.g. in this repo/prompt (blockquote me):
 - [x] Done
 
 ---
+
+Alright, let's modernize the question prompt log.
+Currently, we have question output to `query.md` like @ai/°base/errors/12.md
+Instead I want it changed to @ai/°base/errors/12.expected.md
+
+Construct a unittest using `12.expected.md`'s `json` under **Input JSON (Claude)** as input and asserting the markdown under **`query.md` addition** as output.
+For implementing, the sections **Summary of format options** and **Notes** may be helpful.
+
+- [ ] Done
+
+---
