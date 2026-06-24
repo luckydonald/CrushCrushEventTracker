@@ -1553,3 +1553,4 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 > </details>
 >
 
+❯ using the files in @ai/°base/output/debug/ you can see that you get an understanding for the codex prompt result, so we can incorporate that to the hook script which writes it to `query.md`.

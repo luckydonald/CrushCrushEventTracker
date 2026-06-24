@@ -6,6 +6,7 @@ Usage: hook.py [ai_tool_name]   (currently unused; accepted for parity with save
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -176,6 +177,51 @@ def _render_block(tool_input: dict, tool_response: dict) -> str:
     return "".join(out)
 
 
+def _normalize_codex_answers(questions: list[dict], tool_response: dict) -> dict:
+    """Normalize Codex answer format to Claude Code format when needed.
+
+    Codex:  tool_response["answers"][qid]   = {"answers": ["Label", "user_note: text"]}
+    Claude: tool_response["answers"][qtext] = "Label"  (+ separate annotations dict)
+
+    Returns tool_response unchanged if it is already in Claude Code format.
+    """
+    raw_answers = tool_response.get("answers") or {}
+    if not raw_answers:
+        return tool_response
+
+    first_val = next(iter(raw_answers.values()))
+    if not isinstance(first_val, dict) or "answers" not in first_val:
+        return tool_response  # already Claude Code format
+
+    id_to_q = {q.get("id", ""): q for q in questions if q.get("id")}
+
+    norm_answers: dict[str, str] = {}
+    norm_annotations: dict[str, dict] = {}
+
+    for qid, raw in raw_answers.items():
+        q = id_to_q.get(qid)
+        qtext = q.get("question", qid) if q else qid
+        items = raw.get("answers") or [] if isinstance(raw, dict) else []
+
+        notes = [i[len("user_note: "):] for i in items if isinstance(i, str) and i.startswith("user_note: ")]
+        labels = [i for i in items if isinstance(i, str) and not i.startswith("user_note: ") and i != "None of the above"]
+
+        if labels:
+            norm_answers[qtext] = ", ".join(labels)
+        elif notes:
+            norm_answers[qtext] = "(notes only)"
+        # "None of the above" with no note → nothing selected, omit
+
+        if notes:
+            norm_annotations[qtext] = {"notes": "; ".join(notes)}
+
+    result = dict(tool_response)
+    result["answers"] = norm_answers
+    if norm_annotations:
+        result["annotations"] = norm_annotations
+    return result
+
+
 def main() -> int:
     payload = read_payload()
     dump_debug_payload(payload, "save-decision")
@@ -187,7 +233,14 @@ def main() -> int:
         return 0
 
     raw_response = payload.get("tool_response")
+    # Codex sends tool_response as a JSON string; Claude Code sends a dict.
+    if isinstance(raw_response, str):
+        try:
+            raw_response = json.loads(raw_response)
+        except (json.JSONDecodeError, ValueError):
+            raw_response = {}
     tool_response = raw_response if isinstance(raw_response, dict) else {}
+    tool_response = _normalize_codex_answers(questions, tool_response)
     block = _render_block(tool_input, tool_response)
 
     first_question = questions[0].get("question", "") if isinstance(questions[0], dict) else ""
