@@ -1592,3 +1592,17 @@ So I guess a flatter `Question` + `Choice` should be sufficent? The `Question` w
 > </details>
 >
 
+❯ 1. What's the difference between `notes`, `custom_text`and `selected_preview`?
+2. `selected_preview` is redundant with `rank` being a defacto `selected` boolean.
+3. Actually, add a `Choice.selected -> bool` computed prop. And while at it, a `Question.selected -> Choice[]` computed, too.
+
+❯ Regarding
+
+> 1. `notes` = the annotation note field — used when the user adds a note without selecting a label (single-select "(notes only)"), or as the Codex `user_note`: alongside any selection. Rendered as `[x] _Notes:_ > {text}` in single-select, or as the note accompanying a Codex answer.
+
+This sounds like it's better to move that into the `Choice`, attached to the selected answer. The `other` question may be automatically added by the parsers, so the display part can be dumb.
+
+❯ Actually, like we have claude tests, construct some automated parsing tests for codex as well.
+Note, the definitions for codex are at @ai/references/https/github.com/openai/codex/blob/49614a0391d83eec442ffeca1d4aa0fdeb119818/codex-rs/protocol/src/request_user_input.rs
+and for claude are at @ai/°base/plans/019_available-mcp-tools.md
+
