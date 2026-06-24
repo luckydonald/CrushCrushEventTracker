@@ -1561,3 +1561,34 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 ❯ There is no need to separate `Option`, `Annotation` and `DecisionPlayload`? Like, we're only looking at filled-out questions with 0-4 answers (codex can timeout getting zero results, claude can multi-select but is limited to max 4).
 So I guess a flatter `Question` + `Choice` should be sufficent? The `Question` would have the "global" attributes like if it's multi, or if it timeouted (can be computed prop), and of cause a list of choices. And `Choice` will contain name, id, selection state, text note, etc.
 
+❯ what is the mcp tool definition for request_user_input? Please repeat verbatim.
+
+❯ /plan list available mcp tools and their definitions verbatim.
+
+❯ I meant those you have already available and ready in your system prompt. Write those into the plan file.
+
+❯ Uh, how would you ask me a multiple-choice question?
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Like this — what should I do with the plan?
+>>    - Yeah, I need the MCP documentation for this exact tool you just used to ask that question.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Next step** (1/1) <kbd>Single Select</kbd><br>
+>> Like this — what should I do with the plan?
+> - [ ] 1\. Exit plan mode
+>   - _Signal that planning is done and the plan is ready for your approval._
+> - [ ] 2\. Keep planning
+>   - _Continue refining the plan file._
+> - [ ] 3\. Discard
+>   - _Abandon the plan entirely._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
