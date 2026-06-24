@@ -1608,17 +1608,31 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ /plan hit me with a variety of questions, I need to check a hook integration.
 
+<!-- This next block is  ai/°base/output/debug/20260624-152802_886401-save-decision.json  -->
 ❯ Question answered.
 > <details><summary>
 >
 >> 1. Which environment are you testing the hook integration in?
 >>    - Local dev
 >> 2. What type of hook event are you primarily testing?
+<!-- wrong: 1. "other" apparently not detected/formatted. 2. Typed answer missing
 >>    -
->> 3. What is the primary failure mode you're trying to catch?
+--><!-- correct: -->
+>>    - _Other_: AI Question hook (this is 'other' btw)
+<!-- end correct -->
+> 3. What is the primary failure mode you're trying to catch?
+<!-- wrong:
 >>    - Wrong payload / data, This is 'something else' checked and manually filled.
->> 4. How mature is the hook integration you're testing?
+--><!-- correct: -->
+>>    - Wrong payload / data
+>>    - _Other_: This is 'something else' checked and manually filled.
+<!-- end correct -->
+>> 5. How mature is the hook integration you're testing?
+<!-- wrong: 1. "other" apparently not detected/formatted. 2. Typed answer missing
 >>    -
+--><!-- correct: -->
+>>    - _Other_: One more multi-select please. Also one with code snippets. Need to test those, too.
+<!-- end correct -->
 >
 > (click to expand)
 >
@@ -1646,7 +1660,12 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >   - _Claude Code hooks that intercept tool calls (e.g. user-prompt-submit-hook)._
 > - [ ] 4\. Post-merge / CI trigger
 >   - _Hooks that fire after a merge or as a CI step._
+<!-- wrong: 1. "other" apparently not detected/formatted. 2. Typed answer missing
 > - [ ] 5\. _Type something._
+--><!-- correct: -->
+> - [x] 5\. _Type something:_
+>   - > AI Question hook (this is 'other' btw)
+<!-- end correct -->
 >
 >> **Failure mode** (3/4) <kbd>Multi Select</kbd><br>
 >> What is the primary failure mode you're trying to catch?
@@ -1669,20 +1688,34 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >   - _The hook worked before; something was modified and you're verifying it still works._
 > - [ ] 3\. Regression check
 >   - _No changes were made; you're confirming nothing broke._
+<!-- wrong: 1. "other" apparently not detected/formatted. 2. Typed answer missing
 > - [ ] 4\. _Type something._
+--><!-- correct: -->
+> - [x] 4\. _Type something:_
+>   - > Pretty good. One more multi-select please. Also one with code snippets. Need to test those, too.
+<!-- end correct -->
 >
 > </details>
 >
 
 › hit me with a variety of questions, I need to check a hook integration.
 
+<!--  next question is from codex and at ai/°base/output/debug/20260624-153111_724937-save-decision.json  -->
+<!-- wrong: 1. using the > symbol of claude, not codex. This should be already part of the hook setting mode claude/codex as param. The hole detection should be based on that hook script argument, no guessing!
 ❯ Question answered.
+--><!-- correct: -->
+› Question answered.
+<!-- end correct -->
 > <details><summary>
 >
 >> 1. Which hook surface are you checking right now?
 >>    - Save-decision
 >> 2. What kind of integration input should I focus on?
+<!-- wrong: 1. "other" not detected or displayed.
 >>    - You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+--><!-- correct: -->
+>>    - _Other:_ You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+<!-- end correct -->
 >> 3. What do you want the questions to help check?
 >>    - Pretty much want to check it's now formatting correctly, nothing for you to do, really, then this question. Afterwards I will shut you down, lol. Btw, this is the automatic "None of the above" choice.
 >
@@ -1700,6 +1733,7 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >   - _Exercise the memory sync / deletion path._
 > - [ ] 4\. _Type something._
 >
+<!-- wrong: The answer should be with the selected question, after all, codex is currently always limited to single choice.
 >> **Input** (2/3) <kbd>Single Select</kbd><br>
 >> What kind of integration input should I focus on?
 > - [x] 1\. Codex payload
@@ -1710,6 +1744,18 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >   - _Compare both formats and make sure routing stays consistent._
 > - [x] 4\. _Notes:_
 >   - > You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+--><!-- correct: -->
+>> **Input** (2/3) <kbd>Single Select</kbd><br>
+>> What kind of integration input should I focus on?
+> - [x] 1\. Codex payload
+>   - _Validate the `request_user_input` JSON shape and answer normalization._
+>   - > You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+> - [ ] 2\. Claude payload
+>   - _Validate the `AskUserQuestion` payload and annotations path._
+> - [ ] 3\. Both
+>   - _Compare both formats and make sure routing stays consistent._
+> - [ ] 4\. _Type something._
+<!-- end correct -->
 >
 >> **Goal** (3/3) <kbd>Single Select</kbd><br>
 >> What do you want the questions to help check?
@@ -1719,7 +1765,11 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >   - _Probe timeouts, notes-only, multi-select, and malformed input._
 > - [ ] 3\. Regression hunt
 >   - _Try to flush out routing bugs, wrong prefixes, or broken file output._
+<!-- wrong: 1. I want the text changed here as well, to be uniform.
 > - [x] 4\. _Notes:_
+--><!-- correct: -->
+> - [x] 4\. _Type something:_
+<!-- end correct -->
 >   - > Pretty much want to check it's now formatting correctly, nothing for you to do, really, then this question. Afterwards I will shut you down, lol. Btw, this is the automatic "None of the above" choice.
 >
 > </details>
@@ -1799,7 +1849,7 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >> 1. What should be treated as the success criterion for formatting?
 >>    - Visual parity
 >> 2. How should note-only selections be represented?
->>    - 
+>>    -
 >> 3. How wide should the check go?
 >>    - we're done here. Please say goodbye.
 >
@@ -1853,7 +1903,7 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 >>          return {"status": "ok", "received": payload["type"]}
 >>      ```
 >> 2. Any specific requirements or constraints for the hook integration not covered above?
->>    - 
+>>    -
 >
 > (click to expand)
 >
@@ -1901,8 +1951,8 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 ❯ Question answered.
 > <details><summary>
 >
->> 1. What should the hook return on a validation error — status code and body?
->>    - 
+>>  1\. What should the hook return on a validation error — status code and body?
+>>    -
 >
 > (click to expand)
 >
