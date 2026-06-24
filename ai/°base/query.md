@@ -1606,3 +1606,71 @@ This sounds like it's better to move that into the `Choice`, attached to the sel
 Note, the definitions for codex are at @ai/references/https/github.com/openai/codex/blob/49614a0391d83eec442ffeca1d4aa0fdeb119818/codex-rs/protocol/src/request_user_input.rs
 and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
+❯ /plan hit me with a variety of questions, I need to check a hook integration.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which environment are you testing the hook integration in?
+>>    - Local dev
+>> 2. What type of hook event are you primarily testing?
+>>    -
+>> 3. What is the primary failure mode you're trying to catch?
+>>    - Wrong payload / data, This is 'something else' checked and manually filled.
+>> 4. How mature is the hook integration you're testing?
+>>    -
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Environment** (1/4) <kbd>Single Select</kbd><br>
+>> Which environment are you testing the hook integration in?
+> - [x] 1\. Local dev
+>   - _Running hooks locally against a dev server or local process._
+> - [ ] 2\. CI/CD pipeline
+>   - _Hooks fire as part of an automated build or deploy pipeline._
+> - [ ] 3\. Staging
+>   - _Hooks are wired up in a staging environment that mirrors production._
+> - [ ] 4\. Production
+>   - _Testing live hooks in the production environment._
+> - [ ] 5\. _Type something._
+>
+>> **Hook type** (2/4) <kbd>Single Select</kbd><br>
+>> What type of hook event are you primarily testing?
+> - [ ] 1\. Pre-commit / pre-push
+>   - _Git hooks that run before a commit or push completes._
+> - [ ] 2\. Webhook (HTTP)
+>   - _An outbound HTTP callback triggered by some event._
+> - [ ] 3\. Tool-call hook
+>   - _Claude Code hooks that intercept tool calls (e.g. user-prompt-submit-hook)._
+> - [ ] 4\. Post-merge / CI trigger
+>   - _Hooks that fire after a merge or as a CI step._
+> - [ ] 5\. _Type something._
+>
+>> **Failure mode** (3/4) <kbd>Multi Select</kbd><br>
+>> What is the primary failure mode you're trying to catch?
+> - [ ] 1\. Hook not firing at all
+>   - _The hook doesn't trigger when it should._
+> - [x] 2\. Wrong payload / data <sup><sub><kbd>#1</kbd></sub></sup>
+>   - _The hook fires but the data it receives or emits is incorrect._
+> - [ ] 3\. Timing / ordering issue
+>   - _The hook fires too early, too late, or out of order._
+> - [ ] 4\. Auth / permissions failure
+>   - _The hook fires but is rejected due to missing or wrong credentials._
+> - [x] 5\. _Type something:_
+>   - > This is 'something else' checked and manually filled.
+>
+>> **Maturity** (4/4) <kbd>Single Select</kbd><br>
+>> How mature is the hook integration you're testing?
+> - [ ] 1\. Brand new
+>   - _First time wiring this hook up — still figuring out the basics._
+> - [ ] 2\. Existing, recently changed
+>   - _The hook worked before; something was modified and you're verifying it still works._
+> - [ ] 3\. Regression check
+>   - _No changes were made; you're confirming nothing broke._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
