@@ -1841,3 +1841,60 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which decorator style would you add to the function-based handler?
+>>    - @register("event_type")
+>>      ```text
+>>      @register("user.created")
+>>      def handle_hook(event: dict) -> dict:
+>>          payload = event["payload"]
+>>          return {"status": "ok", "received": payload["type"]}
+>>      ```
+>> 2. Any specific requirements or constraints for the hook integration not covered above?
+>>    - 
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Decorator style** (1/2) <kbd>Single Select</kbd><br>
+>> Which decorator style would you add to the function-based handler?
+> - [ ] 1\. @register("event_type")
+>   - _Explicit event-type binding via decorator argument._
+>   - ```
+>     @register("user.created")
+>     def handle_hook(event: dict) -> dict:
+>         payload = event["payload"]
+>         return {"status": "ok", "received": payload["type"]}
+>     ```
+> - [ ] 2\. @hook
+>   - _Simple marker decorator, type inferred from payload._
+>   - ```
+>     @hook
+>     def handle_hook(event: dict) -> dict:
+>         payload = event["payload"]
+>         return {"status": "ok", "received": payload["type"]}
+>     ```
+> - [ ] 3\. @hook(validate=True)
+>   - _Decorator with inline schema validation enabled._
+>   - ```text
+>     @hook(validate=True)
+>     def handle_hook(event: dict) -> dict:
+>         payload = event["payload"]
+>         return {"status": "ok", "received": payload["type"]}
+>     ```
+> - [ ] 4\. _Notes: Add notes on this design._
+>
+>> **Other notes** (2/2) <kbd>Single Select</kbd><br>
+>> Any specific requirements or constraints for the hook integration not covered above?
+> - [ ] 1\. No additional constraints
+>   - _Everything relevant was covered in the previous questions._
+> - [ ] 2\. Yes, see my note
+>   - _I have something to add — check the notes field._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
