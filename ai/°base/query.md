@@ -1674,3 +1674,54 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+› hit me with a variety of questions, I need to check a hook integration.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which hook surface are you checking right now?
+>>    - Save-decision
+>> 2. What kind of integration input should I focus on?
+>>    - You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+>> 3. What do you want the questions to help check?
+>>    - Pretty much want to check it's now formatting correctly, nothing for you to do, really, then this question. Afterwards I will shut you down, lol. Btw, this is the automatic "None of the above" choice.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Surface** (1/3) <kbd>Single Select</kbd><br>
+>> Which hook surface are you checking right now?
+> - [x] 1\. Save-decision
+>   - _Exercise the AskUserQuestion / request_user_input flow that writes to `ai/query.md`._
+> - [ ] 2\. Save-plan
+>   - _Exercise the plan-capture flow for `Write`, `ExitPlanMode`, or `Stop`._
+> - [ ] 3\. Memory
+>   - _Exercise the memory sync / deletion path._
+> - [ ] 4\. _Type something._
+>
+>> **Input** (2/3) <kbd>Single Select</kbd><br>
+>> What kind of integration input should I focus on?
+> - [x] 1\. Codex payload
+>   - _Validate the `request_user_input` JSON shape and answer normalization._
+> - [ ] 2\. Claude payload
+>   - _Validate the `AskUserQuestion` payload and annotations path._
+> - [ ] 3\. Both
+>   - _Compare both formats and make sure routing stays consistent._
+> - [x] 4\. _Notes:_
+>   - > You shouldn't really focus on the integration, I will do. Btw, this is a note under an existing answer.
+>
+>> **Goal** (3/3) <kbd>Single Select</kbd><br>
+>> What do you want the questions to help check?
+> - [ ] 1\. Happy path
+>   - _Confirm the hook records and commits a normal successful interaction._
+> - [ ] 2\. Edge cases
+>   - _Probe timeouts, notes-only, multi-select, and malformed input._
+> - [ ] 3\. Regression hunt
+>   - _Try to flush out routing bugs, wrong prefixes, or broken file output._
+> - [x] 4\. _Notes:_
+>   - > Pretty much want to check it's now formatting correctly, nothing for you to do, really, then this question. Afterwards I will shut you down, lol. Btw, this is the automatic "None of the above" choice.
+>
+> </details>
+>
+
