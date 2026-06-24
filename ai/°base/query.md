@@ -1898,3 +1898,26 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. What should the hook return on a validation error — status code and body?
+>>    - 
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Error response** (1/1) <kbd>Single Select</kbd><br>
+>> What should the hook return on a validation error — status code and body?
+> - [ ] 1\. 400 Bad Request
+>   - _Return HTTP 400 with an error message body._
+> - [ ] 2\. 422 Unprocessable Entity
+>   - _Return HTTP 422, signaling the payload was received but invalid._
+> - [ ] 3\. 200 with error flag
+>   - _Always return 200; include an error field in the JSON body._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
