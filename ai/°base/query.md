@@ -1921,3 +1921,59 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which hook dispatch architecture fits your system best?
+>>    - This is without selecting any of those options, juust directly jumping to the free text field. Neat drawing though.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Architecture** (1/1) <kbd>Single Select</kbd><br>
+>> Which hook dispatch architecture fits your system best?
+> - [ ] 1\. Direct call
+>   - _Hook handler is called inline in the request path — simple, synchronous._
+>   - ```
+>       Client
+>         │
+>         ▼
+>     ┌─────────┐
+>     │ Server  │──► handle_hook() ──► response
+>     └─────────┘
+>
+>     No queue, no delay. Handler must be fast.
+>     ```
+> - [ ] 2\. Queue-backed
+>   - _Request is acked immediately; handler runs async via a job queue._
+>   - ```
+>       Client
+>         │
+>         ▼
+>     ┌─────────┐     ┌───────┐     ┌─────────┐
+>     │ Server  │────►│ Queue │────►│ Worker  │
+>     └─────────┘     └───────┘     └─────────┘
+>         │                              │
+>       202 Ack                    handle_hook()
+>
+>     Decoupled. Retryable. Slightly more infra.
+>     ```
+> - [ ] 3\. Fan-out
+>   - _One incoming event dispatches to multiple handlers in parallel._
+>   - ```text
+>                 ┌──► handler_a()
+>                 │
+>       event ────┼──► handler_b()
+>                 │
+>                 └──► handler_c()
+>
+>     Good for multi-consumer events.
+>     Each handler is independent.
+>     ```
+> - [x] 4\. _Notes:_
+>   - > This is without selecting any of those options, juust directly jumping to the free text field. Neat drawing though.
+>
+> </details>
+>
+
