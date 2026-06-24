@@ -54,12 +54,15 @@ _data, _expected_output = _parse_spec()
 class RenderBlockTests(unittest.TestCase):
     def test_full_example_from_spec(self):
         """_render_block produces the rich format defined in 12.expected.md."""
-        tool_input = {"questions": _data["questions"]}
-        tool_response = {
-            "answers": _data["answers"],
-            "annotations": _data.get("annotations", {}),
-        }
-        actual = _hook._render_block(tool_input, tool_response)
+        questions = _hook.parse_payload({
+            "tool_name": "AskUserQuestion",
+            "tool_input": {"questions": _data["questions"]},
+            "tool_response": {
+                "answers": _data["answers"],
+                "annotations": _data.get("annotations", {}),
+            },
+        })
+        actual = _hook._render_block(questions)
         self.assertEqual(actual, _expected_output)
 
 

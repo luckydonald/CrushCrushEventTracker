@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""PostToolUse hook for AskUserQuestion: append the asked question(s) and the
-picked answer to ai/query.md as a markdown blockquote, then commit.
+"""PostToolUse hook for AskUserQuestion / request_user_input: append the asked
+question(s) and the picked answer to ai/query.md as a markdown blockquote, then commit.
 
-Usage: hook.py [ai_tool_name]   (currently unused; accepted for parity with save-prompt)
+Usage: hook.py [ai_tool_name]   (accepted for parity with save-prompt; unused here)
 """
 from __future__ import annotations
 
@@ -10,17 +10,61 @@ import json
 import sys
 from pathlib import Path
 
+from pydantic import BaseModel, StrictBool, StrictInt, computed_field
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import append_and_commit, dump_debug_payload, read_payload, resolve_log_path, slugify  # noqa: E402
 
 
-def _parse_multi_answer(answer: str, options: list[dict]) -> tuple[list[str], str]:
-    """Greedy left-to-right match of option labels against the answer string.
+class Choice(BaseModel):
+    label: str = ""
+    description: str = ""
+    preview: str = ""
+    selection: StrictBool | StrictInt = False
+    # False       → not selected
+    # True        → selected, order unknown (single-select)
+    # 1, 2, 3 …  → selected, 1-based click order (multi-select)
+    # bool(selection) is always the correct "is selected" check
+    note: str = ""          # free text / annotation note — Other entry only
+    is_other: bool = False  # True for the parser-injected Other/Notes row
 
-    Returns (click_order, custom_text) where click_order lists matched labels
-    in the order they appear in answer, and custom_text is the leftover.
+    @computed_field
+    @property
+    def selected(self) -> bool:
+        return bool(self.selection)
+
+
+class Question(BaseModel):
+    question: str
+    header: str = ""
+    multi_select: bool = False
+    choices: list[Choice]  # predefined options + one parser-injected Other at end
+
+    @computed_field
+    @property
+    def selected(self) -> list[Choice]:
+        return sorted(
+            (c for c in self.choices if c.selected),
+            key=lambda c: c.selection,
+        )
+
+    @computed_field
+    @property
+    def timed_out(self) -> bool:
+        return not self.selected
+
+
+Choice.model_rebuild()
+Question.model_rebuild()
+
+
+def _greedy_match(answer: str, labels: list[str]) -> tuple[list[str], str]:
+    """Greedy left-to-right match of labels against the answer string.
+
+    Returns (click_order, custom_text) where custom_text is the leftover after
+    all matched labels are consumed.
     """
-    available = [o.get("label", "") for o in options]
+    available = list(labels)
     remaining = answer
     click_order: list[str] = []
     while remaining:
@@ -41,6 +85,175 @@ def _parse_multi_answer(answer: str, options: list[dict]) -> tuple[list[str], st
     return click_order, remaining
 
 
+def _parse_claude(payload: dict) -> list[Question]:
+    """Parse a Claude Code AskUserQuestion payload into a list of Questions."""
+    tool_input = payload.get("tool_input") or {}
+    if not tool_input and isinstance(payload.get("questions"), list):
+        tool_input = {"questions": payload["questions"]}
+    raw_questions = tool_input.get("questions") or []
+
+    raw_response = payload.get("tool_response") or {}
+    if isinstance(raw_response, str):
+        try:
+            raw_response = json.loads(raw_response)
+        except (json.JSONDecodeError, ValueError):
+            raw_response = {}
+    if not isinstance(raw_response, dict):
+        raw_response = {}
+
+    raw_answers: dict = raw_response.get("answers") or {}
+    raw_annotations: dict = raw_response.get("annotations") or {}
+
+    questions: list[Question] = []
+    for q in raw_questions:
+        if not isinstance(q, dict):
+            continue
+        qtext = q.get("question", "")
+        raw_opts = [o for o in (q.get("options") or []) if isinstance(o, dict)]
+        multi = bool(q.get("multiSelect", False))
+        answer_str = raw_answers.get(qtext, "")
+        raw_ann = raw_annotations.get(qtext) or {}
+        ann_notes = raw_ann.get("notes", "")
+        notes_only = answer_str == "(notes only)"
+
+        if multi:
+            labels = [o.get("label", "") for o in raw_opts]
+            click_order, custom_text = _greedy_match(answer_str, labels)
+            rank_map = {label: rank for rank, label in enumerate(click_order, 1)}
+            choices: list[Choice] = [
+                Choice(
+                    label=o.get("label", ""),
+                    description=o.get("description", ""),
+                    preview=o.get("preview", ""),
+                    selection=rank_map.get(o.get("label", ""), False),
+                )
+                for o in raw_opts
+            ]
+            other_sel: StrictBool | StrictInt = True if custom_text else False
+            choices.append(Choice(is_other=True, selection=other_sel, note=custom_text))
+        else:
+            choices = [
+                Choice(
+                    label=o.get("label", ""),
+                    description=o.get("description", ""),
+                    preview=o.get("preview", ""),
+                    selection=not notes_only and o.get("label", "") == answer_str,
+                )
+                for o in raw_opts
+            ]
+            choices.append(Choice(
+                is_other=True,
+                selection=notes_only,
+                note=ann_notes if notes_only else "",
+            ))
+
+        questions.append(Question(
+            question=qtext,
+            header=q.get("header", ""),
+            multi_select=multi,
+            choices=choices,
+        ))
+    return questions
+
+
+def _parse_codex(payload: dict) -> list[Question]:
+    """Parse a Codex request_user_input payload into a list of Questions."""
+    tool_input = payload.get("tool_input") or {}
+    raw_questions = tool_input.get("questions") or []
+
+    raw_response = payload.get("tool_response") or "{}"
+    if isinstance(raw_response, str):
+        try:
+            codex_answers: dict = json.loads(raw_response).get("answers") or {}
+        except (json.JSONDecodeError, ValueError):
+            codex_answers = {}
+    elif isinstance(raw_response, dict):
+        codex_answers = raw_response.get("answers") or {}
+    else:
+        codex_answers = {}
+
+    questions: list[Question] = []
+    for q in raw_questions:
+        if not isinstance(q, dict):
+            continue
+        qid = q.get("id", "")
+        qtext = q.get("question", "")
+        raw_opts = [o for o in (q.get("options") or []) if isinstance(o, dict)]
+        multi = bool(q.get("multiSelect", False))
+
+        raw_ans = codex_answers.get(qid)  # None when key absent (timeout)
+        if raw_ans is None:
+            items: list[str] | None = None
+        else:
+            items = raw_ans.get("answers") or [] if isinstance(raw_ans, dict) else []
+
+        if items is None:
+            notes = ""
+            selected_labels: list[str] = []
+            none_of_above = False
+        else:
+            notes = "; ".join(
+                i[len("user_note: "):]
+                for i in items
+                if isinstance(i, str) and i.startswith("user_note: ")
+            )
+            none_of_above = "None of the above" in items
+            selected_labels = [
+                i for i in items
+                if isinstance(i, str)
+                and not i.startswith("user_note: ")
+                and i != "None of the above"
+            ]
+
+        if multi:
+            rank_map = {label: rank for rank, label in enumerate(selected_labels, 1)}
+            choices: list[Choice] = [
+                Choice(
+                    label=o.get("label", ""),
+                    description=o.get("description", ""),
+                    selection=rank_map.get(o.get("label", ""), False),
+                )
+                for o in raw_opts
+            ]
+            if items is not None and (notes or none_of_above):
+                other_sel: StrictBool | StrictInt = True
+                other_note = notes
+            else:
+                other_sel = False
+                other_note = ""
+            choices.append(Choice(is_other=True, selection=other_sel, note=other_note))
+        else:
+            choices = [
+                Choice(
+                    label=o.get("label", ""),
+                    description=o.get("description", ""),
+                    selection=o.get("label", "") in selected_labels,
+                )
+                for o in raw_opts
+            ]
+            other_selected = items is not None and (none_of_above or bool(notes))
+            choices.append(Choice(
+                is_other=True,
+                selection=other_selected,
+                note=notes,
+            ))
+
+        questions.append(Question(
+            question=qtext,
+            header=q.get("header", ""),
+            multi_select=multi,
+            choices=choices,
+        ))
+    return questions
+
+
+def parse_payload(payload: dict) -> list[Question]:
+    """Dispatch to the correct parser based on tool_name in the hook payload."""
+    if payload.get("tool_name") == "request_user_input":
+        return _parse_codex(payload)
+    return _parse_claude(payload)
+
+
 def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
     """Append a fenced code block for a preview field inside a blockquote list."""
     out.append(f">   - ```{lang}\n")
@@ -52,12 +265,8 @@ def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
     out.append(">     ```\n")
 
 
-def _render_block(tool_input: dict, tool_response: dict) -> str:
-    questions = tool_input.get("questions") or []
-    answers = tool_response.get("answers") or {}
-    annotations = tool_response.get("annotations") or {}
+def _render_block(questions: list[Question]) -> str:
     total = len(questions)
-
     out: list[str] = []
     out.append("❯ Question answered.\n")
     out.append("> <details><summary>\n")
@@ -65,22 +274,34 @@ def _render_block(tool_input: dict, tool_response: dict) -> str:
 
     # --- Summary ---
     for i, q in enumerate(questions, 1):
-        qtext = q.get("question", "")
-        ann = annotations.get(qtext, {})
-        answer = answers.get(qtext, "")
         indent = len(str(i)) + 3
+        other = next((c for c in q.choices if c.is_other), None)
 
-        out.append(f">> {i}. {qtext}\n")
+        if q.multi_select:
+            pred_selected = [c for c in q.selected if not c.is_other]
+            parts = [c.label for c in pred_selected]
+            if other and other.note:
+                parts.append(other.note)
+            display = ", ".join(parts)
+        elif other and other.selected and other.note:
+            display = other.note
+        elif q.selected:
+            display = q.selected[0].label
+        else:
+            display = ""
 
-        display = ann["notes"] if ann.get("notes") else answer
+        out.append(f">> {i}. {q.question}\n")
         out.append(f">>{'':>{indent}}- {display}\n")
 
-        if ann.get("preview"):
-            pi = indent + 2
-            out.append(f">>{'':>{pi}}```text\n")
-            for pline in ann["preview"].splitlines():
-                out.append(f">>{'':>{pi}}{pline}\n")
-            out.append(f">>{'':>{pi}}```\n")
+        # Preview block in summary (single-select only, when selected choice has a preview)
+        if not q.multi_select and q.selected and not q.selected[0].is_other:
+            sel_preview = q.selected[0].preview
+            if sel_preview:
+                pi = indent + 2
+                out.append(f">>{'':>{pi}}```text\n")
+                for pline in sel_preview.splitlines():
+                    out.append(f">>{'':>{pi}}{pline}\n")
+                out.append(f">>{'':>{pi}}```\n")
 
     out.append(">\n")
     out.append("> (click to expand)\n")
@@ -93,71 +314,62 @@ def _render_block(tool_input: dict, tool_response: dict) -> str:
         if i > 1:
             out.append(">\n")
 
-        qtext = q.get("question", "")
-        header = q.get("header", "")
-        opts = q.get("options") or []
-        multi = q.get("multiSelect", False)
-        answer = answers.get(qtext, "")
-        ann = annotations.get(qtext, {})
+        pred_choices = [c for c in q.choices if not c.is_other]
+        other = next((c for c in q.choices if c.is_other), None)
+        has_any_preview = any(c.preview for c in pred_choices)
+        last_pred_idx = len(pred_choices) - 1
 
-        select_type = "Multi Select" if multi else "Single Select"
-        out.append(f">> **{header}** ({i}/{total}) <kbd>{select_type}</kbd><br>\n")
-        out.append(f">> {qtext}\n")
+        select_type = "Multi Select" if q.multi_select else "Single Select"
+        out.append(f">> **{q.header}** ({i}/{total}) <kbd>{select_type}</kbd><br>\n")
+        out.append(f">> {q.question}\n")
 
-        has_any_preview = any(o.get("preview") for o in opts)
-        last_idx = len(opts) - 1
+        if q.multi_select:
+            for n, choice in enumerate(pred_choices, 1):
+                check = "[x]" if choice.selected else "[ ]"
+                rank_badge = (
+                    f" <sup><sub><kbd>#{choice.selection}</kbd></sub></sup>"
+                    if isinstance(choice.selection, int) and not isinstance(choice.selection, bool)
+                    else ""
+                )
+                out.append(f"> - {check} {n}\\. {choice.label}{rank_badge}\n")
+                if choice.description:
+                    out.append(f">   - _{choice.description}_\n")
+                if choice.preview:
+                    lang = "text" if (n - 1) == last_pred_idx else ""
+                    _render_preview_block(choice.preview, lang, out)
 
-        if multi:
-            click_order, custom_text = _parse_multi_answer(answer, opts)
-            rank_map = {label: rank for rank, label in enumerate(click_order, 1)}
-
-            for n, opt in enumerate(opts, 1):
-                label = opt.get("label", "")
-                desc = opt.get("description", "")
-                preview = opt.get("preview", "")
-                rank = rank_map.get(label)
-                check = "[x]" if rank else "[ ]"
-                badge = f" <sup><sub><kbd>#{rank}</kbd></sub></sup>" if rank else ""
-                out.append(f"> - {check} {n}\\. {label}{badge}\n")
-                if desc:
-                    out.append(f">   - _{desc}_\n")
-                if preview:
-                    lang = "text" if (n - 1) == last_idx else ""
-                    _render_preview_block(preview, lang, out)
-
-            other_n = len(opts) + 1
-            if custom_text:
-                other_check = "[ ]" if custom_text.endswith("?") else "[x]"
+            other_n = len(pred_choices) + 1
+            if other and other.note:
+                other_check = "[ ]" if other.note.endswith("?") else "[x]"
                 other_label = "_Type something:_"
             else:
                 other_check = "[ ]"
                 other_label = "_Type something._"
             out.append(f"> - {other_check} {other_n}\\. {other_label}\n")
-            if custom_text:
-                out.append(f">   - > {custom_text}\n")
+            if other and other.note:
+                out.append(f">   - > {other.note}\n")
 
         else:
-            notes_only = answer == "(notes only)"
-            has_preview_ann = bool(ann.get("preview"))
-            selected_label = None if (notes_only or has_preview_ann) else answer
+            # Suppress [x] when the selected choice has a preview —
+            # the preview display serves as the visual selection indicator.
+            selected_has_preview = bool(
+                q.selected and not q.selected[0].is_other and q.selected[0].preview
+            )
 
-            for n, opt in enumerate(opts, 1):
-                label = opt.get("label", "")
-                desc = opt.get("description", "")
-                preview = opt.get("preview", "")
-                check = "[x]" if label == selected_label else "[ ]"
-                out.append(f"> - {check} {n}\\. {label}\n")
-                if desc:
-                    out.append(f">   - _{desc}_\n")
-                if preview:
-                    lang = "text" if (n - 1) == last_idx else ""
-                    _render_preview_block(preview, lang, out)
+            for n, choice in enumerate(pred_choices, 1):
+                check = "[x]" if choice.selected and not selected_has_preview else "[ ]"
+                out.append(f"> - {check} {n}\\. {choice.label}\n")
+                if choice.description:
+                    out.append(f">   - _{choice.description}_\n")
+                if choice.preview:
+                    lang = "text" if (n - 1) == last_pred_idx else ""
+                    _render_preview_block(choice.preview, lang, out)
 
-            other_n = len(opts) + 1
-            if notes_only:
+            other_n = len(pred_choices) + 1
+            if other and other.selected and other.note:
                 other_check = "[x]"
                 other_label = "_Notes:_"
-                other_text = ann.get("notes", "")
+                other_text = other.note
             elif has_any_preview:
                 other_check = "[ ]"
                 other_label = "_Notes: Add notes on this design._"
@@ -177,74 +389,18 @@ def _render_block(tool_input: dict, tool_response: dict) -> str:
     return "".join(out)
 
 
-def _normalize_codex_answers(questions: list[dict], tool_response: dict) -> dict:
-    """Normalize Codex answer format to Claude Code format when needed.
-
-    Codex:  tool_response["answers"][qid]   = {"answers": ["Label", "user_note: text"]}
-    Claude: tool_response["answers"][qtext] = "Label"  (+ separate annotations dict)
-
-    Returns tool_response unchanged if it is already in Claude Code format.
-    """
-    raw_answers = tool_response.get("answers") or {}
-    if not raw_answers:
-        return tool_response
-
-    first_val = next(iter(raw_answers.values()))
-    if not isinstance(first_val, dict) or "answers" not in first_val:
-        return tool_response  # already Claude Code format
-
-    id_to_q = {q.get("id", ""): q for q in questions if q.get("id")}
-
-    norm_answers: dict[str, str] = {}
-    norm_annotations: dict[str, dict] = {}
-
-    for qid, raw in raw_answers.items():
-        q = id_to_q.get(qid)
-        qtext = q.get("question", qid) if q else qid
-        items = raw.get("answers") or [] if isinstance(raw, dict) else []
-
-        notes = [i[len("user_note: "):] for i in items if isinstance(i, str) and i.startswith("user_note: ")]
-        labels = [i for i in items if isinstance(i, str) and not i.startswith("user_note: ") and i != "None of the above"]
-
-        if labels:
-            norm_answers[qtext] = ", ".join(labels)
-        elif notes:
-            norm_answers[qtext] = "(notes only)"
-        # "None of the above" with no note → nothing selected, omit
-
-        if notes:
-            norm_annotations[qtext] = {"notes": "; ".join(notes)}
-
-    result = dict(tool_response)
-    result["answers"] = norm_answers
-    if norm_annotations:
-        result["annotations"] = norm_annotations
-    return result
-
-
 def main() -> int:
+    _ = sys.argv[1] if len(sys.argv) > 1 else "unknown"  # accepted for parity, unused
+
     payload = read_payload()
     dump_debug_payload(payload, "save-decision")
-    tool_input = payload.get("tool_input") or {}
-    if not tool_input and isinstance(payload.get("questions"), list):
-        tool_input = {"questions": payload.get("questions") or []}
-    questions = tool_input.get("questions") or []
+
+    questions = parse_payload(payload)
     if not questions:
         return 0
 
-    raw_response = payload.get("tool_response")
-    # Codex sends tool_response as a JSON string; Claude Code sends a dict.
-    if isinstance(raw_response, str):
-        try:
-            raw_response = json.loads(raw_response)
-        except (json.JSONDecodeError, ValueError):
-            raw_response = {}
-    tool_response = raw_response if isinstance(raw_response, dict) else {}
-    tool_response = _normalize_codex_answers(questions, tool_response)
-    block = _render_block(tool_input, tool_response)
-
-    first_question = questions[0].get("question", "") if isinstance(questions[0], dict) else ""
-    slug = slugify(first_question, fallback="decision")
+    block = _render_block(questions)
+    slug = slugify(questions[0].question, fallback="decision")
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     append_and_commit(
