@@ -1725,3 +1725,71 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which aspects of the hook payload do you want to validate? (select all that apply)
+>>    - Timestamp format, Event type field, Auth token / signature
+>> 2. Which hook handler pattern do you prefer?
+>>    - Function-based
+>>      ```text
+>>      def handle_hook(event: dict) -> dict:
+>>          payload = event["payload"]
+>>          return {"status": "ok", "received": payload["type"]}
+>>      ```
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Payload checks** (1/2) <kbd>Multi Select</kbd><br>
+>> Which aspects of the hook payload do you want to validate? (select all that apply)
+> - [x] 1\. Event type field <sup><sub><kbd>#2</kbd></sub></sup>
+>   - _Confirm the event name/type is correct in the payload._
+> - [x] 2\. Timestamp format <sup><sub><kbd>#1</kbd></sub></sup>
+>   - _Ensure the timestamp is ISO 8601 or whatever format your consumer expects._
+> - [x] 3\. Auth token / signature <sup><sub><kbd>#3</kbd></sub></sup>
+>   - _Validate HMAC signature or bearer token is present and correct._
+> - [ ] 4\. Body schema
+>   - _Full structure matches the expected JSON schema._
+> - [ ] 5\. _Type something._
+>
+>> **Handler style** (2/2) <kbd>Single Select</kbd><br>
+>> Which hook handler pattern do you prefer?
+> - [ ] 1\. Function-based
+>   - _A plain function that receives the event and returns a response._
+>   - ```
+>     def handle_hook(event: dict) -> dict:
+>         payload = event["payload"]
+>         return {"status": "ok", "received": payload["type"]}
+>     ```
+> - [ ] 2\. Class-based
+>   - _A class that encapsulates state and has a dispatch method._
+>   - ```
+>     class HookHandler:
+>         def __init__(self, secret: str):
+>             self.secret = secret
+>
+>         def dispatch(self, event: dict) -> dict:
+>             self._verify(event["signature"])
+>             return self._process(event["payload"])
+>     ```
+> - [ ] 3\. Middleware chain
+>   - _A list of callables applied in order — auth, validate, process._
+>   - ```text
+>     chain = [
+>         verify_signature,
+>         validate_schema,
+>         process_payload,
+>     ]
+>
+>     def handle_hook(event):
+>         for step in chain:
+>             event = step(event)
+>         return event
+>     ```
+> - [ ] 4\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
