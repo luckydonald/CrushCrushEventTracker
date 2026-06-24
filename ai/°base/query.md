@@ -1554,3 +1554,7 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 >
 
 ❯ using the files in @ai/°base/output/debug/ you can see that you get an understanding for the codex prompt result, so we can incorporate that to the hook script which writes it to `query.md`.
+❯ Improve that by migrating both AI's input to one universal pydantic model we define and type properly - and where the rendering then can easily work with attributes, instead of guessing json dict keys.
+
+❯ /plan Improve that by migrating both AI's input to one universal pydantic model we define and type properly - and where the rendering then can easily work with attributes, instead of guessing json dict keys.
+
