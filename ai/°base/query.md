@@ -1793,3 +1793,51 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. What should be treated as the success criterion for formatting?
+>>    - Visual parity
+>> 2. How should note-only selections be represented?
+>>    - 
+>> 3. How wide should the check go?
+>>    - we're done here. Please say goodbye.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Format** (1/3) <kbd>Single Select</kbd><br>
+>> What should be treated as the success criterion for formatting?
+> - [x] 1\. Visual parity
+>   - _The markdown block should look correct and readable even if the internal structure changes._
+> - [ ] 2\. Exact spec
+>   - _The output should match a precise expected block byte-for-byte._
+> - [ ] 3\. Loose compatibility
+>   - _Preserve the old output shape where practical, but allow the new renderer to differ._
+> - [ ] 4\. _Type something._
+>
+>> **Notes** (2/3) <kbd>Single Select</kbd><br>
+>> How should note-only selections be represented?
+> - [ ] 1\. Inline note
+>   - _Attach note text to the special Other row or notes section in the rendered block._
+> - [ ] 2\. Separate summary
+>   - _Keep notes in a distinct summary area instead of mixing them into choice rows._
+> - [ ] 3\. No notes
+>   - _Ignore notes for this check and validate option selection only._
+> - [ ] 4\. _Type something._
+>
+>> **Coverage** (3/3) <kbd>Single Select</kbd><br>
+>> How wide should the check go?
+> - [ ] 1\. Single fixture
+>   - _Use one representative payload and verify one end-to-end render._
+> - [ ] 2\. Matrix
+>   - _Cover multiple payload variants like single-select, multi-select, and timeout._
+> - [ ] 3\. Smoke test
+>   - _Only confirm the hook runs without crashing._
+> - [x] 4\. _Notes:_
+>   - > we're done here. Please say goodbye.
+>
+> </details>
+>
+
