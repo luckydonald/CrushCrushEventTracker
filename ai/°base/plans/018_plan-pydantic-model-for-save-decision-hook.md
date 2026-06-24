@@ -3,113 +3,104 @@
 ## Context
 
 `save-decision/hook.py` currently parses two structurally different wire formats
-(Claude Code `AskUserQuestion` and Codex `request_user_input`) through a chain of raw
-dict lookups and a normalization function that re-serialises back to dicts.
+(Claude Code `AskUserQuestion` and Codex `request_user_input`) through raw dict
+lookups and a normalization function that re-serialises back to dicts.
 `_render_block` then guesses keys again when rendering.
 
-The goal is one typed Pydantic model that both parsers fill and `_render_block` reads
-via attributes — no more `.get("key", default)` scattered throughout.
+Goal: two flat Pydantic models that both parsers fill and `_render_block` reads
+via attributes.
 
 ---
 
-## Model hierarchy  (`save-decision/hook.py`, top of file)
+## Model design  (top of `save-decision/hook.py`)
 
 ```python
 from pydantic import BaseModel, Field
 
-class Option(BaseModel):
+class Choice(BaseModel):
     label: str
     description: str = ""
     preview: str = ""
+    rank: int | None = None   # None = not selected; 1-based click order for multi-select
 
-class Annotation(BaseModel):
-    notes: str = ""
-    preview: str = ""
-
-class QuestionAnswer(BaseModel):
+class Question(BaseModel):
     question: str
     header: str = ""
-    options: list[Option] = Field(default_factory=list)
     multi_select: bool = False
-    answer: str = ""          # selected labels joined by ", ", or "(notes only)", or ""
-    annotation: Annotation = Field(default_factory=Annotation)
+    choices: list[Choice]           # predefined options with selection state embedded
+    custom_text: str = ""           # free text in the auto-added Other box (multi-select)
+    notes: str = ""                 # annotation note (notes-only single, or Codex user_note)
+    selected_preview: str = ""      # annotation.preview when a preview-option was selected
 
-class DecisionPayload(BaseModel):
-    questions: list[QuestionAnswer] = Field(default_factory=list)
+    @property
+    def timed_out(self) -> bool:
+        return (
+            not any(c.rank is not None for c in self.choices)
+            and not self.custom_text
+            and not self.notes
+        )
 ```
 
-`answer` semantics (same as current string conventions, now made explicit):
-- `"Label A, Label B"` — one or more selected option labels (multi joins with `", "`)
-- `"(notes only)"` — user added a note but did not pick a label
-- `""` — no selection (e.g. Codex "None of the above" with no note)
+`choices` holds only the **predefined** options (not the implicit "Other" row).
+The renderer reconstructs the Other row from `custom_text` / `notes` / `selected_preview`.
 
 ---
 
-## Two parsers → one `parse_payload(payload: dict) -> DecisionPayload`
+## Two parsers → one `parse_payload(payload: dict) -> list[Question]`
 
 Dispatch on `payload.get("tool_name")`:
 - `"request_user_input"` → `_parse_codex(payload)`
 - anything else (`"AskUserQuestion"`, missing) → `_parse_claude(payload)`
 
-### `_parse_claude(payload)`
+### `_parse_claude(payload) -> list[Question]`
 
 Sources:
-- questions: `payload["tool_input"]["questions"]`  
-- answers:   `payload["tool_response"]["answers"]`  (keyed by question text)
-- annotations: `payload["tool_response"]["annotations"]`  (keyed by question text)
+- questions list: `payload["tool_input"]["questions"]`
+- answers dict (keyed by question text): `payload["tool_response"]["answers"]`
+- annotations dict (keyed by question text): `payload["tool_response"].get("annotations", {})`
 
-Note: Claude Code sends `tool_response` as a **dict**; the existing fallback for
-`payload.get("questions")` at top level is kept.
+Existing fallback for bare `payload.get("questions")` list is kept.
 
-```python
-for q in raw_questions:
-    qtext = q["question"]
-    raw_ann = raw_annotations.get(qtext) or {}
-    QuestionAnswer(
-        question=qtext,
-        header=q.get("header", ""),
-        options=[Option(**{k: o[k] for k in ("label","description","preview") if k in o})
-                 for o in q.get("options") or []],
-        multi_select=q.get("multiSelect", False),
-        answer=raw_answers.get(qtext, ""),
-        annotation=Annotation(notes=raw_ann.get("notes",""), preview=raw_ann.get("preview","")),
-    )
-```
+Per question:
+1. Parse `_parse_multi_answer(answer_str, labels)` → `(click_order, custom_text)`
+2. Build `choices` from option list, setting `rank` for each matched label
+3. Set `custom_text`, `notes` (from `annotation.notes`), `selected_preview` (from `annotation.preview`)
 
-### `_parse_codex(payload)`
+For single-select `answer == "(notes only)"`: no choices get `rank`, `notes` comes from annotation.
+
+### `_parse_codex(payload) -> list[Question]`
 
 Sources:
-- questions: `payload["tool_input"]["questions"]` — each has an `"id"` field
-- answers:   JSON-parse `payload["tool_response"]` string →  
+- questions list: `payload["tool_input"]["questions"]` — each has an `"id"` field
+- answers: JSON-parse `payload["tool_response"]` string →
   `{qid: {"answers": ["Label", "user_note: text", "None of the above"]}}`
 
 Per question id:
-- items starting with `"user_note: "` → strip prefix → `Annotation.notes` (joined by `"; "`)
-- `"None of the above"` → discard (UI-injected sentinel, no meaningful label)
-- remaining strings → selected labels → join with `", "` → `answer`
-- if no labels but notes exist → `answer = "(notes only)"`
-- if nothing → `answer = ""`
-
-Build `id → QuestionAnswer` map, then emit in question-list order.
+- `"user_note: ..."` items → strip prefix → `notes` (joined by `"; "`)
+- `"None of the above"` → discard (UI-injected sentinel)
+- remaining strings → selected labels → match against option list → set `rank` in click order
+- no matched labels + notes → `notes` only (equivalent to notes-only)
+- nothing at all → `timed_out` is True (computed from empty state)
 
 ---
 
-## Updated `_render_block(payload: DecisionPayload) -> str`
+## Updated `_render_block(questions: list[Question]) -> str`
 
-Signature changes from `(tool_input: dict, tool_response: dict)` to
-`(payload: DecisionPayload)`.
+Replaces `_render_block(tool_input: dict, tool_response: dict)`.
 
-Replace all dict accesses with attribute reads:
-- `q.question`, `q.header`, `q.options`, `q.multi_select`, `q.answer`, `q.annotation`
-- `opt.label`, `opt.description`, `opt.preview`
-- `q.annotation.notes`, `q.annotation.preview`
+All dict accesses become attribute reads:
+- `q.question`, `q.header`, `q.multi_select`, `q.choices`, `q.custom_text`, `q.notes`, `q.selected_preview`, `q.timed_out`
+- `choice.label`, `choice.description`, `choice.preview`, `choice.rank`
 
-`_parse_multi_answer` signature: `(answer: str, options: list[Option]) -> tuple[list[str], str]`  
-— replace `o.get("label", "")` with `o.label`.
+`_parse_multi_answer` is removed — its job now happens at parse time (choices carry `rank`).
 
-`_render_preview_block` is unchanged (takes plain strings, no model knowledge).
+The "Other" row at the bottom of each question is rendered from:
+- multi-select: `custom_text` → checked/unchecked + text if non-empty
+- single-select with preview options: `selected_preview` → `"_Notes: Add notes on this design._"`
+- single-select notes-only: `notes` → `[x] _Notes:_ \n > {notes}`
+- single-select plain: `custom_text` → `"_Type something[.:]_"` (unchanged logic, just via attribute)
 
-`total = len(payload.questions)`, iteration over `payload.questions`.
+Summary section: `q.selected_preview` replaces `ann.get("preview")` lookup.
 
 ---
 
@@ -118,24 +109,24 @@ Replace all dict accesses with attribute reads:
 ```python
 payload = read_payload()
 dump_debug_payload(payload, "save-decision")
-decision = parse_payload(payload)
-if not decision.questions:
+questions = parse_payload(payload)
+if not questions:
     return 0
-block = _render_block(decision)
-slug = slugify(decision.questions[0].question, fallback="decision")
+block = _render_block(questions)
+slug = slugify(questions[0].question, fallback="decision")
 ...
 ```
 
-`_normalize_codex_answers` is deleted — its logic lives in `_parse_codex`.
+`_normalize_codex_answers` is deleted — its logic moves into `_parse_codex`.
 
 ---
 
 ## Test update  (`scripts/°base/tests/test_save_decision.py`)
 
-The test calls `_hook._render_block(tool_input, tool_response)` — update to:
+Update call site from `_render_block(tool_input, tool_response)` to:
 
 ```python
-decision = _hook.parse_payload({
+questions = _hook.parse_payload({
     "tool_name": "AskUserQuestion",
     "tool_input": {"questions": _data["questions"]},
     "tool_response": {
@@ -143,7 +134,7 @@ decision = _hook.parse_payload({
         "annotations": _data.get("annotations", {}),
     },
 })
-actual = _hook._render_block(decision)
+actual = _hook._render_block(questions)
 ```
 
 ---
@@ -152,7 +143,7 @@ actual = _hook._render_block(decision)
 
 | File | Change |
 |---|---|
-| `scripts/°base/ai/hooks/save-decision/hook.py` | Add models + two parsers + `parse_payload`; rewrite `_render_block` + `_parse_multi_answer`; simplify `main`; delete `_normalize_codex_answers` |
+| `scripts/°base/ai/hooks/save-decision/hook.py` | Add `Choice`/`Question` models + `parse_payload` + two parsers; rewrite `_render_block`; simplify `main`; delete `_normalize_codex_answers` + `_parse_multi_answer` |
 | `scripts/°base/tests/test_save_decision.py` | Update call site to use `parse_payload` |
 
 ---
@@ -164,6 +155,6 @@ cd /Users/user/Documents/programming/Python/base
 python -m unittest scripts/°base/tests/test_save_decision.py -v
 ```
 
-Then manually feed a Codex debug payload through `parse_payload` and spot-check
-`decision.questions[*].answer` matches expectations from the debug files in
-`ai/°base/output/debug/`.
+Then spot-check Codex parsing by feeding a debug payload through `parse_payload` and
+inspecting `question.choices[*].rank`, `question.notes`, `question.timed_out` against
+the debug files in `ai/°base/output/debug/`.

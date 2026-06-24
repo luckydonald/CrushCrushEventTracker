@@ -1558,3 +1558,6 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 
 ❯ /plan Improve that by migrating both AI's input to one universal pydantic model we define and type properly - and where the rendering then can easily work with attributes, instead of guessing json dict keys.
 
+❯ There is no need to separate `Option`, `Annotation` and `DecisionPlayload`? Like, we're only looking at filled-out questions with 0-4 answers (codex can timeout getting zero results, claude can multi-select but is limited to max 4).
+So I guess a flatter `Question` + `Choice` should be sufficent? The `Question` would have the "global" attributes like if it's multi, or if it timeouted (can be computed prop), and of cause a list of choices. And `Choice` will contain name, id, selection state, text note, etc.
+
