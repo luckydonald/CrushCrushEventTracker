@@ -923,8 +923,12 @@ coverage/
 **/*.nex
 
 # local AI scripting config stuff
+# # flag files
 ai/.debug
 ai/°base/.debug
+# # output folders
+ai/output/debug/
+ai/°base/output/debug/
 
 
 ######################################
