@@ -58,7 +58,12 @@ Adopt these rules for every commit made this session:
 
    For the base repo itself, use `[base] [optional source repo] topic: ai: …`. Recent examples include `[base] git hooks: ai: …`, `[base] ai/hooks: ai: …`, `[base] [AllMyStorage] skills: ai: …`, and `[base] [userscripts] gitignore: …`.
 
-5. **Stage only files changed by the current task.** Never stage `ai/git/pending-commit.md` (it is gitignored) or unrelated files.
+5. **Stage only files you changed yourself as part of the current task.** Before staging, run `git status` and `git diff --name-only` to confirm every file you are about to add. Never stage:
+   - `ai/git/pending-commit.md` (it is gitignored)
+   - files modified by the user, by hooks, or by other tooling that you did not touch
+   - files unrelated to the task at hand, even if they appear modified
+
+   Add files by explicit path — never `git add .` or `git add -A`.
 
 6. Once this skill is activated, keep commiting after every completed task automatically without asking again.
    If the user responds with a simple `commit` or similar (`commit plz`, `keep commiting`, etc.), this means they want to remind you, to follow the "keep automatically committing" instruction, which you should already anyway.
