@@ -2027,3 +2027,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 > </details>
 >
 
+❯ Fix @ai/°base/errors/15.md
+

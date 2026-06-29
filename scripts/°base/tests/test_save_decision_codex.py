@@ -103,15 +103,17 @@ class ParseCodexTests(unittest.TestCase):
         self.assertEqual(other.note, "")
 
     def test_single_label_with_note(self):
-        """Label selected + user_note → label chosen, Other selected with note."""
+        """Label selected + user_note → note on the selected predefined choice, Other unselected."""
         qs = self._parse(_make_payload(_Q_SINGLE, {
             "q1": {"answers": ["A", "user_note: urgent"]}
         }))
         q = qs[0]
-        self.assertTrue(self._choice(q, "A").selected)
+        a_choice = self._choice(q, "A")
+        self.assertTrue(a_choice.selected)
+        self.assertEqual(a_choice.note, "urgent")
         other = self._other(q)
-        self.assertTrue(other.selected)
-        self.assertEqual(other.note, "urgent")
+        self.assertFalse(other.selected)
+        self.assertEqual(other.note, "")
 
     def test_none_of_the_above_no_note(self):
         """'None of the above' → Other selected, no predefined choice selected."""
@@ -211,10 +213,12 @@ class ParseCodexTests(unittest.TestCase):
 
         q1 = qs[1]
         self.assertEqual(q1.question, "Priority?")
-        self.assertTrue(next(c for c in q1.choices if c.label == "High").selected)
+        high = next(c for c in q1.choices if c.label == "High")
+        self.assertTrue(high.selected)
+        self.assertEqual(high.note, "urgent")
         other1 = next(c for c in q1.choices if c.is_other)
-        self.assertTrue(other1.selected)
-        self.assertEqual(other1.note, "urgent")
+        self.assertFalse(other1.selected)
+        self.assertEqual(other1.note, "")
 
         q2 = qs[2]
         self.assertEqual(q2.question, "Mode?")

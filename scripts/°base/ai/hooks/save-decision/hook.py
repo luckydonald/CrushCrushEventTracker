@@ -223,19 +223,31 @@ def _parse_codex(payload: dict) -> list[Question]:
                 other_note = ""
             choices.append(Choice(is_other=True, selection=other_sel, note=other_note))
         else:
+            # For Codex single-select: when a predefined label is selected and a note
+            # is present, the note belongs on that choice (not on Other). Other is only
+            # selected for "None of the above" or when no predefined choice was picked.
+            has_predefined_selection = bool(selected_labels)
             choices = [
                 Choice(
                     label=o.get("label", ""),
                     description=o.get("description", ""),
                     selection=o.get("label", "") in selected_labels,
+                    note=(
+                        notes
+                        if (o.get("label", "") in selected_labels and not none_of_above)
+                        else ""
+                    ),
                 )
                 for o in raw_opts
             ]
-            other_selected = items is not None and (none_of_above or bool(notes))
+            other_selected = items is not None and (
+                none_of_above or (not has_predefined_selection and bool(notes))
+            )
+            other_note = notes if (none_of_above or not has_predefined_selection) else ""
             choices.append(Choice(
                 is_other=True,
                 selection=other_selected,
-                note=notes,
+                note=other_note,
             ))
 
         questions.append(Question(
@@ -265,10 +277,11 @@ def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
     out.append(">     ```\n")
 
 
-def _render_block(questions: list[Question]) -> str:
+def _render_block(questions: list[Question], *, is_codex: bool = False) -> str:
     total = len(questions)
     out: list[str] = []
-    out.append("❯ Question answered.\n")
+    glyph = "›" if is_codex else "❯"
+    out.append(f"{glyph} Question answered.\n")
     out.append("> <details><summary>\n")
     out.append(">\n")
 
@@ -277,29 +290,34 @@ def _render_block(questions: list[Question]) -> str:
         indent = len(str(i)) + 3
         other = next((c for c in q.choices if c.is_other), None)
 
+        out.append(f">> {i}. {q.question}\n")
+
         if q.multi_select:
             pred_selected = [c for c in q.selected if not c.is_other]
-            parts = [c.label for c in pred_selected]
-            if other and other.note:
-                parts.append(other.note)
-            display = ", ".join(parts)
-        elif other and other.selected and other.note:
-            display = other.note
-        elif q.selected:
-            display = q.selected[0].label
+            items_to_show = [c.label for c in pred_selected]
+            if other and other.selected:
+                items_to_show.append(
+                    f"_Other_: {other.note}" if other.note else "_Other_"
+                )
+            if items_to_show:
+                for item in items_to_show:
+                    out.append(f">>{'':>{indent}}- {item}\n")
+            else:
+                out.append(f">>{'':>{indent}}-\n")
         else:
-            display = ""
+            if other and other.selected:
+                display = f"_Other_: {other.note}" if other.note else "_Other_"
+            elif q.selected and not q.selected[0].is_other:
+                display = q.selected[0].label
+            else:
+                display = ""
+            out.append(f">>{'':>{indent}}- {display}\n")
 
-        out.append(f">> {i}. {q.question}\n")
-        out.append(f">>{'':>{indent}}- {display}\n")
-
-        # Preview block in summary (single-select only, when selected choice has a preview)
-        if not q.multi_select and q.selected and not q.selected[0].is_other:
-            sel_preview = q.selected[0].preview
-            if sel_preview:
+            # Preview block (single-select only, when selected choice has a preview)
+            if q.selected and not q.selected[0].is_other and q.selected[0].preview:
                 pi = indent + 2
                 out.append(f">>{'':>{pi}}```text\n")
-                for pline in sel_preview.splitlines():
+                for pline in q.selected[0].preview.splitlines():
                     out.append(f">>{'':>{pi}}{pline}\n")
                 out.append(f">>{'':>{pi}}```\n")
 
@@ -361,6 +379,8 @@ def _render_block(questions: list[Question]) -> str:
                 out.append(f"> - {check} {n}\\. {choice.label}\n")
                 if choice.description:
                     out.append(f">   - _{choice.description}_\n")
+                if choice.note:
+                    out.append(f">   - > {choice.note}\n")
                 if choice.preview:
                     lang = "text" if (n - 1) == last_pred_idx else ""
                     _render_preview_block(choice.preview, lang, out)
@@ -368,7 +388,7 @@ def _render_block(questions: list[Question]) -> str:
             other_n = len(pred_choices) + 1
             if other and other.selected and other.note:
                 other_check = "[x]"
-                other_label = "_Notes:_"
+                other_label = "_Notes:_" if has_any_preview else "_Type something:_"
                 other_text = other.note
             elif has_any_preview:
                 other_check = "[ ]"
@@ -399,7 +419,8 @@ def main() -> int:
     if not questions:
         return 0
 
-    block = _render_block(questions)
+    is_codex = payload.get("tool_name") == "request_user_input"
+    block = _render_block(questions, is_codex=is_codex)
     slug = slugify(questions[0].question, fallback="decision")
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
