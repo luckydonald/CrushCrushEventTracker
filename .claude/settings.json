@@ -147,6 +147,7 @@
       "Bash(yarn tsc:*)",
       "Bash(yarn fix:*)",
       "Bash(yarn build:*)",
+      "Bash(yarn build-only *)",
       "Bash(yarn test:unit)",
       "Bash(yarn test:e2e:pw:*)",
       "Bash(yarn run test:unit)",
