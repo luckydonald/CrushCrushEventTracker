@@ -2031,3 +2031,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ Write another test utilizing `ai/°base/output/debug/20260624-152802_886401-save-decision.json` and `ai/°base/output/debug/20260624-153111_724937-save-decision.json` as input and an expected output (`15.expected.md`)
 
+❯ I prettly slightly changed the format of `15.expected.md` - Changing the sections to be split by `---\n# {num}\n` and the metadata/imput now being `## Input\n| test | {num} |\n| - | - |\n| type | {codex/claude} |\n| file | \`{file in the °base outputs}\` |`. Dynamically use that table as the subtest (add one initial assertion of that subtest that both `{num}` are the same, and a separete outer test that they are a sequence starting at `0` or `1`). The parsing should be dynamic, the intention is to add more examples over time. So subtest title should be the `{num}`, the type and the file.
+

@@ -1,13 +1,29 @@
-"""Render tests driven by real debug payloads recorded during hook testing.
+"""Render tests driven by real debug payloads recorded during hook integration testing.
 
-Input:  ai/°base/output/debug/20260624-152802_886401-save-decision.json  (Claude)
-        ai/°base/output/debug/20260624-153111_724937-save-decision.json  (Codex)
-Spec:   ai/°base/errors/15.expected.md
+Spec: ai/°base/errors/15.expected.md
+
+Each `# N` section in the spec maps to one subTest. Format:
+
+    # {N}
+    ## Input
+    | test | {N}        |
+    | ---- | ---------- |
+    | type | claude     |  ← or "codex"
+    | file | `filename` |  ← file under ai/°base/output/debug/
+
+    ## `query.md` addition
+
+    {rendered output block}
+
+    ---
+
+New entries can be added to the spec at any time; the test discovers them dynamically.
 """
 from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -15,9 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 _HOOK_PATH = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-decision" / "hook.py"
 _SPEC_PATH = ROOT / "ai" / "°base" / "errors" / "15.expected.md"
-
-_CLAUDE_DEBUG = ROOT / "ai" / "°base" / "output" / "debug" / "20260624-152802_886401-save-decision.json"
-_CODEX_DEBUG  = ROOT / "ai" / "°base" / "output" / "debug" / "20260624-153111_724937-save-decision.json"
+_DEBUG_DIR  = ROOT / "ai" / "°base" / "output" / "debug"
 
 
 def _load_hook():
@@ -27,48 +41,93 @@ def _load_hook():
     return mod
 
 
-def _parse_spec() -> tuple[str, str]:
-    """Extract (claude_expected, codex_expected) from 15.expected.md.
+def _parse_table(text: str) -> dict[str, str]:
+    result = {}
+    for m in re.finditer(r'^\| (\w+) \| (.+?) \|$', text, re.MULTILINE):
+        key = m.group(1)
+        val = m.group(2).strip().strip('`')
+        if re.match(r'^-+$', val):
+            continue  # skip separator row values
+        result[key] = val
+    return result
 
-    Uses the same ce+1 trick as test_save_decision.py to include the trailing
-    blank line that _render_block emits.
+
+def _parse_entries() -> list[dict]:
+    """Parse all # N sections from the spec into entry dicts.
+
+    Returns list of {num, table, output} in order of appearance.
     """
-    text = _SPEC_PATH.read_text(encoding="utf-8")
+    text = _SPEC_PATH.read_text(encoding='utf-8')
 
-    marker_claude = "# `query.md` addition (Claude)\n\n"
-    marker_codex_header = "\n# Input (Codex)"
-    marker_codex = "# `query.md` addition (Codex)\n\n"
+    # Split into sections on bare '---' lines, preserving section content
+    raw_sections: list[list[str]] = []
+    current: list[str] = []
+    for line in text.splitlines(keepends=True):
+        if line.strip() == '---':
+            raw_sections.append(current)
+            current = []
+        else:
+            current.append(line)
+    if current:
+        raw_sections.append(current)
 
-    cs = text.index(marker_claude) + len(marker_claude)
-    ce = text.index(marker_codex_header, cs)
-    claude_expected = text[cs : ce + 1]  # +1 to include the trailing blank line
+    entries = []
+    for raw in raw_sections:
+        section = ''.join(raw).strip()
+        if not section:
+            continue
+        m = re.match(r'^# (\d+)\n', section)
+        if not m:
+            continue
+        num = int(m.group(1))
+        table = _parse_table(section)
 
-    ks = text.index(marker_codex) + len(marker_codex)
-    codex_expected = text[ks:]
+        output_m = re.search(r'^## `query\.md` addition\n\n(.+)', section, re.DOTALL | re.MULTILINE)
+        if not output_m:
+            continue
+        # Normalise trailing newlines: _render_block always ends with \n\n
+        output = output_m.group(1).rstrip('\n') + '\n\n'
 
-    return claude_expected, codex_expected
+        entries.append({'num': num, 'table': table, 'output': output})
+    return entries
 
 
 _hook = _load_hook()
-_claude_expected, _codex_expected = _parse_spec()
+_entries = _parse_entries()
 
 
 class RenderFromDebugTests(unittest.TestCase):
 
-    def test_claude_debug_payload(self):
-        """Claude payload from debug file renders to the spec in 15.expected.md."""
-        payload = json.loads(_CLAUDE_DEBUG.read_text(encoding="utf-8"))
-        questions = _hook.parse_payload(payload)
-        actual = _hook._render_block(questions, is_codex=False)
-        self.assertEqual(actual, _claude_expected)
+    def test_entry_sequence(self):
+        """Entries form a contiguous sequence starting at 1."""
+        nums = [e['num'] for e in _entries]
+        self.assertGreater(len(nums), 0, "spec has no entries")
+        self.assertEqual(nums[0], 1, "sequence must start at 1")
+        for i, n in enumerate(nums, 1):
+            self.assertEqual(n, i, f"entry at position {i} has num={n}, expected {i}")
 
-    def test_codex_debug_payload(self):
-        """Codex payload from debug file renders to the spec in 15.expected.md."""
-        payload = json.loads(_CODEX_DEBUG.read_text(encoding="utf-8"))
-        questions = _hook.parse_payload(payload)
-        actual = _hook._render_block(questions, is_codex=True)
-        self.assertEqual(actual, _codex_expected)
+    def test_render_matches_spec(self):
+        """Each spec entry renders identically to its expected block."""
+        for entry in _entries:
+            num = entry['num']
+            table = entry['table']
+            typ = table.get('type', '')
+            filename = table.get('file', '')
+            label = f"{num} - {typ} - {filename}"
+
+            with self.subTest(label):
+                # Section heading num and table 'test' value must agree
+                self.assertEqual(
+                    str(num), table.get('test', ''),
+                    f"section # {num} heading does not match table test={table.get('test')!r}",
+                )
+
+                payload = json.loads((_DEBUG_DIR / filename).read_text(encoding='utf-8'))
+                is_codex = typ == 'codex'
+                questions = _hook.parse_payload(payload)
+                actual = _hook._render_block(questions, is_codex=is_codex)
+                self.assertEqual(actual, entry['output'])
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()
