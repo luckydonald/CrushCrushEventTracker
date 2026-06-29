@@ -132,19 +132,25 @@ def _parse_claude(payload: dict) -> list[Question]:
             other_sel: StrictBool | StrictInt = True if custom_text else False
             choices.append(Choice(is_other=True, selection=other_sel, note=custom_text))
         else:
+            # "direct other": answer doesn't match any label and isn't the notes-only
+            # sentinel → the raw answer string is the text the user typed in the Other field.
+            label_set = {o.get("label", "") for o in raw_opts}
+            direct_other = bool(answer_str) and not notes_only and answer_str not in label_set
             choices = [
                 Choice(
                     label=o.get("label", ""),
                     description=o.get("description", ""),
                     preview=o.get("preview", ""),
-                    selection=not notes_only and o.get("label", "") == answer_str,
+                    selection=not notes_only and not direct_other and o.get("label", "") == answer_str,
                 )
                 for o in raw_opts
             ]
+            other_sel = notes_only or direct_other
+            other_note = ann_notes if notes_only else (answer_str if direct_other else "")
             choices.append(Choice(
                 is_other=True,
-                selection=notes_only,
-                note=ann_notes if notes_only else "",
+                selection=other_sel,
+                note=other_note,
             ))
 
         questions.append(Question(

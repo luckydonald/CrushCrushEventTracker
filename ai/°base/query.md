@@ -2029,3 +2029,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ Fix @ai/°base/errors/15.md
 
+❯ Write another test utilizing `ai/°base/output/debug/20260624-152802_886401-save-decision.json` and `ai/°base/output/debug/20260624-153111_724937-save-decision.json` as input and an expected output (`15.expected.md`)
+
