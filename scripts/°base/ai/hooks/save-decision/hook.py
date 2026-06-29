@@ -2,10 +2,13 @@
 """PostToolUse hook for AskUserQuestion / request_user_input: append the asked
 question(s) and the picked answer to ai/query.md as a markdown blockquote, then commit.
 
-Usage: hook.py [ai_tool_name]   (accepted for parity with save-prompt; unused here)
+Usage:
+  hook.py [ai_tool_name]           normal hook mode (reads payload from stdin)
+  hook.py --preview=<file>         render a saved payload JSON to stdout for quick inspection
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -415,8 +418,83 @@ def _render_block(questions: list[Question], *, is_codex: bool = False) -> str:
     return "".join(out)
 
 
+def _find_repo_root(start: Path) -> Path | None:
+    p = start.resolve()
+    while True:
+        if (p / ".git").exists():
+            return p
+        parent = p.parent
+        if parent == p:
+            return None
+        p = parent
+
+
+def _resolve_preview_path(value: str, script_dir: Path, cwd: Path) -> Path:
+    """Resolve --preview=VALUE to an existing file path.
+
+    Tries (in order):
+      1. Absolute path as-is; if missing, retry as repo-root-relative (strip leading /).
+      2. Bare filename (no /): ai/°base/output/debug/, then ai/output/debug/.
+      3. Relative path: cwd, repo root, script dir.
+    """
+    repo_root = _find_repo_root(cwd)
+    p = Path(value)
+
+    if p.is_absolute():
+        if p.exists():
+            return p
+        if repo_root is not None:
+            candidate = repo_root / str(p).lstrip("/")
+            if candidate.exists():
+                return candidate
+        raise FileNotFoundError(f"--preview: file not found: {value!r}")
+
+    if "/" not in value and "\\" not in value:
+        if repo_root is not None:
+            for debug_dir in (
+                repo_root / "ai" / "°base" / "output" / "debug",
+                repo_root / "ai" / "output" / "debug",
+            ):
+                candidate = debug_dir / value
+                if candidate.exists():
+                    return candidate
+
+    candidates: list[Path] = [cwd / p]
+    if repo_root is not None and repo_root.resolve() != cwd.resolve():
+        candidates.append(repo_root / p)
+    candidates.append(script_dir / p)
+
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved.exists():
+            return resolved
+
+    raise FileNotFoundError(
+        f"--preview: {value!r} not found "
+        f"(cwd={cwd}, repo={repo_root}, script={script_dir})"
+    )
+
+
 def main() -> int:
-    _ = sys.argv[1] if len(sys.argv) > 1 else "unknown"  # accepted for parity, unused
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("tool_name", nargs="?", default="unknown")
+    parser.add_argument("--preview", metavar="FILE", default=None)
+    args, _ = parser.parse_known_args()
+
+    if args.preview is not None:
+        path = _resolve_preview_path(
+            args.preview,
+            script_dir=Path(__file__).resolve().parent,
+            cwd=Path.cwd(),
+        )
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        questions = parse_payload(payload)
+        if not questions:
+            print("(no questions parsed)", file=sys.stderr)
+            return 1
+        is_codex = payload.get("tool_name") == "request_user_input"
+        sys.stdout.write(_render_block(questions, is_codex=is_codex))
+        return 0
 
     payload = read_payload()
     dump_debug_payload(payload, "save-decision")

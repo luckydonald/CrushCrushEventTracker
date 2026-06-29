@@ -2033,3 +2033,10 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ I prettly slightly changed the format of `15.expected.md` - Changing the sections to be split by `---\n# {num}\n` and the metadata/imput now being `## Input\n| test | {num} |\n| - | - |\n| type | {codex/claude} |\n| file | \`{file in the °base outputs}\` |`. Dynamically use that table as the subtest (add one initial assertion of that subtest that both `{num}` are the same, and a separete outer test that they are a sequence starting at `0` or `1`). The parsing should be dynamic, the intention is to add more examples over time. So subtest title should be the `{num}`, the type and the file.
 
+❯ Add a `--preview=<file>` flag to render the markdown to `stdout` instead - to quickly validate a question payload json. Allow the following formats:
+- a) filename only (e.g. `20260624-152802_886401-save-decision.json`): Look into `ai/°base/output/debug/` and `ai/output/debug/`.
+- b) relative path to repo root (e.g `ai/output/debug/….json` or `/ai/output/debug/….json` or `../other-project/ai/output/debug/….json`)
+- c) absolute path (must start with `/`)
+- d) relative path to script (e.g. `something.json` - would be in `ai/jooks/save-prompt/`)
+- e) relative path to current codex/claude dir (usually repo root, but subprojects within a bigger project are possible - e.g. `../ai/output/debug/….json`)
+
