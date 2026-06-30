@@ -2048,3 +2048,6 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ Fix the unittests, add a test checking the output of `ai/°base/output/debug/20260630-033350_321912-record-memory.json`.
 
+❯ Write me a short python script into `scripts/°base/`, which rebases the current branch from the last `origin/mane` meeting point until now, and removes all claude committer/author name/email.
+I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instead be `✨❯ Lucky Lucy <claude._.ai._.code@luckydonald.de>`.
+
