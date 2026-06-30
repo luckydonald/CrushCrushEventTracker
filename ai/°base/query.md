@@ -2044,3 +2044,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ It's at @ai/skills/commit-with-lplp-style/SKILL.md
 
+❯ Fix @ai/°base/output/debug/20260630-033350_321912-record-memory.json not causing a plan update commit.
+

@@ -76,6 +76,17 @@ def _plan_from_write(tool_input: dict) -> str:
     return (tool_input.get("content") or "").strip()
 
 
+def _plan_from_edit(tool_input: dict) -> str:
+    """Extract plan text when the Edit tool patches ~/.claude/plans/*.md."""
+    file_path = tool_input.get("file_path") or ""
+    if not re.search(r"/\.claude/plans/[^/]+\.md$", file_path):
+        return ""
+    try:
+        return Path(file_path).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def _plan_from_codex_stop(payload: dict) -> str:
     """Extract the final proposed plan from a Codex Stop hook payload."""
     if payload.get("hook_event_name") not in {"Stop", "stop"}:
@@ -230,6 +241,8 @@ def main() -> int:
         plan = _plan_from_codex_sources(payload)
     elif tool_name == "Write":
         plan = _plan_from_write(tool_input)
+    elif tool_name == "Edit":
+        plan = _plan_from_edit(tool_input)
     elif tool_name == "ExitPlanMode":
         plan = (tool_input.get("plan") or "").strip()
         if not plan:

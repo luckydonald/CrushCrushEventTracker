@@ -54,7 +54,7 @@
         ]
       },
       {
-        "matcher": "Write|ExitPlanMode",
+        "matcher": "Write|Edit|ExitPlanMode",
         "hooks": [
           {
             "type": "command",
