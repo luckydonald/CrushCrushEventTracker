@@ -2051,3 +2051,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 ❯ Write me a short python script into `scripts/°base/`, which rebases the current branch from the last `origin/mane` meeting point until now, and removes all claude committer/author name/email.
 I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instead be `✨❯ Lucky Lucy <claude._.ai._.code@luckydonald.de>`.
 
+› Fix ai/°base/errors/16.txt and ai/°base/errors/17.txt
+

@@ -10,8 +10,11 @@ Usage:
 from __future__ import annotations
 
 import os
+import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 UPSTREAM = "origin/mane"
@@ -23,6 +26,10 @@ NEW_AUTHOR = f"{NEW_NAME} <{NEW_EMAIL}>"
 
 def capture(*args: str) -> str:
     return subprocess.run(args, check=True, text=True, capture_output=True).stdout.strip()
+
+
+def shell_join(args: list[str]) -> str:
+    return " ".join(shlex.quote(arg) for arg in args)
 
 
 def amend_step() -> None:
@@ -53,8 +60,24 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Rebasing onto merge-base {merge_base} with {UPSTREAM}, stripping claude[bot] authorship...")
 
     script_path = Path(__file__).resolve()
-    exec_cmd = f"{sys.executable} {script_path} --amend-step"
-    subprocess.run(["git", "rebase", merge_base, "--exec", exec_cmd], check=True)
+    tmp = Path(tempfile.mkdtemp(prefix="rebase-strip-claude-"))
+    exec_script = tmp / script_path.name
+    shutil.copy2(script_path, exec_script)
+    exec_cmd = shell_join([sys.executable, str(exec_script), "--amend-step"])
+    try:
+        subprocess.run(["git", "rebase", merge_base, "--exec", exec_cmd], check=True)
+    except subprocess.CalledProcessError as exc:
+        print(
+            "\nRebase stopped before claude[bot] authorship stripping completed.",
+            file=sys.stderr,
+        )
+        print(f"Kept the rebase --exec callback at: {exec_script}", file=sys.stderr)
+        print("Resolve conflicts, stage the resolved files, then run:", file=sys.stderr)
+        print("  git rebase --continue", file=sys.stderr)
+        print("To abandon the rebase, run:", file=sys.stderr)
+        print("  git rebase --abort", file=sys.stderr)
+        return exc.returncode
+    shutil.rmtree(tmp)
     return 0
 
 
