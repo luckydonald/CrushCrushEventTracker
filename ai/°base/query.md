@@ -2046,3 +2046,5 @@ and for claude are at @ai/°base/plans/019_available-mcp-tools.md
 
 ❯ Fix @ai/°base/output/debug/20260630-033350_321912-record-memory.json not causing a plan update commit.
 
+❯ Fix the unittests, add a test checking the output of `ai/°base/output/debug/20260630-033350_321912-record-memory.json`.
+

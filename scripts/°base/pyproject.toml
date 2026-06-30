@@ -5,6 +5,7 @@ description = "Local environment for scripts/°base/ helpers and tests."
 requires-python = ">=3.11"
 dependencies = [
     "prompt_toolkit>=3.0.52,<4",
+    "pydantic>=2.0,<3",
     "pyte>=0.8.1,<0.9",
 ]
 
