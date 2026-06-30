@@ -207,9 +207,7 @@
       "Read(**/secrets/**)",
       "Read(**/credentials/**)",
       "Read(**/.aws/**)",
-      "Read(**/.ssh/**)",
-      "Read(**/docker-compose*.yml)",
-      "Read(**/config/database.yml)"
+      "Read(**/.ssh/**)"
     ]
   }
 }
