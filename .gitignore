@@ -882,31 +882,29 @@ install-state.gz
 .playwright-mcp/
 
 # AI folder
-ai/git/pending-commit.md
-ai/git/rebase-msg-*.md
-ai/git/rebase-msg.md
+**/ai/git/pending-commit.md
+**/ai/git/rebase-msg-*.md
+**/ai/git/rebase-msg.md
 
 # AI docs: api/webpage downloads
-ai/apis/
+**/ai/apis/
 
 # Scripts folder
 !/scripts/
-!ai/scripts/
+!**/ai/scripts/
 
 !/scripts/**
-!ai/scripts/**
+!**/ai/scripts/**
 
 /scripts/.venv
-/ai/scripts/.venv
+**/ai/scripts/.venv
 
 
 # Don't ignore the libs we've written ourselves.
 !src/lib/
 
 # Don't ignore .gitkeep
-!.gitkeep
 !**/.gitkeep
-!/**/.gitkeep
 
 # coverage output
 coverage/
