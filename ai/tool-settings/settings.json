@@ -496,18 +496,6 @@
         "command": "./scripts/°base/ai/references/download-link.py:*"
       },
       {
-        "type": "bash",
-        "command": "echo \"---\""
-      },
-      {
-        "type": "bash",
-        "command": "echo ---"
-      },
-      {
-        "type": "bash",
-        "command": "echo '---'"
-      },
-      {
         "type": "mcp",
         "server": "bugsink",
         "tool": "list_projects"
@@ -521,6 +509,18 @@
         "type": "mcp",
         "server": "bugsink",
         "tool": "get_issue"
+      },
+      {
+        "type": "bash",
+        "command": "echo \"---\""
+      },
+      {
+        "type": "bash",
+        "command": "echo ---"
+      },
+      {
+        "type": "bash",
+        "command": "echo '---'"
       }
     ],
     "deny": [
