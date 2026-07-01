@@ -88,6 +88,67 @@ class AiSettingsSyncTests(unittest.TestCase):
         self.assertIn("'claude'", claude_command)
         self.assertNotIn("'codex'", claude_command)
 
+    def test_render_save_decision_uses_uv_project_environment(self):
+        shared = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "AskUserQuestion|request_user_input",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'claude'",
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+
+        rendered = MODULE.render_codex_hooks(shared)
+        command = rendered["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
+
+        self.assertIn('uv run --project "$(git rev-parse --show-toplevel)/scripts/°base"', command)
+        self.assertIn('python "$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py"', command)
+        self.assertIn("'codex'", command)
+
+    def test_uv_wrapped_save_decision_neutralizes_to_same_identity(self):
+        plain = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "AskUserQuestion|request_user_input",
+                        "hooks": [
+                            {
+                                "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'claude'",
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+        wrapped = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "AskUserQuestion|request_user_input",
+                        "hooks": [
+                            {
+                                "command": "uv run --project \"$(git rev-parse --show-toplevel)/scripts/°base\" python \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'codex'",
+                                "async": True,
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+
+        merged = MODULE._merge(plain, wrapped)
+        entries = merged["hooks"]["PostToolUse"]
+
+        self.assertEqual(len(entries), 1)
+        self.assertTrue(entries[0]["hooks"][0]["async"])
+
     def test_normalize_native_adds_default_plan_tool_arg(self):
         native = {
             "hooks": {

@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'claude'",
+            "command": "uv run --project \"$(git rev-parse --show-toplevel)/scripts/°base\" python \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'claude'",
             "async": true
           }
         ]
@@ -195,6 +195,9 @@
       "Bash(uv run --directory scripts/°base python -m ai.settings.sync:*)",
       "Bash(./scripts/°base/ai/settings/sync.py)",
       "Bash(GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *)",
+      "Bash(env UV_CACHE_DIR=/tmp/uv-cache DOWNLOAD_LINK_LIVE=1 uv run --project scripts/°base python -m unittest scripts/°base/tests/test_download_link_live.py -v)",
+      "Bash(env UV_CACHE_DIR=/tmp/uv-cache ./scripts/°base/ai/references/download-link.py:*)",
+      "Bash(./scripts/°base/ai/references/download-link.py:*)",
       "Bash(echo \"---\")",
       "Bash(echo ---)",
       "Bash(echo '---')"

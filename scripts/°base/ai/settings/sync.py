@@ -312,8 +312,43 @@ def _normalize_command_path(command: str) -> str:
     return command
 
 
+def _uv_project_hook_command(command: str) -> str:
+    if "save-decision/hook.py" not in command:
+        return command
+    match = re.search(r"(?:python3|python)\s+\"?([^\"']*save-decision/hook\.py)\"?\s*(.*)\Z", command)
+    if not match:
+        return command
+    script, args = match.groups()
+    if "uv run --project" in command:
+        return command
+    script = script.strip()
+    args = args.strip()
+    if "$(git rev-parse --show-toplevel)" not in script:
+        script = f"$(git rev-parse --show-toplevel)/{script.lstrip('./')}"
+    return (
+        f'uv run --project "$(git rev-parse --show-toplevel)/scripts/°base" '
+        f'python "{script}"'
+        + (f" {args}" if args else "")
+    )
+
+
+def _neutralize_uv_project_hook_command(command: str) -> str:
+    match = re.search(
+        r"\Auv run --project \"?\$\(git rev-parse --show-toplevel\)/scripts/°base\"? "
+        r"python \"?([^\"']*save-decision/hook\.py)\"?\s*(.*)\Z",
+        command,
+    )
+    if not match:
+        return command
+    script, args = match.groups()
+    script = script.strip()
+    args = args.strip()
+    return f'python3 "{script}"' + (f" {args}" if args else "")
+
+
 def _neutralize_command(command: str) -> str:
     command = _normalize_command_path(command)
+    command = _neutralize_uv_project_hook_command(command)
     if (
         "save-prompt/hook.py" in command
         or "save-decision/hook.py" in command
@@ -343,6 +378,7 @@ def _render_hooks(shared: dict[str, Any], tool: str) -> dict[str, Any]:
                 new_hook = deepcopy(hook)
                 command = str(new_hook.get("command") or "")
                 command = _normalize_command_path(_replace_tool_arg(command, tool))
+                command = _uv_project_hook_command(command)
                 new_hook["command"] = command
                 if tool == "codex":
                     new_hook.pop("async", None)

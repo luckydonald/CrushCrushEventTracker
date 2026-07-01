@@ -2053,3 +2053,100 @@ I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instea
 
 › Fix ai/°base/errors/16.txt and ai/°base/errors/17.txt
 
+› write a python script at `scripts/°base/ai/references/download-link.py`, which
+- input: URL
+- processes arg 1 or asks for input, fails if no tty and nothing piped in with error how to do it instead.
+- Take url as folder path (remove schema's `:` though)
+- write output to `ai/references/{path}`.
+- fetches url and writes to file
+- use `uv` to install some html-to-markdown parser
+- `uv` shebang
+- basically for downloading documentation
+- cases:
+  1. link ends in `.md`
+     - can be downloaded directy
+     - path as is
+  2. link does not end in `.md`
+     - attempt if `.md` version exists
+     - try with and without original extension
+     - Examples:
+       - `/docs/foo` -> `/docs/foo.md`
+       - `/docs/bar.html` -> `/docs/bar.md`, `/docs/bar.html.md`
+  3. Link is on github
+     - grab permalink
+       1. basically api lookup for the repo's current commit
+          - `curl -sS -H "Accept: application/vnd.github+json" https://api.github.com/repos/OWNER/REPO/git/ref/heads/BRANCH | jq -r .object.sha`
+       2. Construct back the full URL with the blob/COMMIT
+     - actually download from the `raw.githubusercontent.com` page instead
+  4. other git hoster
+     - similar to github
+     - gitlab, bitbucket, sourceforge, AWS CodeCommit, SourceHut, Codeberg, Launchpad
+     - gitlab selfhosted, gitea, Forgejo, Radicle, other selfhosted
+  5. readthedocs
+     - if not latest use the version in the url (i.e. 2.3.4) as is - normal url parsing should work
+     - the filename should not be `_.md` but the revision (in footer of document)
+  5. HTML pages
+     - convert to markdown
+     - attach `/_.md` for writing the file.
+- tests:
+  - `https://developers.openai.com/codex/config-advanced#profiles` -> `ai/resources/https/developers.openai.com/codex/config-advanced.md`
+  - `https://github.com/j-shelfwood/bugsink-mcp/blob/main/README.md` -> `ai/resources/https/github.com/j-shelfwood/bugsink-mcp/blob/3010d119bca3a48eced460e8f51f52cda4b51d5b/README.md` for folder path and `https://raw.githubusercontent.com/j-shelfwood/bugsink-mcp/3010d119bca3a48eced460e8f51f52cda4b51d5b/README.md` for dl.
+  - `https://pyte.readthedocs.io/en/latest/api.html` -> `ai/resources/https/pyte.readthedocs.io/en/latest/api.html/a267d4ae.md`
+  - `https://www.equestriadaily.com/2016/02/oc-pony-spotlight-littlepip.html` -> `ai/resources/https/www.equestriadaily.com/2016/02/oc-pony-spotlight-littlepip.html/_.md`
+
+› Also fix `• PostToolUse hook (failed)` ` error: hook exited with code 1`
+
+› No, it's probably the record decision hook when I answered the questions.
+
+› No, use `uv` shebang and `uv` command to make sure pydantic is installed through it.
+
+> › Implement the [Plan](./plans/020_download-references-script-and-uv-hook-fix.md).
+
+› Also recover the question decision by manually triggerening the fixed hook. Then use $commit-with-lplp-style
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which output root should the script and tests use?
+>>    - ai/references (Recommended)
+>> 2. How complete should the first implementation be for non-GitHub git hosters?
+>>    - All listed hosters
+>> 3. Should tests hit the live network or mock fetch/API responses?
+>>    - _Other_: Both, Mock network for exact tests, plus live examples which assert that something useful is returned. Also for e.g. github add some branch links and commit-hash permalinks to the test input. At least the commit ones should not change at all, for the other two, be okay with the resulting commit hash changing.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Output Root** (1/3) <kbd>Single Select</kbd><br>
+>> Which output root should the script and tests use?
+> - [x] 1\. ai/references (Recommended)
+>   - _Matches the main requirement and existing repository layout; treat the `ai/resources` examples as typos._
+> - [ ] 2\. ai/resources
+>   - _Matches the example paths exactly, but conflicts with the requested destination and existing reference files._
+> - [ ] 3\. _Type something._
+>
+>> **Forge Scope** (2/3) <kbd>Single Select</kbd><br>
+>> How complete should the first implementation be for non-GitHub git hosters?
+> - [ ] 1\. GitHub full, others clear errors (Recommended)
+>   - _Implements GitHub permalink/raw behavior now, with explicit unsupported-host errors for other forges._
+> - [ ] 2\. Major hosted forges
+>   - _Also implement GitLab.com, Bitbucket, Codeberg/Forgejo/Gitea public URL patterns where raw/permalink URLs are deterministic._
+> - [x] 3\. All listed hosters
+>   - _Attempts broad support including self-hosted and uncommon forges, increasing complexity and likely requiring host-specific API decisions._
+> - [ ] 4\. _Type something._
+>
+>> **Tests** (3/3) <kbd>Single Select</kbd><br>
+>> Should tests hit the live network or mock fetch/API responses?
+> - [ ] 1\. Mock network (Recommended)
+>   - _Keeps unit tests stable and fast while asserting exact URL resolution, fallback order, and output paths._
+> - [ ] 2\. Live examples
+>   - _Uses the provided URLs end-to-end, but tests can fail when remote content, branches, or revision hashes change._
+> - [x] 3\. _Type something:_
+>   - > Both, Mock network for exact tests, plus live examples which assert that something useful is returned. Also for e.g. github add some branch links and commit-hash permalinks to the test input. At least the commit ones should not change at all, for the other two, be okay with the resulting commit hash changing.
+>
+> </details>
+>
+
+› Hey, keep my additions to `ai/tool-settings/settings.json`!
+
