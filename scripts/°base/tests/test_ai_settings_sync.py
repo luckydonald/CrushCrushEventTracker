@@ -324,6 +324,11 @@ class CommandsTests(unittest.TestCase):
         self.assertEqual(entry, {"type": "webfetch", "pattern": "https://example.com"})
         self.assertEqual(commands._render_claude_permission_entry(entry), "WebFetch(https://example.com)")
 
+    def test_parse_render_round_trip_mcp_tool(self):
+        entry = commands._parse_claude_permission_entry("mcp__bugsink__list_projects")
+        self.assertEqual(entry, {"type": "mcp", "server": "bugsink", "tool": "list_projects"})
+        self.assertEqual(commands._render_claude_permission_entry(entry), "mcp__bugsink__list_projects")
+
     def test_parse_malformed_string_is_lossless_raw(self):
         entry = commands._parse_claude_permission_entry("not-a-tool-call")
         self.assertEqual(entry, {"type": "raw", "value": "not-a-tool-call"})
@@ -609,6 +614,39 @@ class McpServersTests(unittest.TestCase):
     def test_parse_codex_mcp_toml_ignores_garbage(self):
         self.assertEqual(mcp_servers.parse_codex_mcp_toml("not { valid toml"), {})
 
+    def test_render_codex_mcp_block_includes_tool_approval_and_disabled_tools(self):
+        shared = {
+            "mcp": self._mcp(),
+            "permissions": {
+                "allow": [{"type": "mcp", "server": "bugsink", "tool": "list_projects"}],
+                "deny": [{"type": "mcp", "server": "bugsink", "tool": "delete_project"}],
+            },
+        }
+        block, skipped = mcp_servers.render_codex_mcp_block(shared, self.GIT_ROOT)
+
+        self.assertEqual(skipped, [])
+        self.assertIn('disabled_tools = ["delete_project"]', block)
+        self.assertIn('[mcp_servers."bugsink".tools."list_projects"]', block)
+        self.assertIn('approval_mode = "auto"', block)
+
+    def test_parse_codex_mcp_tool_permissions_round_trip(self):
+        shared = {
+            "mcp": self._mcp(),
+            "permissions": {
+                "allow": [{"type": "mcp", "server": "bugsink", "tool": "list_projects"}],
+                "deny": [{"type": "mcp", "server": "bugsink", "tool": "delete_project"}],
+            },
+        }
+        block, _ = mcp_servers.render_codex_mcp_block(shared, self.GIT_ROOT)
+
+        parsed = mcp_servers.parse_codex_mcp_tool_permissions(block)
+
+        self.assertEqual(parsed["allow"], [{"type": "mcp", "server": "bugsink", "tool": "list_projects"}])
+        self.assertEqual(parsed["deny"], [{"type": "mcp", "server": "bugsink", "tool": "delete_project"}])
+
+    def test_parse_codex_mcp_tool_permissions_ignores_garbage(self):
+        self.assertEqual(mcp_servers.parse_codex_mcp_tool_permissions("not { valid toml"), {"allow": [], "deny": []})
+
     def test_insert_or_replace_block_appends_when_absent(self):
         text = 'model = "gpt-5.5"\n'
         result = mcp_servers.insert_or_replace_block(text, "# BEGIN", "# END", "# BEGIN\nnew content\n# END\n")
@@ -692,6 +730,37 @@ class CliLoadLayerTests(unittest.TestCase):
 
             claude = hooks.render_claude(shared)
             self.assertIn("Bash(tree:*)", claude["permissions"]["allow"])
+
+    def test_load_layer_merges_hand_edited_mcp_tool_approval_and_is_stable_on_rerun(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            config_path = root / ".codex" / "config.toml"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"version": 1, "hooks": {}, "permissions": {"allow": [], "deny": []}, "enabledPlugins": {}}',
+                encoding="utf-8",
+            )
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text(
+                '[mcp_servers.bugsink]\ncommand = "npx"\nargs = ["-y", "bugsink-mcp"]\nenabled = true\n'
+                '\n[mcp_servers.bugsink.tools.list_projects]\napproval_mode = "auto"\n',
+                encoding="utf-8",
+            )
+
+            shared = cli._load_layer(shared_path, claude_path, codex_path, None, config_path)
+
+            self.assertIn(
+                {"type": "mcp", "server": "bugsink", "tool": "list_projects"},
+                shared["permissions"]["allow"],
+            )
+
+            shared_path.write_text(json.dumps(shared), encoding="utf-8")
+            shared_again = cli._load_layer(shared_path, claude_path, codex_path, None, config_path)
+            self.assertEqual(shared_again["permissions"]["allow"], shared["permissions"]["allow"])
 
     def test_load_layer_merges_hand_added_claude_mcp_server_as_flat_entry(self):
         with tempfile.TemporaryDirectory() as tmp:

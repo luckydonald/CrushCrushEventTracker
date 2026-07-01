@@ -61,6 +61,37 @@ def _merge_codex_rules_additions(shared: dict[str, Any], rules_text: str) -> dic
     return shared
 
 
+def _merge_mcp_tool_permission_additions(
+    shared: dict[str, Any], parsed: dict[str, list[dict[str, Any]]]
+) -> dict[str, Any]:
+    """Merge genuinely new MCP tool permission entries parsed back from a
+    hand-edited `.codex/config.toml` (`disabled_tools` / per-tool
+    `approval_mode = "auto"`) into `shared`, deduped by (server, tool)."""
+    if not parsed.get("allow") and not parsed.get("deny"):
+        return shared
+
+    shared = deepcopy(shared)
+    permissions = shared.setdefault("permissions", {"allow": [], "deny": []})
+    for bucket in ("allow", "deny"):
+        existing = list(permissions.get(bucket) or [])
+        known = {
+            (entry.get("server"), entry.get("tool"))
+            for entry in existing
+            if isinstance(entry, dict) and entry.get("type") == "mcp"
+        }
+        additions = []
+        for entry in parsed.get(bucket) or []:
+            key = (entry["server"], entry["tool"])
+            if key in known:
+                continue
+            additions.append(entry)
+            known.add(key)
+        if additions:
+            permissions[bucket] = existing + additions
+    shared["permissions"] = permissions
+    return shared
+
+
 def _merge_mcp_native_additions(
     shared: dict[str, Any], native_servers: dict[str, dict[str, Any]], git_root: Path
 ) -> dict[str, Any]:
@@ -127,12 +158,13 @@ def _load_layer(
     for path in (claude_path, codex_path):
         if path.is_file():
             native_sources.append((path.stat().st_mtime, _read_json(path)))
+    codex_config_text: str | None = None
     if codex_config_path is not None and codex_config_path.is_file():
-        config_text = codex_config_path.read_text(encoding="utf-8")
-        plugins = codex_toml.parse_codex_plugins(config_text)
+        codex_config_text = codex_config_path.read_text(encoding="utf-8")
+        plugins = codex_toml.parse_codex_plugins(codex_config_text)
         if plugins:
             native_sources.append((codex_config_path.stat().st_mtime, {"enabledPlugins": plugins}))
-        mcp_from_codex = mcp_servers.parse_codex_mcp_toml(config_text)
+        mcp_from_codex = mcp_servers.parse_codex_mcp_toml(codex_config_text)
         if mcp_from_codex:
             mcp_native_sources.append((codex_config_path.stat().st_mtime, mcp_from_codex))
     if claude_mcp_path is not None and claude_mcp_path.is_file():
@@ -148,6 +180,10 @@ def _load_layer(
 
     if codex_rules_path is not None and codex_rules_path.is_file():
         shared = _merge_codex_rules_additions(shared, codex_rules_path.read_text(encoding="utf-8"))
+
+    if codex_config_text is not None:
+        parsed_tool_permissions = mcp_servers.parse_codex_mcp_tool_permissions(codex_config_text)
+        shared = _merge_mcp_tool_permission_additions(shared, parsed_tool_permissions)
 
     combined_mcp_native: dict[str, Any] = {}
     for _, data in sorted(mcp_native_sources, key=lambda item: item[0]):

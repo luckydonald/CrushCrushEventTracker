@@ -7,6 +7,11 @@ from typing import Any
 
 _PERMISSION_ENTRY = re.compile(r"^([A-Za-z_]\w*)\((.*)\)$", re.DOTALL)
 
+# Claude's MCP tool permission strings are bare (no parens), e.g.
+# `mcp__bugsink__list_projects` — server names are simple slugs with no
+# `__`; tool names may contain underscores.
+_MCP_TOOL_ENTRY = re.compile(r"^mcp__(?P<server>[^_]+)__(?P<tool>.+)$")
+
 # Type-specific field name used for the entry's main value, keyed by the
 # lowercased tool type. Anything not listed here falls back to `pattern`.
 _TYPE_FIELD: dict[str, str] = {
@@ -39,6 +44,9 @@ def _parse_claude_permission_entry(entry: Any) -> dict[str, Any]:
         return entry
     if not isinstance(entry, str):
         return {"type": "raw", "value": entry}
+    mcp_match = _MCP_TOOL_ENTRY.match(entry)
+    if mcp_match:
+        return {"type": "mcp", "server": mcp_match.group("server"), "tool": mcp_match.group("tool")}
     match = _PERMISSION_ENTRY.match(entry)
     if not match:
         return {"type": "raw", "value": entry}
@@ -58,6 +66,8 @@ def _render_claude_permission_entry(entry: Any) -> str:
     entry_type = entry.get("type", "")
     if entry_type == "raw":
         return str(entry.get("value", ""))
+    if entry_type == "mcp":
+        return f"mcp__{entry.get('server', '')}__{entry.get('tool', '')}"
     tool = _TYPE_TO_CLAUDE_TOOL.get(entry_type, entry_type.capitalize())
     field = _TYPE_FIELD.get(entry_type, _DEFAULT_FIELD)
     content = entry.get(field, entry.get(_DEFAULT_FIELD, ""))

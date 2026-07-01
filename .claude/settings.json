@@ -196,7 +196,10 @@
       "Bash(./scripts/°base/ai/references/download-link.py:*)",
       "Bash(echo \"---\")",
       "Bash(echo ---)",
-      "Bash(echo '---')"
+      "Bash(echo '---')",
+      "mcp__bugsink__list_projects",
+      "mcp__bugsink__list_issues",
+      "mcp__bugsink__get_issue"
     ],
     "deny": [
       "Read(**/.env*)",

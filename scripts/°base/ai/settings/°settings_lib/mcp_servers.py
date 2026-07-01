@@ -93,7 +93,30 @@ def parse_claude_mcp(mcp_json_data: dict[str, Any]) -> dict[str, dict[str, Any]]
     return result
 
 
-def _server_table_lines(name: str, server: dict[str, Any], mcp: dict[str, Any], git_root: Path) -> list[str] | None:
+def _mcp_tool_permissions(shared: dict[str, Any]) -> dict[str, dict[str, list[str]]]:
+    """Group `{"type": "mcp", "server": ..., "tool": ...}` permission entries
+    by server, keyed by bucket (`allow`/`deny`)."""
+    permissions = shared.get("permissions") or {}
+    result: dict[str, dict[str, list[str]]] = {}
+    for bucket in ("allow", "deny"):
+        for entry in permissions.get(bucket) or []:
+            if not isinstance(entry, dict) or entry.get("type") != "mcp":
+                continue
+            server = entry.get("server")
+            tool = entry.get("tool")
+            if not server or not tool:
+                continue
+            result.setdefault(server, {}).setdefault(bucket, []).append(tool)
+    return result
+
+
+def _server_table_lines(
+    name: str,
+    server: dict[str, Any],
+    mcp: dict[str, Any],
+    git_root: Path,
+    tool_permissions: dict[str, list[str]] | None = None,
+) -> list[str] | None:
     table_name = f'mcp_servers.{json.dumps(name)}'
     lines = [f"[{table_name}]"]
     if server.get("type") == "http":
@@ -109,6 +132,15 @@ def _server_table_lines(name: str, server: dict[str, Any], mcp: dict[str, Any], 
         lines.append(f'args = {json.dumps(argv[1:])}')
     enabled = server.get("enabled", True)
     lines.append(f'enabled = {"true" if enabled else "false"}')
+
+    tool_permissions = tool_permissions or {}
+    denied = sorted(set(tool_permissions.get("deny") or []))
+    if denied:
+        lines.append(f'disabled_tools = {json.dumps(denied)}')
+    for tool in sorted(set(tool_permissions.get("allow") or [])):
+        lines.append("")
+        lines.append(f'[{table_name}.tools.{json.dumps(tool)}]')
+        lines.append('approval_mode = "auto"')
     return lines
 
 
@@ -116,12 +148,13 @@ def render_codex_mcp_block(shared: dict[str, Any], git_root: Path) -> tuple[str,
     """Render the `[mcp_servers.*]` marked block. Returns (block_text, skipped_server_names)."""
     mcp = shared.get("mcp") or {}
     servers = mcp.get("servers") or {}
+    tool_permissions = _mcp_tool_permissions(shared)
     lines = [MCP_TOML_BEGIN_MARKER]
     skipped: list[str] = []
     for name, server in servers.items():
         if not isinstance(server, dict):
             continue
-        table_lines = _server_table_lines(name, server, mcp, git_root)
+        table_lines = _server_table_lines(name, server, mcp, git_root, tool_permissions.get(name))
         if table_lines is None:
             skipped.append(name)
             continue
@@ -190,4 +223,31 @@ def parse_codex_mcp_toml(text: str) -> dict[str, dict[str, Any]]:
             "cmd": [command, *[str(arg) for arg in args]],
             "enabled": enabled,
         }
+    return result
+
+
+def parse_codex_mcp_tool_permissions(text: str) -> dict[str, list[dict[str, Any]]]:
+    """Parse per-tool `disabled_tools` / `approval_mode = "auto"` overrides
+    back out of a Codex `config.toml` into neutral `{"type": "mcp", ...}`
+    permission entries, keyed by bucket (`allow`/`deny`)."""
+    result: dict[str, list[dict[str, Any]]] = {"allow": [], "deny": []}
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError:
+        return result
+    mcp_servers = data.get("mcp_servers")
+    if not isinstance(mcp_servers, dict):
+        return result
+    for name, entry in mcp_servers.items():
+        if not isinstance(entry, dict):
+            continue
+        for tool in entry.get("disabled_tools") or []:
+            if isinstance(tool, str):
+                result["deny"].append({"type": "mcp", "server": name, "tool": tool})
+        tools = entry.get("tools")
+        if not isinstance(tools, dict):
+            continue
+        for tool, tool_entry in tools.items():
+            if isinstance(tool_entry, dict) and tool_entry.get("approval_mode") == "auto":
+                result["allow"].append({"type": "mcp", "server": name, "tool": tool})
     return result

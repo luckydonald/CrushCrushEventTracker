@@ -2221,3 +2221,47 @@ Create a jsonschema for it, too, please.
 
 ❯ for the `# 4 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).` comment in the last line of `.codex/rules/generated.rules`, also add those offending rules commented out (single-line json)
 
+❯ /plan Add MCP tools to allow list.
+For claude, `bugsink`'s `list_projects` would be stored as the following allow string: `"mcp__bugsink__list_projects"` (as opposed to `"Bash(echo foo)"`). So joined by `__`. I don't know the format for codex, please figure that out.
+
+❯ Task Notification:
+> - Task `a56caacdd01d5802f` <kbd>completed</kbd>
+> - Tool `toolu_01QopXefL2RREexaweoKvsms`
+> - > Agent "Explore MCP + permission sync code" finished
+> - [Query (`3034` chars, `2.99 KB`)](output/agents/002.a56caacdd01d5802f/prompt.md)
+> - [Answer (`10575` chars, `10.4 KB`)](output/agents/002.a56caacdd01d5802f/result.md)
+> - [Raw log (`450128` chars, `440 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/7544b66e-7c4d-4f20-aba7-f287b2106bfa/tasks/a56caacdd01d5802f.output)
+> - `38` tools, `64013` tokens, `1.60485 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Should the deny bucket also get MCP-tool support (e.g. `permissions.deny` entry for `mcp__server__tool` → Codex `disabled_tools`), or just allow for now?
+>>    - Allow + deny (Recommended)
+>> 2. Should I also add a concrete example entry (bugsink's list_projects) to the tracked ai/tool-settings/settings.json as part of this change?
+>>    - _Other_: Yes, and the following entries: `{"type": "mcp", "server": "bugsink", "tool": "list_projects"}` (like the format), and the json variant of `mcp__bugsink__list_issues`, `mcp__bugsink__get_issue`.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Deny support** (1/2) <kbd>Single Select</kbd><br>
+>> Should the deny bucket also get MCP-tool support (e.g. `permissions.deny` entry for `mcp__server__tool` → Codex `disabled_tools`), or just allow for now?
+> - [x] 1\. Allow + deny (Recommended)
+>   - _Mirror the existing bash prefix_rule pattern, which already supports both allow (→ approval_mode = "auto") and deny (→ disabled_tools) for symmetry and future-proofing._
+> - [ ] 2\. Allow only
+>   - _Only implement the allow-list mechanism you asked about; skip deny handling for MCP tools entirely for now._
+> - [ ] 3\. _Type something._
+>
+>> **Example entry** (2/2) <kbd>Single Select</kbd><br>
+>> Should I also add a concrete example entry (bugsink's list_projects) to the tracked ai/tool-settings/settings.json as part of this change?
+> - [ ] 1\. No, mechanism only (Recommended)
+>   - _Just build the parse/render machinery and cover it with tests; you can add real allow entries yourself afterward via .claude/settings.json or the neutral file._
+> - [ ] 2\. Yes, add it now
+>   - _Also add {"type": "mcp", "server": "bugsink", "tool": "list_projects"} to the allow list as a working example, even though bugsink is currently disabled._
+> - [x] 3\. _Type something:_
+>   - > Yes, and the following entries: `{"type": "mcp", "server": "bugsink", "tool": "list_projects"}` (like the format), and the json variant of `mcp__bugsink__list_issues`, `mcp__bugsink__get_issue`.
+>
+> </details>
+>
+

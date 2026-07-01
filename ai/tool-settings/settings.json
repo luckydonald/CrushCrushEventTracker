@@ -506,6 +506,21 @@
       {
         "type": "bash",
         "command": "echo '---'"
+      },
+      {
+        "type": "mcp",
+        "server": "bugsink",
+        "tool": "list_projects"
+      },
+      {
+        "type": "mcp",
+        "server": "bugsink",
+        "tool": "list_issues"
+      },
+      {
+        "type": "mcp",
+        "server": "bugsink",
+        "tool": "get_issue"
       }
     ],
     "deny": [
