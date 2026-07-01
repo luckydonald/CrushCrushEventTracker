@@ -544,7 +544,8 @@
     ]
   },
   "enabledPlugins": {
-    "openai-developers@openai-developers": true
+    "openai-developers@openai-developers": true,
+    "skill-creator@claude-plugins-official": true
   },
   "mcp": {
     "tools": {

@@ -11,3 +11,6 @@ args = ["-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"]
 enabled = false
 
 # --- END generated mcp_servers ---
+
+[plugins."skill-creator@claude-plugins-official"]
+enabled = true
