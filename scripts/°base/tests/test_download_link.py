@@ -5,6 +5,7 @@ import importlib
 import io
 import sys
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -17,6 +18,7 @@ MODULE = importlib.import_module("°dllink_lib")
 cli = importlib.import_module("°dllink_lib.cli")
 providers = importlib.import_module("°dllink_lib.providers")
 generic_provider = importlib.import_module("°dllink_lib.providers.generic")
+config = importlib.import_module("°dllink_lib.config")
 
 ENTRYPOINT_PATH = LIB_ROOT / "download-link.py"
 SPEC = importlib.util.spec_from_file_location("download_link_entrypoint", ENTRYPOINT_PATH)
@@ -220,13 +222,85 @@ class DownloadLinkInputTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch.object(cli, "fetch_url", FakeFetch({(url, "GET"): response})):
-                status = MODULE.main(["--output-root", str(Path(tmp) / "refs"), url])
+                status = MODULE.main(
+                    ["--output-root", str(Path(tmp) / "refs"), "--no-git-add", "--no-open-ide", url]
+                )
 
             self.assertEqual(status, 0)
             self.assertEqual(
                 (Path(tmp) / "refs" / "https" / "example.com" / "docs" / "page.md").read_text(),
                 "# Page\n",
             )
+
+    def test_main_adds_and_opens_by_default(self):
+        url = "https://example.com/docs/page.md"
+        response = MODULE.Response(url=url, status=200, content=b"# Page\n", content_type="text/markdown")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = config.repo_root()
+            calls: list[list[str]] = []
+
+            def fake_run(cmd, capture_output=False, text=False):
+                calls.append(list(cmd))
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+
+            with mock.patch.object(cli, "load_download_link_settings", return_value=config.DownloadLinkSettings(ide="pycharm")):
+                with mock.patch.object(cli.subprocess, "run", side_effect=fake_run):
+                    with mock.patch.object(cli, "fetch_url", FakeFetch({(url, "GET"): response})):
+                        status = cli.main(["--output-root", str(Path(tmp) / "refs"), url])
+
+            self.assertEqual(status, 0)
+            self.assertEqual(calls[0][:4], ["git", "-C", str(repo_root), "add"])
+            self.assertEqual(calls[1][0], "pycharm")
+            self.assertEqual(calls[1][-1], str(Path(tmp) / "refs" / "https" / "example.com" / "docs" / "page.md"))
+
+    def test_open_ide_override_wins_over_settings(self):
+        url = "https://example.com/docs/page.md"
+        response = MODULE.Response(url=url, status=200, content=b"# Page\n", content_type="text/markdown")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            calls: list[list[str]] = []
+
+            def fake_run(cmd, capture_output=False, text=False):
+                calls.append(list(cmd))
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+
+            with mock.patch.object(cli, "load_download_link_settings", return_value=config.DownloadLinkSettings(ide="pycharm")):
+                with mock.patch.object(cli.subprocess, "run", side_effect=fake_run):
+                    with mock.patch.object(cli, "fetch_url", FakeFetch({(url, "GET"): response})):
+                        status = cli.main(["--output-root", str(Path(tmp) / "refs"), "--open-ide=code", url])
+
+            self.assertEqual(status, 0)
+            self.assertEqual(calls[1][0], "code")
+            self.assertEqual(calls[1][-1], str(Path(tmp) / "refs" / "https" / "example.com" / "docs" / "page.md"))
+
+    def test_no_open_ide_wins_over_override_and_no_git_add_skips_git(self):
+        url = "https://example.com/docs/page.md"
+        response = MODULE.Response(url=url, status=200, content=b"# Page\n", content_type="text/markdown")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            calls: list[list[str]] = []
+
+            def fake_run(cmd, capture_output=False, text=False):
+                calls.append(list(cmd))
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+
+            with mock.patch.object(cli, "load_download_link_settings", return_value=config.DownloadLinkSettings(ide="pycharm")):
+                with mock.patch.object(cli.subprocess, "run", side_effect=fake_run):
+                    with mock.patch.object(cli, "fetch_url", FakeFetch({(url, "GET"): response})):
+                        status = cli.main(
+                            [
+                                "--output-root",
+                                str(Path(tmp) / "refs"),
+                                "--no-git-add",
+                                "--no-open-ide",
+                                "--open-ide=code",
+                                url,
+                            ]
+                        )
+
+            self.assertEqual(status, 0)
+            self.assertEqual(calls, [])
 
     def test_entrypoint_exposes_main(self):
         self.assertIs(ENTRYPOINT.main, cli.main)

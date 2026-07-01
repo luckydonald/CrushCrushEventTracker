@@ -213,5 +213,8 @@
       "Read(**/.aws/**)",
       "Read(**/.ssh/**)"
     ]
+  },
+  "download_link": {
+    "ide": "pycharm"
   }
 }

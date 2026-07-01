@@ -204,6 +204,24 @@ class AiSettingsSyncTests(unittest.TestCase):
         self.assertEqual(rendered["permissions"]["allow"], ["Bash(git status:*)"])
         self.assertEqual(rendered["permissions"]["deny"], ["Read(**/.env*)"])
 
+    def test_load_layer_preserves_shared_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"version": 1, "hooks": {}, "permissions": {"allow": [], "deny": []}, "download_link": {"ide": "pycharm"}}',
+                encoding="utf-8",
+            )
+
+            shared = MODULE._load_layer(shared_path, claude_path, codex_path)
+
+            self.assertEqual(shared["download_link"], {"ide": "pycharm"})
+            self.assertNotIn("download_link", MODULE.render_claude(shared))
+            self.assertNotIn("download_link", MODULE.render_codex_hooks(shared))
+
     def test_merge_unions_permissions_without_duplicates(self):
         base = {"permissions": {"allow": ["A", "B"], "deny": ["X"]}}
         incoming = {"permissions": {"allow": ["B", "C"], "deny": ["X", "Y"]}}

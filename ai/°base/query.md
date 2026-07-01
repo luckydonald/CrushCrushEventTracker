@@ -2154,3 +2154,7 @@ I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instea
 
 › You may extract the `download-link.py` to have `°dllink_lib/*.py` (or subfolders in that), to organize the code better. Including `°dllink_lib.providers.*` packages, etc. `download-link.py` is still the command starting point.
 
+› In the script, add the flags `--no-git-add` and `--no-open-ide`, and the default behaviour to `git add` the downloaded file, and open the file in the IDE. IDE is `pycharm` by default, however it's setable via `ai/tool-settings/settings.json` (also defaulting to `pycharm` there). Here `--open-ide=<command>` would be possible to set, too, however the `--no-open-ide` still wins.
+For example `pycharm`, `rustrover`, `codium`, `code` would be exectuables which take the file path as arg and might be good choices for the settings file.
+Add a `ai/tool-settings/README.md` documenting that file.
+
