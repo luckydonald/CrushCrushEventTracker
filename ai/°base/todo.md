@@ -51,3 +51,5 @@ For implementing, the sections **Summary of format options** and **Notes** may b
 
 Additionally, using @ai/references/https/developers.openai.com/codex/mcp.md and @ai/references/https/github.com/7c/bugsink-mcp/blob/87ce8bba8d65b15004f80314fce5845543ae193b/README.md support MCP sync.
 While at it configure it directly with `envmcp` to use `ai/.env` of a repo, see @ai/references/https/github.com/griffithsbs/envmcp/blob/9dc9d6510aa07f999095b7bb5eed636428eebec5/README.md for that tool.
+
+- [x] Done

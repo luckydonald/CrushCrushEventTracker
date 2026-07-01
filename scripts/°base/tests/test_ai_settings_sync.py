@@ -20,6 +20,7 @@ commands = importlib.import_module("°settings_lib.commands")
 hooks = importlib.import_module("°settings_lib.hooks")
 codex_rules = importlib.import_module("°settings_lib.codex_rules")
 codex_toml = importlib.import_module("°settings_lib.codex_toml")
+mcp_servers = importlib.import_module("°settings_lib.mcp_servers")
 skills = importlib.import_module("°settings_lib.skills")
 cli = importlib.import_module("°settings_lib.cli")
 
@@ -269,6 +270,38 @@ class HooksTests(unittest.TestCase):
 
         self.assertTrue(merged["hooks"]["SessionStart"][0]["hooks"][0]["async"])
 
+    def test_merge_mcp_updates_tools_and_servers_by_name(self):
+        base = {"mcp": {"tools": {".env": {"": {"mode": "prefix", "cmd": ["envmcp"]}}}, "servers": {"a": {"type": "http", "url": "https://old"}}}}
+        incoming = {"mcp": {"tools": {}, "servers": {"a": {"type": "http", "url": "https://new"}, "b": {"type": "http", "url": "https://b"}}}}
+
+        merged = hooks._merge(base, incoming)
+
+        self.assertEqual(merged["mcp"]["tools"], {".env": {"": {"mode": "prefix", "cmd": ["envmcp"]}}})
+        self.assertEqual(merged["mcp"]["servers"]["a"]["url"], "https://new")
+        self.assertEqual(merged["mcp"]["servers"]["b"]["url"], "https://b")
+
+    def test_render_claude_emits_enabled_and_disabled_mcp_server_lists(self):
+        shared = {
+            "hooks": {},
+            "mcp": {
+                "servers": {
+                    "on": {"type": "stdio", "cmd": ["x"]},
+                    "off": {"type": "stdio", "cmd": ["y"], "enabled": False},
+                }
+            },
+        }
+
+        rendered = hooks.render_claude(shared)
+
+        self.assertEqual(rendered["enabledMcpjsonServers"], ["on"])
+        self.assertEqual(rendered["disabledMcpjsonServers"], ["off"])
+
+    def test_render_claude_omits_mcp_server_lists_when_no_servers(self):
+        rendered = hooks.render_claude({"hooks": {}})
+
+        self.assertNotIn("enabledMcpjsonServers", rendered)
+        self.assertNotIn("disabledMcpjsonServers", rendered)
+
 
 class CommandsTests(unittest.TestCase):
     def test_parse_render_round_trip_bash(self):
@@ -466,6 +499,148 @@ class CodexTomlTests(unittest.TestCase):
         self.assertEqual(codex_toml.parse_codex_plugins("not { valid toml"), {})
 
 
+class McpServersTests(unittest.TestCase):
+    GIT_ROOT = Path("/repo")
+
+    def _mcp(self):
+        return {
+            "tools": {
+                ".env": {
+                    "": {"mode": "prefix", "cmd": ["npx", "-y", "envmcp", "--env-file", "ai/.env"]},
+                    "repo-root": {
+                        "mode": "prefix",
+                        "cmd": ["npx", "-y", "envmcp", "--env-file", "$(git rev-parse --show-toplevel)/.env"],
+                    },
+                }
+            },
+            "servers": {
+                "bugsink": {
+                    "enabled": True,
+                    "type": "stdio",
+                    "tools": [".env"],
+                    "cmd": ["npx", "-y", "bugsink-mcp"],
+                }
+            },
+        }
+
+    def test_resolve_tool_ref_default_variant(self):
+        tools = self._mcp()["tools"]
+        self.assertEqual(mcp_servers._resolve_tool_ref(tools, ".env"), ["npx", "-y", "envmcp", "--env-file", "ai/.env"])
+
+    def test_resolve_tool_ref_named_variant(self):
+        tools = self._mcp()["tools"]
+        resolved = mcp_servers._resolve_tool_ref(tools, ".env@repo-root")
+        self.assertIn("$(git rev-parse --show-toplevel)/.env", resolved)
+
+    def test_resolve_tool_ref_missing_tool_or_variant_is_none(self):
+        tools = self._mcp()["tools"]
+        self.assertIsNone(mcp_servers._resolve_tool_ref(tools, "nope"))
+        self.assertIsNone(mcp_servers._resolve_tool_ref(tools, ".env@nope"))
+
+    def test_resolve_server_argv_prepends_tools_left_to_right_and_substitutes_git_root(self):
+        mcp = self._mcp()
+        mcp["servers"]["bugsink"]["tools"] = [".env@repo-root"]
+        argv = mcp_servers._resolve_server_argv(mcp, mcp["servers"]["bugsink"], self.GIT_ROOT)
+        self.assertEqual(
+            argv,
+            ["npx", "-y", "envmcp", "--env-file", "/repo/.env", "npx", "-y", "bugsink-mcp"],
+        )
+
+    def test_resolve_server_argv_none_on_unresolvable_tool(self):
+        mcp = self._mcp()
+        mcp["servers"]["bugsink"]["tools"] = ["missing"]
+        self.assertIsNone(mcp_servers._resolve_server_argv(mcp, mcp["servers"]["bugsink"], self.GIT_ROOT))
+
+    def test_render_claude_mcp_stdio_and_skips_unresolvable(self):
+        mcp = self._mcp()
+        mcp["servers"]["broken"] = {"type": "stdio", "tools": ["missing"], "cmd": ["x"]}
+        data, skipped = mcp_servers.render_claude_mcp({"mcp": mcp}, self.GIT_ROOT)
+
+        self.assertEqual(skipped, ["broken"])
+        entry = data["mcpServers"]["bugsink"]
+        self.assertEqual(entry["type"], "stdio")
+        self.assertEqual(entry["command"], "npx")
+        self.assertEqual(entry["args"], ["-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"])
+        self.assertNotIn("enabled", entry)
+        self.assertNotIn("tools", entry)
+
+    def test_render_claude_mcp_http(self):
+        shared = {"mcp": {"tools": {}, "servers": {"remote": {"type": "http", "url": "https://mcp.example.com", "headers": {"X": "1"}}}}}
+        data, skipped = mcp_servers.render_claude_mcp(shared, self.GIT_ROOT)
+        self.assertEqual(skipped, [])
+        self.assertEqual(data["mcpServers"]["remote"], {"type": "http", "url": "https://mcp.example.com", "headers": {"X": "1"}})
+
+    def test_parse_claude_mcp_round_trip(self):
+        shared = {"mcp": self._mcp()}
+        rendered, _ = mcp_servers.render_claude_mcp(shared, self.GIT_ROOT)
+
+        parsed = mcp_servers.parse_claude_mcp(rendered)
+
+        self.assertEqual(
+            parsed["bugsink"],
+            {
+                "type": "stdio",
+                "cmd": ["npx", "-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"],
+                "enabled": True,
+            },
+        )
+        self.assertNotIn("tools", parsed["bugsink"])
+
+    def test_render_codex_mcp_block_and_parse_round_trip(self):
+        shared = {"mcp": self._mcp()}
+        block, skipped = mcp_servers.render_codex_mcp_block(shared, self.GIT_ROOT)
+
+        self.assertEqual(skipped, [])
+        self.assertIn(mcp_servers.MCP_TOML_BEGIN_MARKER, block)
+        self.assertIn(mcp_servers.MCP_TOML_END_MARKER, block)
+        self.assertIn('[mcp_servers."bugsink"]', block)
+
+        parsed = mcp_servers.parse_codex_mcp_toml(block)
+        self.assertEqual(
+            parsed["bugsink"],
+            {
+                "type": "stdio",
+                "cmd": ["npx", "-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"],
+                "enabled": True,
+            },
+        )
+
+    def test_parse_codex_mcp_toml_ignores_garbage(self):
+        self.assertEqual(mcp_servers.parse_codex_mcp_toml("not { valid toml"), {})
+
+    def test_insert_or_replace_block_appends_when_absent(self):
+        text = 'model = "gpt-5.5"\n'
+        result = mcp_servers.insert_or_replace_block(text, "# BEGIN", "# END", "# BEGIN\nnew content\n# END\n")
+
+        self.assertIn('model = "gpt-5.5"', result)
+        self.assertIn("new content", result)
+
+    def test_insert_or_replace_block_replaces_only_marked_region(self):
+        text = (
+            "# a comment that must survive\n"
+            "# BEGIN\n"
+            "old content\n"
+            "# END\n"
+            "trailing = true\n"
+        )
+        result = mcp_servers.insert_or_replace_block(text, "# BEGIN", "# END", "# BEGIN\nnew content\n# END\n")
+
+        self.assertIn("# a comment that must survive", result)
+        self.assertIn("trailing = true", result)
+        self.assertIn("new content", result)
+        self.assertNotIn("old content", result)
+
+    def test_plugins_and_mcp_blocks_coexist_in_one_config_toml(self):
+        base_text = codex_toml.render_codex_plugins("", {"demo@marketplace": True})
+        block, _ = mcp_servers.render_codex_mcp_block({"mcp": self._mcp()}, self.GIT_ROOT)
+        final_text = mcp_servers.insert_or_replace_block(
+            base_text, mcp_servers.MCP_TOML_BEGIN_MARKER, mcp_servers.MCP_TOML_END_MARKER, block
+        )
+
+        self.assertEqual(codex_toml.parse_codex_plugins(final_text), {"demo@marketplace": True})
+        self.assertIn("bugsink", mcp_servers.parse_codex_mcp_toml(final_text))
+
+
 class CliLoadLayerTests(unittest.TestCase):
     def test_load_layer_preserves_shared_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -516,6 +691,86 @@ class CliLoadLayerTests(unittest.TestCase):
 
             claude = hooks.render_claude(shared)
             self.assertIn("Bash(tree:*)", claude["permissions"]["allow"])
+
+    def test_load_layer_merges_hand_added_claude_mcp_server_as_flat_entry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            mcp_path = root / ".mcp.json"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"version": 1, "hooks": {}, "permissions": {"allow": [], "deny": []}}',
+                encoding="utf-8",
+            )
+            mcp_path.write_text(
+                json.dumps({"mcpServers": {"handadded": {"type": "stdio", "command": "echo", "args": ["hi"]}}}),
+                encoding="utf-8",
+            )
+
+            shared = cli._load_layer(shared_path, claude_path, codex_path, claude_mcp_path=mcp_path)
+
+            server = shared["mcp"]["servers"]["handadded"]
+            self.assertEqual(server["cmd"], ["echo", "hi"])
+            self.assertNotIn("tools", server)
+
+    def test_load_layer_keeps_authored_tools_form_when_native_mcp_matches_resolved_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            mcp_path = root / ".mcp.json"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_json = {
+                "version": 1,
+                "hooks": {},
+                "permissions": {"allow": [], "deny": []},
+                "mcp": {
+                    "tools": {".env": {"": {"mode": "prefix", "cmd": ["envmcp", "--env-file", "ai/.env"]}}},
+                    "servers": {"bugsink": {"enabled": True, "type": "stdio", "tools": [".env"], "cmd": ["bugsink-mcp"]}},
+                },
+            }
+            shared_path.write_text(json.dumps(shared_json), encoding="utf-8")
+            rendered, _ = mcp_servers.render_claude_mcp(shared_json, Path.cwd())
+            mcp_path.write_text(json.dumps(rendered), encoding="utf-8")
+
+            shared = cli._load_layer(shared_path, claude_path, codex_path, claude_mcp_path=mcp_path)
+
+            self.assertEqual(shared["mcp"]["servers"]["bugsink"]["tools"], [".env"])
+
+    def test_load_layer_merges_codex_mcp_enabled_flag_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            config_path = root / ".codex" / "config.toml"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "hooks": {},
+                        "permissions": {"allow": [], "deny": []},
+                        "mcp": {"tools": {}, "servers": {"demo": {"enabled": True, "type": "stdio", "cmd": ["echo", "hi"]}}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_path.write_text(
+                '[mcp_servers."demo"]\ncommand = "echo"\nargs = ["hi"]\nenabled = false\n',
+                encoding="utf-8",
+            )
+
+            shared = cli._load_layer(shared_path, claude_path, codex_path, codex_config_path=config_path)
+
+            self.assertEqual(shared["mcp"]["servers"]["demo"]["enabled"], False)
 
 
 class CliApplyOrCheckTests(unittest.TestCase):
@@ -577,6 +832,54 @@ class CliApplyOrCheckTests(unittest.TestCase):
             self.assertEqual(shared["permissions"]["allow"], [{"type": "bash", "command": "yarn"}])
             claude = json.loads(claude_path.read_text(encoding="utf-8"))
             self.assertEqual(claude["permissions"]["allow"], ["Bash(yarn)"])
+
+    def test_mcp_json_and_codex_toml_are_written_and_idempotent_across_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            config_path = root / ".codex" / "config.toml"
+            mcp_path = root / ".mcp.json"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "hooks": {},
+                        "permissions": {"allow": [], "deny": []},
+                        "mcp": {
+                            "tools": {".env": {"": {"mode": "prefix", "cmd": ["envmcp", "--env-file", "ai/.env"]}}},
+                            "servers": {
+                                "bugsink": {"enabled": True, "type": "stdio", "tools": [".env"], "cmd": ["bugsink-mcp"]}
+                            },
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            changed = cli._apply_or_check(
+                shared_path, claude_path, codex_path, True, codex_config_path=config_path, claude_mcp_path=mcp_path
+            )
+
+            self.assertIn(str(mcp_path), changed)
+            self.assertIn(str(config_path), changed)
+            mcp_data = json.loads(mcp_path.read_text(encoding="utf-8"))
+            self.assertEqual(mcp_data["mcpServers"]["bugsink"]["command"], "envmcp")
+            self.assertIn('[mcp_servers."bugsink"]', config_path.read_text(encoding="utf-8"))
+            claude = json.loads(claude_path.read_text(encoding="utf-8"))
+            self.assertEqual(claude["enabledMcpjsonServers"], ["bugsink"])
+
+            for _ in range(3):
+                second_pass = cli._apply_or_check(
+                    shared_path, claude_path, codex_path, True, codex_config_path=config_path, claude_mcp_path=mcp_path
+                )
+                self.assertEqual(second_pass, [])
+
+            shared = json.loads(shared_path.read_text(encoding="utf-8"))
+            self.assertEqual(shared["mcp"]["servers"]["bugsink"]["tools"], [".env"])
 
 
 class SkillsTests(unittest.TestCase):

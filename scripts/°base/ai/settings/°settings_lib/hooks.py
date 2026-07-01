@@ -7,7 +7,7 @@ from typing import Any
 from .commands import _parse_claude_permission_entry, _render_claude_permission_entry
 from .json_io import _unique
 
-_CORE_SHARED_KEYS = {"version", "hooks", "permissions", "enabledPlugins"}
+_CORE_SHARED_KEYS = {"version", "hooks", "permissions", "enabledPlugins", "mcp"}
 
 
 def _hook_id(event: str, entry: dict[str, Any]) -> str:
@@ -80,11 +80,16 @@ def _normalize_native(data: dict[str, Any]) -> dict[str, Any]:
             for hook in entry.get("hooks") or []:
                 if isinstance(hook, dict):
                     hook["command"] = _neutralize_command(str(hook.get("command") or ""))
+    mcp = data.get("mcp") or {}
     return {
         "version": 1,
         "hooks": hooks,
         "permissions": _normalize_permissions(data.get("permissions") or {}),
         "enabledPlugins": deepcopy(data.get("enabledPlugins") or {}),
+        "mcp": {
+            "tools": deepcopy(mcp.get("tools") or {}),
+            "servers": deepcopy(mcp.get("servers") or {}),
+        },
     }
 
 
@@ -133,6 +138,12 @@ def _merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
     enabled_plugins = deepcopy(merged.get("enabledPlugins") or {})
     enabled_plugins.update(incoming.get("enabledPlugins") or {})
     merged["enabledPlugins"] = enabled_plugins
+
+    merged_mcp = deepcopy(merged.get("mcp") or {"tools": {}, "servers": {}})
+    incoming_mcp = incoming.get("mcp") or {}
+    merged_mcp.setdefault("tools", {}).update(incoming_mcp.get("tools") or {})
+    merged_mcp.setdefault("servers", {}).update(incoming_mcp.get("servers") or {})
+    merged["mcp"] = merged_mcp
     return merged
 
 
@@ -250,6 +261,14 @@ def render_claude(shared: dict[str, Any]) -> dict[str, Any]:
     enabled_plugins = shared.get("enabledPlugins")
     if enabled_plugins:
         data["enabledPlugins"] = deepcopy(enabled_plugins)
+    servers = (shared.get("mcp") or {}).get("servers") or {}
+    if servers:
+        enabled = [name for name, server in servers.items() if isinstance(server, dict) and server.get("enabled", True)]
+        disabled = [name for name, server in servers.items() if isinstance(server, dict) and server.get("enabled", True) is False]
+        if enabled:
+            data["enabledMcpjsonServers"] = enabled
+        if disabled:
+            data["disabledMcpjsonServers"] = disabled
     return data
 
 

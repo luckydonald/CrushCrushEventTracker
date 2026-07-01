@@ -25,6 +25,7 @@ CODEX_CONFIG = Path.home() / ".codex" / "config.toml"
 CODEX_RULES = Path(".codex/rules/generated.rules")
 CODEX_RULES_LOCAL = Path(".codex/rules/generated.local.rules")
 CODEX_PROJECT_CONFIG = Path(".codex/config.toml")
+CLAUDE_MCP = Path(".mcp.json")
 SHARED_SKILLS = Path("ai/skills")
 AGENTS_SKILLS = Path(".agents/skills")
 CLAUDE_SKILLS = Path(".claude/skills")

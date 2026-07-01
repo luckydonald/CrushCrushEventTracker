@@ -546,6 +546,51 @@
   "enabledPlugins": {
     "openai-developers@openai-developers": true
   },
+  "mcp": {
+    "tools": {
+      ".env": {
+        "": {
+          "mode": "prefix",
+          "cmd": [
+            "npx",
+            "-y",
+            "envmcp",
+            "--env-file",
+            "ai/.env"
+          ]
+        },
+        "repo-root": {
+          "mode": "prefix",
+          "cmd": [
+            "npx",
+            "-y",
+            "envmcp",
+            "--env-file",
+            "$(git rev-parse --show-toplevel)/.env"
+          ]
+        },
+        "debug": {
+          "mode": "prefix",
+          "cmd": [
+            "npx",
+            "-y",
+            "mcpipe",
+            "--debug",
+            "--env-file",
+            "ai/.env"
+          ]
+        }
+      }
+    },
+    "servers": {
+      "bugsink": {
+        "enabled": true,
+        "type": "stdio",
+        "tools": [".env"],
+        "cmd": ["npx", "-y", "bugsink-mcp"]
+      }
+    }
+  },
   "download_link": {
     "ide": "pycharm"
   }

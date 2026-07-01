@@ -14,7 +14,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from . import codex_rules, codex_toml, commands, paths
+from . import codex_rules, codex_toml, commands, mcp_servers, paths
 from .hooks import _shared_extras, _merge, _normalize_native, render_claude, render_codex_hooks
 from .json_io import _read_json, _same_json, _write_json, _write_text_if_changed
 from .skills import _sync_skills
@@ -61,12 +61,61 @@ def _merge_codex_rules_additions(shared: dict[str, Any], rules_text: str) -> dic
     return shared
 
 
+def _merge_mcp_native_additions(
+    shared: dict[str, Any], native_servers: dict[str, dict[str, Any]], git_root: Path
+) -> dict[str, Any]:
+    """Merge genuinely new/changed MCP server entries parsed back from native
+    files (`.mcp.json`, `.codex/config.toml`) into `shared`. Entries are
+    compared by their *resolved* argv/url, not raw equality, because
+    `render_claude_mcp`/`render_codex_mcp_block` always emit a fully-resolved
+    flat command — reparsing our own generated output would otherwise look
+    "different" from the authored `tools`-based entry (which has no `cmd`
+    matching the resolved form literally) and clobber it every run."""
+    if not native_servers:
+        return shared
+
+    shared = deepcopy(shared)
+    mcp = shared.setdefault("mcp", {"tools": {}, "servers": {}})
+    mcp.setdefault("tools", {})
+    servers = mcp.setdefault("servers", {})
+
+    for name, entry in native_servers.items():
+        existing = servers.get(name)
+        if existing is not None:
+            existing_enabled = existing.get("enabled", True)
+            new_enabled = entry.get("enabled", True)
+            if entry.get("type") == "http" or existing.get("type") == "http":
+                existing_sig = (
+                    existing.get("type"),
+                    existing.get("url"),
+                    tuple(sorted((existing.get("headers") or {}).items())),
+                    existing_enabled,
+                )
+                new_sig = (
+                    entry.get("type"),
+                    entry.get("url"),
+                    tuple(sorted((entry.get("headers") or {}).items())),
+                    new_enabled,
+                )
+            else:
+                existing_sig = (mcp_servers._resolve_server_argv(mcp, existing, git_root), existing_enabled)
+                new_sig = (mcp_servers._resolve_server_argv(mcp, entry, git_root), new_enabled)
+            if existing_sig == new_sig:
+                continue
+        servers[name] = entry
+
+    mcp["servers"] = servers
+    shared["mcp"] = mcp
+    return shared
+
+
 def _load_layer(
     shared_path: Path,
     claude_path: Path,
     codex_path: Path,
     codex_rules_path: Path | None = None,
     codex_config_path: Path | None = None,
+    claude_mcp_path: Path | None = None,
 ) -> dict[str, Any]:
     shared_source = _read_json(shared_path)
     shared = deepcopy(shared_source)
@@ -74,13 +123,22 @@ def _load_layer(
         shared = _merge({}, shared)
 
     native_sources: list[tuple[float, dict[str, Any]]] = []
+    mcp_native_sources: list[tuple[float, dict[str, Any]]] = []
     for path in (claude_path, codex_path):
         if path.is_file():
             native_sources.append((path.stat().st_mtime, _read_json(path)))
     if codex_config_path is not None and codex_config_path.is_file():
-        plugins = codex_toml.parse_codex_plugins(codex_config_path.read_text(encoding="utf-8"))
+        config_text = codex_config_path.read_text(encoding="utf-8")
+        plugins = codex_toml.parse_codex_plugins(config_text)
         if plugins:
             native_sources.append((codex_config_path.stat().st_mtime, {"enabledPlugins": plugins}))
+        mcp_from_codex = mcp_servers.parse_codex_mcp_toml(config_text)
+        if mcp_from_codex:
+            mcp_native_sources.append((codex_config_path.stat().st_mtime, mcp_from_codex))
+    if claude_mcp_path is not None and claude_mcp_path.is_file():
+        mcp_from_claude = mcp_servers.parse_claude_mcp(_read_json(claude_mcp_path))
+        if mcp_from_claude:
+            mcp_native_sources.append((claude_mcp_path.stat().st_mtime, mcp_from_claude))
 
     if not shared and native_sources:
         shared = _normalize_native(sorted(native_sources, key=lambda item: item[0])[-1][1])
@@ -90,6 +148,12 @@ def _load_layer(
 
     if codex_rules_path is not None and codex_rules_path.is_file():
         shared = _merge_codex_rules_additions(shared, codex_rules_path.read_text(encoding="utf-8"))
+
+    combined_mcp_native: dict[str, Any] = {}
+    for _, data in sorted(mcp_native_sources, key=lambda item: item[0]):
+        combined_mcp_native.update(data)
+    if combined_mcp_native:
+        shared = _merge_mcp_native_additions(shared, combined_mcp_native, paths._git_root())
 
     shared.update(_shared_extras(shared_source))
     return shared
@@ -102,11 +166,13 @@ def _apply_or_check(
     apply: bool,
     codex_rules_path: Path | None = None,
     codex_config_path: Path | None = None,
+    claude_mcp_path: Path | None = None,
 ) -> list[str]:
     changed: list[str] = []
-    shared = _load_layer(shared_path, claude_path, codex_path, codex_rules_path, codex_config_path)
+    shared = _load_layer(shared_path, claude_path, codex_path, codex_rules_path, codex_config_path, claude_mcp_path)
     claude = render_claude(shared)
     codex = render_codex_hooks(shared)
+    git_root = paths._git_root()
 
     for path, data in (
         (shared_path, shared),
@@ -126,7 +192,22 @@ def _apply_or_check(
     if codex_config_path is not None:
         current_text = codex_config_path.read_text(encoding="utf-8") if codex_config_path.is_file() else ""
         plugins_text = codex_toml.render_codex_plugins(current_text, shared.get("enabledPlugins") or {})
-        changed.extend(_write_text_if_changed(codex_config_path, plugins_text, apply))
+        mcp_block, codex_skipped = mcp_servers.render_codex_mcp_block(shared, git_root)
+        for name in codex_skipped:
+            print(f"Skipped MCP server '{name}' for Codex: unresolvable tool reference.")
+        final_text = mcp_servers.insert_or_replace_block(
+            plugins_text, mcp_servers.MCP_TOML_BEGIN_MARKER, mcp_servers.MCP_TOML_END_MARKER, mcp_block
+        )
+        changed.extend(_write_text_if_changed(codex_config_path, final_text, apply))
+
+    if claude_mcp_path is not None:
+        mcp_data, claude_skipped = mcp_servers.render_claude_mcp(shared, git_root)
+        for name in claude_skipped:
+            print(f"Skipped MCP server '{name}' for Claude: unresolvable tool reference.")
+        if not _same_json(claude_mcp_path, mcp_data):
+            changed.append(str(claude_mcp_path))
+            if apply:
+                _write_json(claude_mcp_path, mcp_data)
 
     return changed
 
@@ -154,6 +235,7 @@ def main(argv: list[str] | None = None) -> int:
             apply,
             paths.CODEX_RULES,
             paths.CODEX_PROJECT_CONFIG,
+            paths.CLAUDE_MCP,
         )
     )
     if paths.LOCAL_SHARED.is_file() or paths.CLAUDE_LOCAL.is_file() or paths.CODEX_LOCAL_HOOKS.is_file():

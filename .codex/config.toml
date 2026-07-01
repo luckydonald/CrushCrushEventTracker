@@ -2,3 +2,12 @@
 
 [plugins."openai-developers@openai-developers"]
 enabled = true
+
+# --- BEGIN generated mcp_servers (scripts/°base/ai/settings/sync.py) ---
+
+[mcp_servers."bugsink"]
+command = "npx"
+args = ["-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"]
+enabled = true
+
+# --- END generated mcp_servers ---

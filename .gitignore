@@ -753,6 +753,7 @@ somewhere.py
 **/*.env.*
 !/.env.example
 !**/*.example.env
+!ai/.env.example
 
 # Misc stuff
 certs/
