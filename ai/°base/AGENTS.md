@@ -73,7 +73,7 @@ Resolved servers render into `.mcp.json` (Claude) and a marked `[mcp_servers.*]`
 `disabledMcpjsonServers` in `.claude/settings.json` are derived one-directionally from each server's
 `enabled` flag (not parsed back — approval state isn't meant to round-trip into version control).
 
-Skills follow the same pattern: the canonical file is `ai/skills/<slug>/SKILL.md`. `sync.py` writes a thin wrapper at `.claude/skills/<slug>/SKILL.md` and `.agents/skills/<slug>/SKILL.md` that points back to the canonical path. Always edit the canonical file, then run `sync.py`.
+Skills follow the same pattern: the canonical file is `ai/skills/<slug>/SKILL.md`. `sync.py` symlinks `.claude/skills/<slug>/SKILL.md` and `.agents/skills/<slug>/SKILL.md` to the canonical path (Linux/Mac only — this repo does not support Windows checkouts). Always edit the canonical file, then run `sync.py`. `.claude/commands/<slug>.md` still gets a small generated text shim (a slash command pointing at the skill), since it isn't a mirror of the same file.
 
 ### AI artifact routing (`scripts/°base/ai/hooks/_lib.py`)
 

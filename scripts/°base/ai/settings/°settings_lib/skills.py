@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -115,30 +116,16 @@ def _render_canonical_skill(name: str, description: str, body: str) -> str:
     )
 
 
-def _render_claude_skill_wrapper(name: str, description: str, shared_path: Path) -> str:
-    return (
-        f"---\n"
-        f"name: {_yaml_scalar(name)}\n"
-        f"description: {_yaml_scalar(description)}\n"
-        f"---\n\n"
-        f"{paths.GENERATED_MARKER}\n\n"
-        f"# {name}\n\n"
-        f"Read and follow the canonical skill at `{shared_path.as_posix()}` before acting.\n"
-        f"When updating this skill, edit the canonical source and run the AI settings sync.\n"
-    )
-
-
-def _render_codex_skill_wrapper(name: str, description: str, shared_path: Path) -> str:
-    return (
-        f"---\n"
-        f"name: {_yaml_scalar(name)}\n"
-        f"description: {_yaml_scalar(description)}\n"
-        f"---\n\n"
-        f"{paths.GENERATED_MARKER}\n\n"
-        f"# {name}\n\n"
-        f"Read and follow the canonical skill at `{shared_path.as_posix()}` before acting.\n"
-        f"When updating this skill, edit the canonical source and run the AI settings sync.\n"
-    )
+def _write_symlink_if_changed(link_path: Path, target_path: Path, apply: bool) -> list[str]:
+    relative_target = Path(os.path.relpath(target_path, start=link_path.parent))
+    if link_path.is_symlink() and Path(os.readlink(link_path)) == relative_target:
+        return []
+    if apply:
+        link_path.parent.mkdir(parents=True, exist_ok=True)
+        if link_path.is_symlink() or link_path.exists():
+            link_path.unlink()
+        link_path.symlink_to(relative_target)
+    return [str(link_path)]
 
 
 def _render_claude_command_shim(name: str, description: str, shared_path: Path) -> str:
@@ -176,12 +163,10 @@ def _sync_skills(apply: bool) -> list[str]:
             elif path.suffix == ".md":
                 claude_command_paths.add(path)
 
-        codex_wrapper = _render_codex_skill_wrapper(name, description, shared_path)
-        skill_wrapper = _render_claude_skill_wrapper(name, description, shared_path)
         command_shim = _render_claude_command_shim(name, description, shared_path)
-        changed.extend(_write_text_if_changed(codex_skill_path, codex_wrapper, apply))
+        changed.extend(_write_symlink_if_changed(codex_skill_path, shared_path, apply))
         for path in sorted(claude_skill_paths):
-            changed.extend(_write_text_if_changed(path, skill_wrapper, apply))
+            changed.extend(_write_symlink_if_changed(path, shared_path, apply))
         for path in sorted(claude_command_paths):
             changed.extend(_write_text_if_changed(path, command_shim, apply))
 

@@ -999,11 +999,11 @@ class SkillsTests(unittest.TestCase):
             self.assertTrue(shared.is_file())
             self.assertIn('description: "Use demo: carefully."', shared.read_text(encoding="utf-8"))
             self.assertIn("Full command body.", shared.read_text(encoding="utf-8"))
-            self.assertIn(paths.GENERATED_MARKER, codex_skill.read_text(encoding="utf-8"))
-            self.assertIn(paths.GENERATED_MARKER, wrapper.read_text(encoding="utf-8"))
+            self.assertTrue(codex_skill.is_symlink())
+            self.assertTrue(wrapper.is_symlink())
+            self.assertEqual(codex_skill.resolve(), shared.resolve())
+            self.assertEqual(wrapper.resolve(), shared.resolve())
             self.assertIn(paths.GENERATED_MARKER, command.read_text(encoding="utf-8"))
-            self.assertNotIn("Full command body.", codex_skill.read_text(encoding="utf-8"))
-            self.assertNotIn("Full command body.", wrapper.read_text(encoding="utf-8"))
             self.assertNotIn("Full command body.", command.read_text(encoding="utf-8"))
 
     def test_sync_skills_imports_new_claude_skill_over_generated_wrapper(self):
@@ -1045,7 +1045,8 @@ class SkillsTests(unittest.TestCase):
             shared_text = shared.read_text(encoding="utf-8")
             self.assertIn("New Claude skill.", shared_text)
             self.assertIn("New body.", shared_text)
-            self.assertIn(paths.GENERATED_MARKER, claude_skill.read_text(encoding="utf-8"))
+            self.assertTrue(claude_skill.is_symlink())
+            self.assertEqual(claude_skill.resolve(), shared.resolve())
 
 
 if __name__ == "__main__":

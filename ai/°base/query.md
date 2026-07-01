@@ -2265,3 +2265,7 @@ For claude, `bugsink`'s `list_projects` would be stored as the following allow s
 > </details>
 >
 
+❯ for loading the skills for codex and claude, would it make sense to just symlink them instead of writing the wrappers into .codex and .claude?
+
+❯ All Linux/Mac, no Windows checkouts.
+
