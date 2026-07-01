@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import importlib
 import io
 import sys
 import tempfile
@@ -10,12 +11,19 @@ from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
-MODULE_PATH = ROOT / "scripts" / "°base" / "ai" / "references" / "download-link.py"
-SPEC = importlib.util.spec_from_file_location("download_link", MODULE_PATH)
-MODULE = importlib.util.module_from_spec(SPEC)
+LIB_ROOT = ROOT / "scripts" / "°base" / "ai" / "references"
+sys.path.insert(0, str(LIB_ROOT))
+MODULE = importlib.import_module("°dllink_lib")
+cli = importlib.import_module("°dllink_lib.cli")
+providers = importlib.import_module("°dllink_lib.providers")
+generic_provider = importlib.import_module("°dllink_lib.providers.generic")
+
+ENTRYPOINT_PATH = LIB_ROOT / "download-link.py"
+SPEC = importlib.util.spec_from_file_location("download_link_entrypoint", ENTRYPOINT_PATH)
+ENTRYPOINT = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
-sys.modules[SPEC.name] = MODULE
-SPEC.loader.exec_module(MODULE)
+sys.modules[SPEC.name] = ENTRYPOINT
+SPEC.loader.exec_module(ENTRYPOINT)
 
 
 class FakeFetch:
@@ -179,7 +187,7 @@ class DownloadLinkPathTests(unittest.TestCase):
             ),
         )
 
-    @mock.patch.object(MODULE, "git_ls_remote_sha", return_value="abcdefabcdefabcdefabcdefabcdefabcdefabcd")
+    @mock.patch.object(generic_provider, "git_ls_remote_sha", return_value="abcdefabcdefabcdefabcdefabcdefabcdefabcd")
     def test_selfhosted_gitlab_shape_resolves_without_gitlab_hostname(self, _ls_remote):
         url = "https://git.example.test/group/project/-/blob/main/docs/readme.md"
 
@@ -202,7 +210,7 @@ class DownloadLinkInputTests(unittest.TestCase):
     def test_empty_non_tty_stdin_explains_usage(self):
         stdin = io.StringIO("")
         stdin.isatty = lambda: False  # type: ignore[method-assign]
-        with mock.patch.object(MODULE.sys, "stdin", stdin):
+        with mock.patch.object(cli.sys, "stdin", stdin):
             with self.assertRaisesRegex(MODULE.DownloadError, "download-link.py URL"):
                 MODULE.read_url_from_input(None)
 
@@ -211,7 +219,7 @@ class DownloadLinkInputTests(unittest.TestCase):
         response = MODULE.Response(url=url, status=200, content=b"# Page\n", content_type="text/markdown")
 
         with tempfile.TemporaryDirectory() as tmp:
-            with mock.patch.object(MODULE, "fetch_url", FakeFetch({(url, "GET"): response})):
+            with mock.patch.object(cli, "fetch_url", FakeFetch({(url, "GET"): response})):
                 status = MODULE.main(["--output-root", str(Path(tmp) / "refs"), url])
 
             self.assertEqual(status, 0)
@@ -219,6 +227,9 @@ class DownloadLinkInputTests(unittest.TestCase):
                 (Path(tmp) / "refs" / "https" / "example.com" / "docs" / "page.md").read_text(),
                 "# Page\n",
             )
+
+    def test_entrypoint_exposes_main(self):
+        self.assertIs(ENTRYPOINT.main, cli.main)
 
 
 if __name__ == "__main__":

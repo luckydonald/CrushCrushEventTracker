@@ -2152,3 +2152,5 @@ I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instea
 
 › for `uv`, check `scripts/°base/git/hooks/tool_path.sh`, if that can be adapted to properly support `uv`.
 
+› You may extract the `download-link.py` to have `°dllink_lib/*.py` (or subfolders in that), to organize the code better. Including `°dllink_lib.providers.*` packages, etc. `download-link.py` is still the command starting point.
+
