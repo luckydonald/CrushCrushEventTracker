@@ -2160,3 +2160,16 @@ Add a `ai/tool-settings/README.md` documenting that file.
 
 ❯ Allow `enabledPlugins` for claude config (See `ai/tool-settings/settings.json`, `scripts/°base/ai/settings/sync.py`, `.claude/settings.json`, `.codex/hooks.json`.
 
+❯ Check the `codex` config & permission documentation in @ai/references/https/developers.openai.com/codex/ and adapt @scripts/°base/ai/settings/sync.py accordingly.
+
+❯ /plan add sycronisation of command permissions for codex as well. You can introduce a better format (i.e. `{ type: 'bash', command: "…" }` instead of `"Bash(…)"`) for our own settings file, to better transform it to both codex and claude.
+
+❯ Task Notification:
+> - Task `aa8bd65b4be70f656` <kbd>completed</kbd>
+> - Tool `toolu_01Gw3QqjpPnxAXuLLsAMHvLU`
+> - > Agent "Explore permission-check.py and settings sync format" finished
+> - [Query (`3423` chars, `3.36 KB`)](output/agents/001.aa8bd65b4be70f656/prompt.md)
+> - [Answer (`11947` chars, `11.7 KB`)](output/agents/001.aa8bd65b4be70f656/result.md)
+> - [Raw log (`386357` chars, `378 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/c2fb04e4-da32-448e-9403-50f57883376f/tasks/aa8bd65b4be70f656.output)
+> - `26` tools, `56310` tokens, `1.17953 s`
+
