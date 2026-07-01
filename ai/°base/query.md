@@ -2158,3 +2158,5 @@ I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instea
 For example `pycharm`, `rustrover`, `codium`, `code` would be exectuables which take the file path as arg and might be good choices for the settings file.
 Add a `ai/tool-settings/README.md` documenting that file.
 
+❯ Allow `enabledPlugins` for claude config (See `ai/tool-settings/settings.json`, `scripts/°base/ai/settings/sync.py`, `.claude/settings.json`, `.codex/hooks.json`.
+

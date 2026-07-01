@@ -126,10 +126,6 @@
       "Bash(uv run python -m pytest:*)",
       "Bash(poetry run pytests:*)",
       "Bash(python3 -m unittest:*)",
-      "Bash(python3 -m unittest ai.scripts.tests.test_permission_check:*)",
-      "Bash(python3 -m unittest ai.scripts.tests.test_permission_check.IntegrationTests.test_git_commit_heredoc_prose_mention_allowed:*)",
-      "Bash(python3 -m unittest ai.scripts.tests.test_permission_check.CheckGitCommitTests.test_co_authored_by_heredoc_caught_by_shlex_path:*)",
-      "Bash(uv run --project scripts/°base python -m unittest:*)",
       "Bash(npm test:*)",
       "Bash(yarn test:*)",
       "Bash(yarn test:unit:*)",
@@ -183,8 +179,8 @@
       "Skill(/commit-with-lplp-style)",
       "Read(ai/skills/commit-with-lplp-style/SKILL.md)",
       "Read(./ai/skills/commit-with-lplp-style/SKILL.md)",
-      "Bash(uv run --project scripts/°base python -m unittest ai.scripts.tests.test_git_remote_fix ai.scripts.tests.test_git_remote_fix_tui_tdd ai.scripts.tests.test_git_remote_fix_tui_terminal -v)",
-      "Bash(uv run --project scripts/°base python -m unittest discover -s scripts/°base/tests -v)",
+      "Bash(uv run --project scripts/°base python -m unittest:*)",
+      "Bash(uv run --project \"scripts/°base\" python -m unittest:*)",
       "Bash(python3 scripts/°base/ai/hooks/save-prompt/hook.py)",
       "Bash(python3 -m pytest scripts/°base/tests/test_permission_check.py:*)",
       "Bash(python3 -m pytest scripts/°base/init/checkout.sh)",
@@ -213,6 +209,9 @@
       "Read(**/.aws/**)",
       "Read(**/.ssh/**)"
     ]
+  },
+  "enabledPlugins": {
+    "openai-developers@openai-developers": true
   },
   "download_link": {
     "ide": "pycharm"
