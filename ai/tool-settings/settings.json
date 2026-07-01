@@ -584,7 +584,7 @@
     },
     "servers": {
       "bugsink": {
-        "enabled": true,
+        "enabled": false,
         "type": "stdio",
         "tools": [".env"],
         "cmd": ["npx", "-y", "bugsink-mcp"]

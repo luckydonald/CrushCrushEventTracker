@@ -212,7 +212,7 @@
   "enabledPlugins": {
     "openai-developers@openai-developers": true
   },
-  "enabledMcpjsonServers": [
+  "disabledMcpjsonServers": [
     "bugsink"
   ]
 }

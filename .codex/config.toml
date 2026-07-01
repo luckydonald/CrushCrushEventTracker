@@ -8,6 +8,6 @@ enabled = true
 [mcp_servers."bugsink"]
 command = "npx"
 args = ["-y", "envmcp", "--env-file", "ai/.env", "npx", "-y", "bugsink-mcp"]
-enabled = true
+enabled = false
 
 # --- END generated mcp_servers ---
