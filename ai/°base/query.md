@@ -2173,3 +2173,6 @@ Add a `ai/tool-settings/README.md` documenting that file.
 > - [Raw log (`386357` chars, `378 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/c2fb04e4-da32-448e-9403-50f57883376f/tasks/aa8bd65b4be70f656.output)
 > - `26` tools, `56310` tokens, `1.17953 s`
 
+❯ While at it, extract the toolings etc. to local submodules, to clean up the code. Also note that parsing the codex files shall be supported.
+Additionally check if we can properly sync the `enabledPlugins`, too.
+
