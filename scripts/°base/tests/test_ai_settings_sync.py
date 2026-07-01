@@ -108,6 +108,7 @@ class AiSettingsSyncTests(unittest.TestCase):
         rendered = MODULE.render_codex_hooks(shared)
         command = rendered["hooks"]["PostToolUse"][0]["hooks"][0]["command"]
 
+        self.assertIn('"$(git rev-parse --show-toplevel)/scripts/°base/git/hooks/tool_path.sh"', command)
         self.assertIn('uv run --project "$(git rev-parse --show-toplevel)/scripts/°base"', command)
         self.assertIn('python "$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py"', command)
         self.assertIn("'codex'", command)
@@ -134,7 +135,7 @@ class AiSettingsSyncTests(unittest.TestCase):
                         "matcher": "AskUserQuestion|request_user_input",
                         "hooks": [
                             {
-                                "command": "uv run --project \"$(git rev-parse --show-toplevel)/scripts/°base\" python \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'codex'",
+                                "command": "\"$(git rev-parse --show-toplevel)/scripts/°base/git/hooks/tool_path.sh\" uv run --project \"$(git rev-parse --show-toplevel)/scripts/°base\" python \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-decision/hook.py\" 'codex'",
                                 "async": True,
                             }
                         ],

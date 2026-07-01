@@ -326,6 +326,7 @@ def _uv_project_hook_command(command: str) -> str:
     if "$(git rev-parse --show-toplevel)" not in script:
         script = f"$(git rev-parse --show-toplevel)/{script.lstrip('./')}"
     return (
+        f'"$(git rev-parse --show-toplevel)/scripts/°base/git/hooks/tool_path.sh" '
         f'uv run --project "$(git rev-parse --show-toplevel)/scripts/°base" '
         f'python "{script}"'
         + (f" {args}" if args else "")
@@ -334,7 +335,8 @@ def _uv_project_hook_command(command: str) -> str:
 
 def _neutralize_uv_project_hook_command(command: str) -> str:
     match = re.search(
-        r"\Auv run --project \"?\$\(git rev-parse --show-toplevel\)/scripts/°base\"? "
+        r'\A(?:"?\$\(git rev-parse --show-toplevel\)/scripts/°base/git/hooks/tool_path\.sh"? )?'
+        r"uv run --project \"?\$\(git rev-parse --show-toplevel\)/scripts/°base\"? "
         r"python \"?([^\"']*save-decision/hook\.py)\"?\s*(.*)\Z",
         command,
     )

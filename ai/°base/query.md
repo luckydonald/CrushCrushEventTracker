@@ -2150,3 +2150,5 @@ I.e. `claude[bot] <41898282+claude[bot]@users.noreply.github.com>` should instea
 
 › Hey, keep my additions to `ai/tool-settings/settings.json`!
 
+› for `uv`, check `scripts/°base/git/hooks/tool_path.sh`, if that can be adapted to properly support `uv`.
+
