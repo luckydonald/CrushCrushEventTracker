@@ -16,7 +16,7 @@ def render_codex_rules(shared: dict[str, Any]) -> str:
     reads or skill invocation, which Codex rules don't cover."""
     permissions = shared.get("permissions") or {}
     lines = [RULES_GENERATED_MARKER, ""]
-    skipped = 0
+    skipped: list[dict[str, Any]] = []
     for bucket, decision in (("allow", "allow"), ("deny", "forbidden")):
         for entry in permissions.get(bucket) or []:
             if not isinstance(entry, dict) or entry.get("type") != "bash":
@@ -24,7 +24,7 @@ def render_codex_rules(shared: dict[str, Any]) -> str:
             command = entry.get("command", "")
             prefix = _bash_pattern_to_prefix(command)
             if prefix is None:
-                skipped += 1
+                skipped.append(entry)
                 continue
             pattern_literal = "[" + ", ".join(json.dumps(tok, ensure_ascii=False) for tok in prefix) + "]"
             lines.append(f'prefix_rule(pattern = {pattern_literal}, decision = "{decision}")')
@@ -32,9 +32,11 @@ def render_codex_rules(shared: dict[str, Any]) -> str:
     if skipped:
         lines.append("")
         lines.append(
-            f"# {skipped} command permission(s) could not be translated to a Codex "
+            f"# {len(skipped)} command permission(s) could not be translated to a Codex "
             "prefix rule and were skipped (compound/redirected/substituted commands)."
         )
+        for entry in skipped:
+            lines.append(f"# {json.dumps(entry, ensure_ascii=False)}")
     return "\n".join(lines) + "\n"
 
 

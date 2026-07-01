@@ -2219,3 +2219,5 @@ While at it configure it directly with `envmcp` to use `ai/.env` of a repo, see 
 ```
 Create a jsonschema for it, too, please.
 
+❯ for the `# 4 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).` comment in the last line of `.codex/rules/generated.rules`, also add those offending rules commented out (single-line json)
+

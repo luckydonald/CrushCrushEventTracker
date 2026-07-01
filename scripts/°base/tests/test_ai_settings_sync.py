@@ -381,6 +381,7 @@ class CodexRulesTests(unittest.TestCase):
 
         self.assertNotIn("prefix_rule", text)
         self.assertIn("1 command permission(s) could not be translated", text)
+        self.assertIn('# {"type": "bash", "command": "echo \\"exit: $?\\""}', text)
 
     def test_parse_codex_rules_round_trips_generated_output(self):
         shared = {
