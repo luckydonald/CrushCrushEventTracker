@@ -41,10 +41,17 @@ python3 scripts/°base/ai/settings/sync.py --check
 | `ai/tool-settings/settings.local.json` | Machine-local settings overlay (gitignored) |
 | `.claude/settings.json` | Generated from `ai/tool-settings/`; do not edit directly |
 | `.claude/hooks/permission-check.py` | PermissionRequest hook — enforces git commit policy |
+| `.codex/rules/generated.rules` | Generated Codex command allowlist (Starlark `prefix_rule`s); do not edit — hand edits are picked up and folded back on the next sync, but get overwritten in the process |
+| `.codex/config.toml` | Generated project-local Codex config — currently only holds `[plugins."<id>"].enabled`; other content is preserved if you add it |
+| `scripts/°base/ai/settings/°settings_lib/` | The actual sync implementation; `sync.py` is a thin shim over it (mirrors `ai/references/°dllink_lib/`) |
 
 ### Settings + skills sync (`scripts/°base/ai/settings/sync.py`)
 
-The single source of truth is `ai/tool-settings/settings.json`. Running `sync.py` renders it into `.claude/settings.json` (Claude) and `.codex/hooks.json` (Codex), adjusting async flags and tool-name arguments between the two formats. A pre-commit hook runs `sync.py --check` to block commits when the files drift.
+The single source of truth is `ai/tool-settings/settings.json`. Running `sync.py` renders it into `.claude/settings.json` (Claude), `.codex/hooks.json` (Codex hooks), `.codex/rules/generated.rules` (Codex command allowlist), and `.codex/config.toml` (Codex plugin enable/disable), adjusting async flags and tool-name arguments between the two formats. A pre-commit hook runs `sync.py --check` to block commits when the files drift.
+
+`permissions.allow`/`permissions.deny` entries use a structured schema, not raw Claude strings: `{"type": "bash", "command": "git status:*"}`, `{"type": "read", "path": "**/.env*"}`, `{"type": "skill", "name": "..."}` (unrecognized tools fall back to a `pattern` field; unparseable legacy strings become `{"type": "raw", "value": "..."}`). This is what lets `sync.py` render the same entry into both Claude's `Tool(content)` syntax and Codex's `prefix_rule(pattern=[...], decision=...)` syntax. Only `bash` entries reach Codex — Codex `.rules` files govern command execution only, not file reads or skill invocation. Commands that can't be reduced to a static argv prefix (shell substitution, redirection, `&&`/`||`/`;`/`|`, env-var-assignment prefixes) stay Claude-only.
+
+Codex's `.rules` file and `.codex/config.toml` plugin blocks are genuinely bidirectional: `sync.py` parses them back (Starlark via `ast`, TOML via `tomllib`) and folds new entries into `ai/tool-settings/settings.json`. Because a Codex prefix rule has no "exact match" concept, re-parsed bash commands are compared by their token-prefix (not their rendered string) before merging, so re-importing `sync.py`'s own generated output never duplicates entries.
 
 Skills follow the same pattern: the canonical file is `ai/skills/<slug>/SKILL.md`. `sync.py` writes a thin wrapper at `.claude/skills/<slug>/SKILL.md` and `.agents/skills/<slug>/SKILL.md` that points back to the canonical path. Always edit the canonical file, then run `sync.py`.
 

@@ -95,119 +95,452 @@
   },
   "permissions": {
     "allow": [
-      "Bash(tree:*)",
-      "Bash(ls:*)",
-      "Bash(yarn)",
-      "Bash(make)",
-      "Bash(which python)",
-      "Bash(python --version)",
-      "Bash(pip show:*)",
-      "Bash(pip3 show:*)",
-      "Bash(uv pip show:*)",
-      "Bash(pip index versions:*)",
-      "Bash(pip3 index versions:*)",
-      "Bash(uv --version)",
-      "Bash(uv python list)",
-      "Bash(uv pip index versions:*)",
-      "Bash(nvm use:*)",
-      "Bash(poetry install:*)",
-      "Bash(yarn install:*)",
-      "Bash(corepack yarn@4.9.2 install:*)",
-      "Bash(uv sync:*)",
-      "Bash(uv lock *)",
-      "Bash(npx vue-tsc:*)",
-      "Bash(npx vitest:*)",
-      "Bash(npx tsc *)",
-      "Bash(./node_modules/.bin/tsc --noEmit)",
-      "Bash(node_modules/.bin/tsc --version)",
-      "Bash(node_modules/.bin/tsc --noEmit)",
-      "Bash(uv run ruff check:*)",
-      "Bash(uv run pytest:*)",
-      "Bash(uv run python -m pytest:*)",
-      "Bash(poetry run pytests:*)",
-      "Bash(python3 -m unittest:*)",
-      "Bash(npm test:*)",
-      "Bash(yarn test:*)",
-      "Bash(yarn test:unit:*)",
-      "Bash(yarn test:coverage:*)",
-      "Bash(cargo test:*)",
-      "Bash(python -m py_compile:*)",
-      "Bash(yarn build-check:*)",
-      "Bash(yarn run type-check)",
-      "Bash(yarn run type-check:*)",
-      "Bash(yarn run lint)",
-      "Bash(yarn run lint:*)",
-      "Bash(yarn run tsc:*)",
-      "Bash(yarn type-check:*)",
-      "Bash(yarn lint:*)",
-      "Bash(yarn eslint:*)",
-      "Bash(yarn tsc:*)",
-      "Bash(yarn fix:*)",
-      "Bash(yarn build:*)",
-      "Bash(yarn build-only *)",
-      "Bash(yarn test:unit)",
-      "Bash(yarn test:e2e:pw:*)",
-      "Bash(yarn run test:unit)",
-      "Bash(yarn run test:e2e:pw:*)",
-      "Bash(cargo check:*)",
-      "Bash(corepack yarn@4.9.2 add:*)",
-      "Bash(yarn add:*)",
-      "Bash(uv add:*)",
-      "Bash(echo \"exit: $?\")",
-      "Bash(git add:*)",
-      "Bash(git log:*)",
-      "Bash(git diff:*)",
-      "Bash(git status:*)",
-      "Bash(git show:*)",
-      "Bash(git branch --show-current)",
-      "Bash(git ls-tree:*)",
-      "Bash(git check-ignore:*)",
-      "Bash(git fetch:*)",
-      "Bash(git stash:*)",
-      "Bash(git commit -F ai/git/pending-commit.md)",
-      "Bash(git commit --amend -F ai/git/pending-commit.md)",
-      "Bash(git commit --amend --reset-author --no-edit)",
-      "Bash(make commit:*)",
-      "Bash(rm ai/git/pending-commit.md || echo 'was gone')",
-      "Bash(rm ai/git/pending-commit.md)",
-      "Bash(git lfs install)",
-      "Bash(command -v pre-commit)",
-      "Bash(git rebase --continue)",
-      "Bash(pkill -f \"vite\")",
-      "Bash(tree)",
-      "Skill(commit-with-lplp-style)",
-      "Skill(/commit-with-lplp-style)",
-      "Read(ai/skills/commit-with-lplp-style/SKILL.md)",
-      "Read(./ai/skills/commit-with-lplp-style/SKILL.md)",
-      "Bash(uv run --project scripts/°base python -m unittest:*)",
-      "Bash(uv run --project \"scripts/°base\" python -m unittest:*)",
-      "Bash(python3 scripts/°base/ai/hooks/save-prompt/hook.py)",
-      "Bash(python3 -m pytest scripts/°base/tests/test_permission_check.py:*)",
-      "Bash(python3 -m pytest scripts/°base/init/checkout.sh)",
-      "Bash(GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git *)",
-      "Bash(uv run fastapi --help)",
-      "Bash(python3 \"scripts/°base/ai/settings/sync.py\")",
-      "Bash(python3 scripts/°base/ai/settings/sync.py:*)",
-      "Bash(python scripts/°base/ai/settings/sync.py:*)",
-      "Bash(uv run --directory scripts/°base python -m ai.settings.sync:*)",
-      "Bash(./scripts/°base/ai/settings/sync.py)",
-      "Bash(GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *)",
-      "Bash(env UV_CACHE_DIR=/tmp/uv-cache DOWNLOAD_LINK_LIVE=1 uv run --project scripts/°base python -m unittest scripts/°base/tests/test_download_link_live.py -v)",
-      "Bash(env UV_CACHE_DIR=/tmp/uv-cache ./scripts/°base/ai/references/download-link.py:*)",
-      "Bash(./scripts/°base/ai/references/download-link.py:*)",
-      "Bash(echo \"---\")",
-      "Bash(echo ---)",
-      "Bash(echo '---')"
+      {
+        "type": "bash",
+        "command": "tree:*"
+      },
+      {
+        "type": "bash",
+        "command": "ls:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn"
+      },
+      {
+        "type": "bash",
+        "command": "make"
+      },
+      {
+        "type": "bash",
+        "command": "which python"
+      },
+      {
+        "type": "bash",
+        "command": "python --version"
+      },
+      {
+        "type": "bash",
+        "command": "pip show:*"
+      },
+      {
+        "type": "bash",
+        "command": "pip3 show:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv pip show:*"
+      },
+      {
+        "type": "bash",
+        "command": "pip index versions:*"
+      },
+      {
+        "type": "bash",
+        "command": "pip3 index versions:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv --version"
+      },
+      {
+        "type": "bash",
+        "command": "uv python list"
+      },
+      {
+        "type": "bash",
+        "command": "uv pip index versions:*"
+      },
+      {
+        "type": "bash",
+        "command": "nvm use:*"
+      },
+      {
+        "type": "bash",
+        "command": "poetry install:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn install:*"
+      },
+      {
+        "type": "bash",
+        "command": "corepack yarn@4.9.2 install:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv sync:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv lock *"
+      },
+      {
+        "type": "bash",
+        "command": "npx vue-tsc:*"
+      },
+      {
+        "type": "bash",
+        "command": "npx vitest:*"
+      },
+      {
+        "type": "bash",
+        "command": "npx tsc *"
+      },
+      {
+        "type": "bash",
+        "command": "./node_modules/.bin/tsc --noEmit"
+      },
+      {
+        "type": "bash",
+        "command": "node_modules/.bin/tsc --version"
+      },
+      {
+        "type": "bash",
+        "command": "node_modules/.bin/tsc --noEmit"
+      },
+      {
+        "type": "bash",
+        "command": "uv run ruff check:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv run pytest:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv run python -m pytest:*"
+      },
+      {
+        "type": "bash",
+        "command": "poetry run pytests:*"
+      },
+      {
+        "type": "bash",
+        "command": "python3 -m unittest:*"
+      },
+      {
+        "type": "bash",
+        "command": "npm test:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn test:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn test:unit:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn test:coverage:*"
+      },
+      {
+        "type": "bash",
+        "command": "cargo test:*"
+      },
+      {
+        "type": "bash",
+        "command": "python -m py_compile:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn build-check:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run type-check"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run type-check:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run lint"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run lint:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run tsc:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn type-check:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn lint:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn eslint:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn tsc:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn fix:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn build:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn build-only *"
+      },
+      {
+        "type": "bash",
+        "command": "yarn test:unit"
+      },
+      {
+        "type": "bash",
+        "command": "yarn test:e2e:pw:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run test:unit"
+      },
+      {
+        "type": "bash",
+        "command": "yarn run test:e2e:pw:*"
+      },
+      {
+        "type": "bash",
+        "command": "cargo check:*"
+      },
+      {
+        "type": "bash",
+        "command": "corepack yarn@4.9.2 add:*"
+      },
+      {
+        "type": "bash",
+        "command": "yarn add:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv add:*"
+      },
+      {
+        "type": "bash",
+        "command": "echo \"exit: $?\""
+      },
+      {
+        "type": "bash",
+        "command": "git add:*"
+      },
+      {
+        "type": "bash",
+        "command": "git log:*"
+      },
+      {
+        "type": "bash",
+        "command": "git diff:*"
+      },
+      {
+        "type": "bash",
+        "command": "git status:*"
+      },
+      {
+        "type": "bash",
+        "command": "git show:*"
+      },
+      {
+        "type": "bash",
+        "command": "git branch --show-current"
+      },
+      {
+        "type": "bash",
+        "command": "git ls-tree:*"
+      },
+      {
+        "type": "bash",
+        "command": "git check-ignore:*"
+      },
+      {
+        "type": "bash",
+        "command": "git fetch:*"
+      },
+      {
+        "type": "bash",
+        "command": "git stash:*"
+      },
+      {
+        "type": "bash",
+        "command": "git commit -F ai/git/pending-commit.md"
+      },
+      {
+        "type": "bash",
+        "command": "git commit --amend -F ai/git/pending-commit.md"
+      },
+      {
+        "type": "bash",
+        "command": "git commit --amend --reset-author --no-edit"
+      },
+      {
+        "type": "bash",
+        "command": "make commit:*"
+      },
+      {
+        "type": "bash",
+        "command": "rm ai/git/pending-commit.md || echo 'was gone'"
+      },
+      {
+        "type": "bash",
+        "command": "rm ai/git/pending-commit.md"
+      },
+      {
+        "type": "bash",
+        "command": "git lfs install"
+      },
+      {
+        "type": "bash",
+        "command": "command -v pre-commit"
+      },
+      {
+        "type": "bash",
+        "command": "git rebase --continue"
+      },
+      {
+        "type": "bash",
+        "command": "pkill -f \"vite\""
+      },
+      {
+        "type": "bash",
+        "command": "tree"
+      },
+      {
+        "type": "skill",
+        "name": "commit-with-lplp-style"
+      },
+      {
+        "type": "skill",
+        "name": "/commit-with-lplp-style"
+      },
+      {
+        "type": "read",
+        "path": "ai/skills/commit-with-lplp-style/SKILL.md"
+      },
+      {
+        "type": "read",
+        "path": "./ai/skills/commit-with-lplp-style/SKILL.md"
+      },
+      {
+        "type": "bash",
+        "command": "uv run --project scripts/°base python -m unittest:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv run --project \"scripts/°base\" python -m unittest:*"
+      },
+      {
+        "type": "bash",
+        "command": "python3 scripts/°base/ai/hooks/save-prompt/hook.py"
+      },
+      {
+        "type": "bash",
+        "command": "python3 -m pytest scripts/°base/tests/test_permission_check.py:*"
+      },
+      {
+        "type": "bash",
+        "command": "python3 -m pytest scripts/°base/init/checkout.sh"
+      },
+      {
+        "type": "bash",
+        "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git *"
+      },
+      {
+        "type": "bash",
+        "command": "uv run fastapi --help"
+      },
+      {
+        "type": "bash",
+        "command": "python3 \"scripts/°base/ai/settings/sync.py\""
+      },
+      {
+        "type": "bash",
+        "command": "python3 scripts/°base/ai/settings/sync.py:*"
+      },
+      {
+        "type": "bash",
+        "command": "python scripts/°base/ai/settings/sync.py:*"
+      },
+      {
+        "type": "bash",
+        "command": "uv run --directory scripts/°base python -m ai.settings.sync:*"
+      },
+      {
+        "type": "bash",
+        "command": "./scripts/°base/ai/settings/sync.py"
+      },
+      {
+        "type": "bash",
+        "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *"
+      },
+      {
+        "type": "bash",
+        "command": "env UV_CACHE_DIR=/tmp/uv-cache DOWNLOAD_LINK_LIVE=1 uv run --project scripts/°base python -m unittest scripts/°base/tests/test_download_link_live.py -v"
+      },
+      {
+        "type": "bash",
+        "command": "env UV_CACHE_DIR=/tmp/uv-cache ./scripts/°base/ai/references/download-link.py:*"
+      },
+      {
+        "type": "bash",
+        "command": "./scripts/°base/ai/references/download-link.py:*"
+      },
+      {
+        "type": "bash",
+        "command": "echo \"---\""
+      },
+      {
+        "type": "bash",
+        "command": "echo ---"
+      },
+      {
+        "type": "bash",
+        "command": "echo '---'"
+      }
     ],
     "deny": [
-      "Read(**/.env*)",
-      "Read(**/env.php*)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Read(**/secrets/**)",
-      "Read(**/credentials/**)",
-      "Read(**/.aws/**)",
-      "Read(**/.ssh/**)"
+      {
+        "type": "read",
+        "path": "**/.env*"
+      },
+      {
+        "type": "read",
+        "path": "**/env.php*"
+      },
+      {
+        "type": "read",
+        "path": "**/*.pem"
+      },
+      {
+        "type": "read",
+        "path": "**/*.key"
+      },
+      {
+        "type": "read",
+        "path": "**/secrets/**"
+      },
+      {
+        "type": "read",
+        "path": "**/credentials/**"
+      },
+      {
+        "type": "read",
+        "path": "**/.aws/**"
+      },
+      {
+        "type": "read",
+        "path": "**/.ssh/**"
+      }
     ]
   },
   "enabledPlugins": {
