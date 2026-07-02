@@ -74,7 +74,12 @@
         "allOf": [
           {
             "if": { "properties": { "type": { "const": "stdio" } }, "required": ["type"] },
-            "then": { "required": ["cmd"] }
+            "then": {
+              "anyOf": [
+                { "required": ["cmd"] },
+                { "required": ["tools"], "properties": { "tools": { "minItems": 1 } } }
+              ]
+            }
           },
           {
             "if": { "properties": { "type": { "const": "http" } }, "required": ["type"] },

@@ -2269,3 +2269,45 @@ For claude, `bugsink`'s `list_projects` would be stored as the following allow s
 
 ❯ All Linux/Mac, no Windows checkouts.
 
+❯ /plan check out `scripts/°base/ai/settings/sync.py`. It should be able to parse old versions of the config files (version 1, fix the missing bump to two btw)
+An example would be the before-after of file `ai/tool-settings/settings.json` in commit `95f48bc69b93f990ce7986344ca05722192c4ff1`
+Additionally I'd like the following changes, while at it:
+2. `enabled` booleans shall always come as first in json or toml export.
+3. `permissions`.`allow`/`deny`'s elements should be singleline each.
+4. if there's `enabled…`/`disabled…` variants (MCP, Plugins, etc.), always populate both arrays, and make sure they have a linesplit for best possible diffs.
+5. A MCP server with a tool will be synced to claude/codex, but then replace back the original MCP in the ai/…/settings.json - hence replacing the short `"tool"` version with an merged longer `"cmd"` containing the tool invocation hardcoded.
+  - a) detect the case of inlining a tool directly
+  - b) detect matching existing tools to extract them from `"cmd"`.
+  - c) improve merge strategy to not be weird.
+6. `mcp.tools.<tool>.<variant>.cmd` and `mcp.servers.<name>.cmd` shall be single line.
+7. `enabledPlugins` should be just be `plugins` in the settings file, and have `enabled` flag as well (respecting **2.** and **4.**).
+
+❯ For the old version parsing, most of it the claude parser should be able to parse it, as it has been the plain claude schema at first anyways. The current missmatch with the already converted ones should be carefully considered if the file says v1, but can be skipped for a proper v2 once we're done here.
+
+❯ Task Notification:
+> - Task `a4f40cec5f0aab7bd` <kbd>completed</kbd>
+> - Tool `toolu_01PHUDQagJbNGRD3MqRAmZE6`
+> - > Agent "placeholder to yield turn" finished
+> - [Query (`4` chars, `4 B`)](output/agents/003.a4f40cec5f0aab7bd/prompt.md)
+> - [Answer (`36` chars, `38 B`)](output/agents/003.a4f40cec5f0aab7bd/result.md)
+> - [Raw log (`12968` chars, `12.7 KB`)](/private/tmp/claude-501/-Users-user-Documents-programming-Python-base/bad0a844-d71b-44c5-bc5d-a77a872c284f/tasks/a4f40cec5f0aab7bd.output)
+> - `0` tools, `15084` tokens, `0.0598333 s`
+
+❯ /plan check on settings sync design plan agent
+
+❯ Task Notification:
+> - Task `a01f38eb95bb4ce4c` <kbd>completed</kbd>
+> - Tool `toolu_01SZRcE53V1ZN78C37rGXday`
+> - > Agent "Design settings sync improvements" finished
+> - [Query (`13467` chars, `13.2 KB`)](output/agents/004.a01f38eb95bb4ce4c/prompt.md)
+> - [Answer (`23282` chars, `22.9 KB`)](output/agents/004.a01f38eb95bb4ce4c/result.md)
+> - [Raw log (`518301` chars, `507 KB`)](/private/tmp/claude-501/-Users-user-Documents-programming-Python-base/bad0a844-d71b-44c5-bc5d-a77a872c284f/tasks/a01f38eb95bb4ce4c.output)
+> - `22` tools, `108608` tokens, `7.6869 s`
+
+❯ Alright, let's assume sync.opy or the readme/agends.md might be wrong in how to handle skills.
+I want to have a way to easily call the skill with autocompletion. Codex allows `$skill` so this `/skill` wrapper looked like the second best way fot claude?
+
+❯ /plan check on settings sync design plan agent
+
+❯ then run it now, to see it's handling the unmarked v1.5 properly.
+

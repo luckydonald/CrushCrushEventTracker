@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from . import codex_rules, codex_toml, commands, mcp_servers, paths
-from .hooks import _shared_extras, _merge, _normalize_native, render_claude, render_codex_hooks
+from .hooks import CURRENT_VERSION, _shared_extras, _merge, _normalize_native, render_claude, render_codex_hooks
 from .json_io import _read_json, _same_json, _write_json, _write_text_if_changed
 from .skills import _sync_skills
 
@@ -101,7 +101,18 @@ def _merge_mcp_native_additions(
     `render_claude_mcp`/`render_codex_mcp_block` always emit a fully-resolved
     flat command — reparsing our own generated output would otherwise look
     "different" from the authored `tools`-based entry (which has no `cmd`
-    matching the resolved form literally) and clobber it every run."""
+    matching the resolved form literally) and clobber it every run.
+
+    Native formats have no `tools` concept — a parsed-back entry only ever
+    carries a flat `cmd`. To avoid permanently flattening an authored
+    `tools`-based entry on every round-trip: when only `enabled` changed,
+    just update that field on the existing entry in place; when the resolved
+    command genuinely changed (or the server is brand new), re-run
+    `mcp_servers.extract_tools_from_cmd` against the known `mcp.tools`
+    snippets to reconstruct a `tools`/`cmd` split rather than storing the raw
+    flat `cmd` forever. `.mcp.json` also carries no real `enabled` value
+    (`parse_claude_mcp` omits the key), so `new_enabled` falls back to the
+    existing value rather than a hardcoded default."""
     if not native_servers:
         return shared
 
@@ -112,28 +123,49 @@ def _merge_mcp_native_additions(
 
     for name, entry in native_servers.items():
         existing = servers.get(name)
-        if existing is not None:
-            existing_enabled = existing.get("enabled", True)
+        is_http = entry.get("type") == "http" or (existing is not None and existing.get("type") == "http")
+
+        if existing is None:
             new_enabled = entry.get("enabled", True)
-            if entry.get("type") == "http" or existing.get("type") == "http":
-                existing_sig = (
-                    existing.get("type"),
-                    existing.get("url"),
-                    tuple(sorted((existing.get("headers") or {}).items())),
-                    existing_enabled,
-                )
-                new_sig = (
-                    entry.get("type"),
-                    entry.get("url"),
-                    tuple(sorted((entry.get("headers") or {}).items())),
-                    new_enabled,
-                )
+            if entry.get("type") == "stdio":
+                servers[name] = mcp_servers._reconstruct_stdio_entry(mcp, entry.get("cmd") or [], new_enabled, git_root)
             else:
-                existing_sig = (mcp_servers._resolve_server_argv(mcp, existing, git_root), existing_enabled)
-                new_sig = (mcp_servers._resolve_server_argv(mcp, entry, git_root), new_enabled)
-            if existing_sig == new_sig:
-                continue
-        servers[name] = entry
+                entry = deepcopy(entry)
+                entry["enabled"] = new_enabled
+                servers[name] = entry
+            continue
+
+        existing_enabled = existing.get("enabled", True)
+        new_enabled = entry.get("enabled", existing_enabled)
+
+        if is_http:
+            existing_sig = (
+                existing.get("type"),
+                existing.get("url"),
+                tuple(sorted((existing.get("headers") or {}).items())),
+            )
+            new_sig = (
+                entry.get("type"),
+                entry.get("url"),
+                tuple(sorted((entry.get("headers") or {}).items())),
+            )
+        else:
+            existing_sig = mcp_servers._resolve_server_argv(mcp, existing, git_root)
+            new_sig = mcp_servers._resolve_server_argv(mcp, entry, git_root)
+
+        if existing_sig == new_sig:
+            if existing_enabled != new_enabled:
+                updated = deepcopy(existing)
+                updated["enabled"] = new_enabled
+                servers[name] = updated
+            continue
+
+        if is_http:
+            entry = deepcopy(entry)
+            entry["enabled"] = new_enabled
+            servers[name] = entry
+        else:
+            servers[name] = mcp_servers._reconstruct_stdio_entry(mcp, entry.get("cmd") or [], new_enabled, git_root)
 
     mcp["servers"] = servers
     shared["mcp"] = mcp
@@ -176,7 +208,7 @@ def _load_layer(
         shared = _normalize_native(sorted(native_sources, key=lambda item: item[0])[-1][1])
     for _, data in sorted(native_sources, key=lambda item: item[0]):
         shared = _merge(shared, data)
-    shared = shared or {"version": 1, "hooks": {}, "permissions": {"allow": [], "deny": []}}
+    shared = shared or {"version": CURRENT_VERSION, "hooks": {}, "permissions": {"allow": [], "deny": []}}
 
     if codex_rules_path is not None and codex_rules_path.is_file():
         shared = _merge_codex_rules_additions(shared, codex_rules_path.read_text(encoding="utf-8"))
@@ -187,7 +219,10 @@ def _load_layer(
 
     combined_mcp_native: dict[str, Any] = {}
     for _, data in sorted(mcp_native_sources, key=lambda item: item[0]):
-        combined_mcp_native.update(data)
+        for name, entry in data.items():
+            merged_entry = dict(combined_mcp_native.get(name) or {})
+            merged_entry.update(entry)
+            combined_mcp_native[name] = merged_entry
     if combined_mcp_native:
         shared = _merge_mcp_native_additions(shared, combined_mcp_native, paths._git_root())
 
@@ -227,7 +262,11 @@ def _apply_or_check(
 
     if codex_config_path is not None:
         current_text = codex_config_path.read_text(encoding="utf-8") if codex_config_path.is_file() else ""
-        plugins_text = codex_toml.render_codex_plugins(current_text, shared.get("enabledPlugins") or {})
+        plugins_flat = {
+            plugin_id: bool((entry or {}).get("enabled", True))
+            for plugin_id, entry in (shared.get("plugins") or {}).items()
+        }
+        plugins_text = codex_toml.render_codex_plugins(current_text, plugins_flat)
         mcp_block, codex_skipped = mcp_servers.render_codex_mcp_block(shared, git_root)
         for name in codex_skipped:
             print(f"Skipped MCP server '{name}' for Codex: unresolvable tool reference.")

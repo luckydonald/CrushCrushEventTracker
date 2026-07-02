@@ -216,6 +216,7 @@
     "openai-developers@openai-developers": true,
     "skill-creator@claude-plugins-official": true
   },
+  "enabledMcpjsonServers": [],
   "disabledMcpjsonServers": [
     "bugsink"
   ]

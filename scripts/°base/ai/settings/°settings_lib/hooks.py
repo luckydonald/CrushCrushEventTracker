@@ -7,7 +7,13 @@ from typing import Any
 from .commands import _parse_claude_permission_entry, _render_claude_permission_entry
 from .json_io import _unique
 
-_CORE_SHARED_KEYS = {"version", "hooks", "permissions", "enabledPlugins", "mcp"}
+CURRENT_VERSION = 2
+
+# "enabledPlugins" is the deprecated v1 name for "plugins" — still recognized
+# here (so `_normalize_plugins` can read it and `_shared_extras` won't treat
+# it as opaque user metadata to preserve verbatim), even though nothing ever
+# writes it back out at this level again.
+_CORE_SHARED_KEYS = {"version", "hooks", "permissions", "plugins", "enabledPlugins", "mcp"}
 
 
 def _hook_id(event: str, entry: dict[str, Any]) -> str:
@@ -69,6 +75,24 @@ def _normalize_permissions(permissions: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def _normalize_plugins(data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Build the neutral `plugins: {id: {"enabled": bool}}` shape from either
+    an already-nested `plugins` key, or the legacy/native flat
+    `enabledPlugins: {id: bool}` shape (v1 files, or Codex's
+    `parse_codex_plugins` round-trip, which only ever produces flat bools)."""
+    plugins = data.get("plugins")
+    if isinstance(plugins, dict):
+        result: dict[str, dict[str, Any]] = {}
+        for plugin_id, entry in plugins.items():
+            if isinstance(entry, dict):
+                result[plugin_id] = {"enabled": bool(entry.get("enabled", True))}
+            else:
+                result[plugin_id] = {"enabled": bool(entry)}
+        return result
+    enabled_plugins = data.get("enabledPlugins") or {}
+    return {plugin_id: {"enabled": bool(enabled)} for plugin_id, enabled in enabled_plugins.items()}
+
+
 def _normalize_native(data: dict[str, Any]) -> dict[str, Any]:
     hooks = deepcopy(data.get("hooks") or {})
     for entries in hooks.values():
@@ -82,10 +106,10 @@ def _normalize_native(data: dict[str, Any]) -> dict[str, Any]:
                     hook["command"] = _neutralize_command(str(hook.get("command") or ""))
     mcp = data.get("mcp") or {}
     return {
-        "version": 1,
+        "version": CURRENT_VERSION,
         "hooks": hooks,
         "permissions": _normalize_permissions(data.get("permissions") or {}),
-        "enabledPlugins": deepcopy(data.get("enabledPlugins") or {}),
+        "plugins": _normalize_plugins(data),
         "mcp": {
             "tools": deepcopy(mcp.get("tools") or {}),
             "servers": deepcopy(mcp.get("servers") or {}),
@@ -135,9 +159,10 @@ def _merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
         permissions[key] = _unique(values)
     merged["permissions"] = permissions
 
-    enabled_plugins = deepcopy(merged.get("enabledPlugins") or {})
-    enabled_plugins.update(incoming.get("enabledPlugins") or {})
-    merged["enabledPlugins"] = enabled_plugins
+    plugins = deepcopy(merged.get("plugins") or {})
+    for plugin_id, entry in (incoming.get("plugins") or {}).items():
+        plugins[plugin_id] = deepcopy(entry)
+    merged["plugins"] = plugins
 
     merged_mcp = deepcopy(merged.get("mcp") or {"tools": {}, "servers": {}})
     incoming_mcp = incoming.get("mcp") or {}
@@ -258,17 +283,19 @@ def render_claude(shared: dict[str, Any]) -> dict[str, Any]:
             if key not in ("allow", "deny"):
                 rendered_permissions[key] = deepcopy(value)
         data["permissions"] = rendered_permissions
-    enabled_plugins = shared.get("enabledPlugins")
-    if enabled_plugins:
-        data["enabledPlugins"] = deepcopy(enabled_plugins)
+    plugins = shared.get("plugins")
+    if plugins:
+        data["enabledPlugins"] = {
+            plugin_id: bool(entry.get("enabled", True))
+            for plugin_id, entry in plugins.items()
+            if isinstance(entry, dict)
+        }
     servers = (shared.get("mcp") or {}).get("servers") or {}
     if servers:
         enabled = [name for name, server in servers.items() if isinstance(server, dict) and server.get("enabled", True)]
         disabled = [name for name, server in servers.items() if isinstance(server, dict) and server.get("enabled", True) is False]
-        if enabled:
-            data["enabledMcpjsonServers"] = enabled
-        if disabled:
-            data["disabledMcpjsonServers"] = disabled
+        data["enabledMcpjsonServers"] = enabled
+        data["disabledMcpjsonServers"] = disabled
     return data
 
 

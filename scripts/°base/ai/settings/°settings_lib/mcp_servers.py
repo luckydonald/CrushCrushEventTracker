@@ -41,10 +41,65 @@ def _resolve_server_argv(mcp: dict[str, Any], server: dict[str, Any], git_root: 
             return None
         argv.extend(resolved)
     cmd = server.get("cmd")
-    if not isinstance(cmd, list) or not cmd or not all(isinstance(token, str) for token in cmd):
+    if cmd is not None:
+        if not isinstance(cmd, list) or not all(isinstance(token, str) for token in cmd):
+            return None
+        argv.extend(cmd)
+    if not argv:
         return None
-    argv.extend(cmd)
     return [_substitute_git_root(token, git_root) for token in argv]
+
+
+def _tool_ref(name: str, variant: str) -> str:
+    return name if variant == "" else f"{name}@{variant}"
+
+
+def extract_tools_from_cmd(tools: dict[str, Any], cmd: list[str], git_root: Path) -> tuple[list[str], list[str]]:
+    """Greedily match `cmd` against known `mcp.tools.<name>.<variant>` prefix
+    snippets, from the front, chaining matches left-to-right (mirroring
+    `_resolve_server_argv`'s `tools[0].cmd + tools[1].cmd + ... + cmd`
+    composition). Ties are broken by longest matching prefix first, then
+    alphabetical `(name, variant)`, for determinism. Returns
+    `(tool_refs, remaining_cmd)`; when nothing matches at all, degenerates to
+    `([], cmd)` — the "just store the flat cmd" fallback."""
+    candidates: list[tuple[str, list[str]]] = []
+    for name, variants in tools.items():
+        if not isinstance(variants, dict):
+            continue
+        for variant, entry in variants.items():
+            if not isinstance(entry, dict) or entry.get("mode") != "prefix":
+                continue
+            snippet = entry.get("cmd")
+            if not isinstance(snippet, list) or not snippet or not all(isinstance(t, str) for t in snippet):
+                continue
+            resolved = [_substitute_git_root(token, git_root) for token in snippet]
+            candidates.append((_tool_ref(name, variant), resolved))
+    candidates.sort(key=lambda item: (-len(item[1]), item[0]))
+
+    tool_refs: list[str] = []
+    pos = 0
+    while pos < len(cmd):
+        match = None
+        for ref, resolved in candidates:
+            end = pos + len(resolved)
+            if end <= len(cmd) and cmd[pos:end] == resolved:
+                match = (ref, len(resolved))
+                break
+        if match is None:
+            break
+        tool_refs.append(match[0])
+        pos += match[1]
+    return tool_refs, cmd[pos:]
+
+
+def _reconstruct_stdio_entry(mcp: dict[str, Any], cmd: list[str], enabled: bool, git_root: Path) -> dict[str, Any]:
+    tool_refs, remaining = extract_tools_from_cmd(mcp.get("tools") or {}, cmd, git_root)
+    entry: dict[str, Any] = {"enabled": enabled, "type": "stdio"}
+    if tool_refs:
+        entry["tools"] = tool_refs
+    if remaining or not tool_refs:
+        entry["cmd"] = remaining
+    return entry
 
 
 def render_claude_mcp(shared: dict[str, Any], git_root: Path) -> tuple[dict[str, Any], list[str]]:
@@ -71,12 +126,16 @@ def render_claude_mcp(shared: dict[str, Any], git_root: Path) -> tuple[dict[str,
 
 
 def parse_claude_mcp(mcp_json_data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """`.mcp.json` has no enabled/disabled concept — `render_claude_mcp` writes
+    every server into it regardless of state — so parsed-back entries omit
+    `enabled` entirely rather than fabricating a value; callers fall back to
+    whatever the shared config already knows."""
     result: dict[str, dict[str, Any]] = {}
     for name, entry in (mcp_json_data.get("mcpServers") or {}).items():
         if not isinstance(entry, dict):
             continue
         if entry.get("type") == "http" or "url" in entry:
-            neutral: dict[str, Any] = {"type": "http", "url": entry.get("url", ""), "enabled": True}
+            neutral: dict[str, Any] = {"type": "http", "url": entry.get("url", "")}
             if entry.get("headers"):
                 neutral["headers"] = dict(entry["headers"])
             result[name] = neutral
@@ -88,7 +147,6 @@ def parse_claude_mcp(mcp_json_data: dict[str, Any]) -> dict[str, dict[str, Any]]
         result[name] = {
             "type": "stdio",
             "cmd": [command, *[str(arg) for arg in args]],
-            "enabled": True,
         }
     return result
 
@@ -119,6 +177,8 @@ def _server_table_lines(
 ) -> list[str] | None:
     table_name = f'mcp_servers.{json.dumps(name)}'
     lines = [f"[{table_name}]"]
+    enabled = server.get("enabled", True)
+    lines.append(f'enabled = {"true" if enabled else "false"}')
     if server.get("type") == "http":
         lines.append(f'url = {json.dumps(server.get("url", ""))}')
         headers = server.get("headers")
@@ -130,8 +190,6 @@ def _server_table_lines(
             return None
         lines.append(f'command = {json.dumps(argv[0])}')
         lines.append(f'args = {json.dumps(argv[1:])}')
-    enabled = server.get("enabled", True)
-    lines.append(f'enabled = {"true" if enabled else "false"}')
 
     tool_permissions = tool_permissions or {}
     denied = sorted(set(tool_permissions.get("deny") or []))
