@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -238,6 +240,7 @@ def _apply_or_check(
     codex_rules_path: Path | None = None,
     codex_config_path: Path | None = None,
     claude_mcp_path: Path | None = None,
+    backup_timestamp: str | None = None,
 ) -> list[str]:
     changed: list[str] = []
     shared = _load_layer(shared_path, claude_path, codex_path, codex_rules_path, codex_config_path, claude_mcp_path)
@@ -254,11 +257,11 @@ def _apply_or_check(
             continue
         changed.append(str(path))
         if apply:
-            _write_json(path, data)
+            _write_json(path, data, backup_timestamp)
 
     if codex_rules_path is not None:
         rules_text = codex_rules.render_codex_rules(shared)
-        changed.extend(_write_text_if_changed(codex_rules_path, rules_text, apply))
+        changed.extend(_write_text_if_changed(codex_rules_path, rules_text, apply, backup_timestamp))
 
     if codex_config_path is not None:
         current_text = codex_config_path.read_text(encoding="utf-8") if codex_config_path.is_file() else ""
@@ -273,7 +276,7 @@ def _apply_or_check(
         final_text = mcp_servers.insert_or_replace_block(
             plugins_text, mcp_servers.MCP_TOML_BEGIN_MARKER, mcp_servers.MCP_TOML_END_MARKER, mcp_block
         )
-        changed.extend(_write_text_if_changed(codex_config_path, final_text, apply))
+        changed.extend(_write_text_if_changed(codex_config_path, final_text, apply, backup_timestamp))
 
     if claude_mcp_path is not None:
         mcp_data, claude_skipped = mcp_servers.render_claude_mcp(shared, git_root)
@@ -282,9 +285,15 @@ def _apply_or_check(
         if not _same_json(claude_mcp_path, mcp_data):
             changed.append(str(claude_mcp_path))
             if apply:
-                _write_json(claude_mcp_path, mcp_data)
+                _write_json(claude_mcp_path, mcp_data, backup_timestamp)
 
     return changed
+
+
+def _stage(paths_to_add: list[str]) -> None:
+    if not paths_to_add:
+        return
+    subprocess.run(["git", "add", "--", *paths_to_add], check=False)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -294,37 +303,59 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     os.chdir(paths._git_root())
-    dry = args.dry_run or args.check
+
+    # A merge commit can leave the tracked settings genuinely out of sync (a
+    # normal thing to fix), but it can also just surface pre-existing drift in
+    # the gitignored `.local` layer that has nothing to do with the merge. Since
+    # merge commits are usually not an interactive moment to stop and fix
+    # things by hand, auto-sync instead of blocking, and back up whatever gets
+    # overwritten so nothing is silently lost.
+    merge_auto_sync = args.check and not args.dry_run and paths._is_merge_in_progress()
+
+    dry = args.dry_run or (args.check and not merge_auto_sync)
     apply = not dry
+    backup_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") if merge_auto_sync else None
     if args.dry_run:
         print("Dry run — no files will be written.")
 
     config_status = codex_toml._migrate_codex_feature_flag(paths.CODEX_CONFIG, apply, sys.stdin.isatty())
 
-    changed: list[str] = []
-    changed.extend(
-        _apply_or_check(
-            paths.TRACKED_SHARED,
-            paths.CLAUDE_SETTINGS,
-            paths.CODEX_HOOKS,
-            apply,
-            paths.CODEX_RULES,
-            paths.CODEX_PROJECT_CONFIG,
-            paths.CLAUDE_MCP,
-        )
+    changed_main = _apply_or_check(
+        paths.TRACKED_SHARED,
+        paths.CLAUDE_SETTINGS,
+        paths.CODEX_HOOKS,
+        apply,
+        paths.CODEX_RULES,
+        paths.CODEX_PROJECT_CONFIG,
+        paths.CLAUDE_MCP,
+        backup_timestamp,
     )
+    changed_local: list[str] = []
     if paths.LOCAL_SHARED.is_file() or paths.CLAUDE_LOCAL.is_file() or paths.CODEX_LOCAL_HOOKS.is_file():
-        changed.extend(
-            _apply_or_check(
-                paths.LOCAL_SHARED,
-                paths.CLAUDE_LOCAL,
-                paths.CODEX_LOCAL_HOOKS,
-                apply,
-                paths.CODEX_RULES_LOCAL,
-                None,
-            )
+        changed_local = _apply_or_check(
+            paths.LOCAL_SHARED,
+            paths.CLAUDE_LOCAL,
+            paths.CODEX_LOCAL_HOOKS,
+            apply,
+            paths.CODEX_RULES_LOCAL,
+            None,
+            None,
+            backup_timestamp,
         )
-    changed.extend(_sync_skills(apply))
+    changed_skills = _sync_skills(apply)
+    changed = changed_main + changed_local + changed_skills
+
+    if merge_auto_sync:
+        if changed:
+            print("Merge in progress — auto-synced AI tool settings:")
+            for path in changed:
+                print(f"  Wrote: {path}")
+            if backup_timestamp:
+                print(f"Backups of overwritten files saved alongside originals (*.bak.{backup_timestamp}.*).")
+            _stage(changed_main + changed_skills)
+        else:
+            print("All files are already in sync.")
+        return config_status
 
     if changed:
         if args.check:
