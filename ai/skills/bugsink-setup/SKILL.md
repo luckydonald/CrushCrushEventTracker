@@ -1,6 +1,6 @@
 ---
 name: "bugsink-setup"
-description: "Wire up Sentry-compatible error tracking (Bugsink or Sentry SaaS) for a backend and/or frontend: SDK init, environment variables, release/build tagging, sourcemap upload, and — critical for self-hosted Bugsink — a same-origin tunnel so CORS/mixed-content doesn't silently swallow browser errors. Currently covers Python backends and Vue frontends, with more stacks addable over time. Use this whenever the user asks to add error monitoring, crash reporting, exception tracking, hook up Sentry or Bugsink, or wants to see JS/Python errors from production — even if they only mention one side of the stack, or say things like 'track errors in prod' or 'set up crash reporting' without naming Bugsink/Sentry explicitly."
+description: "Wire up Sentry-compatible error tracking (Bugsink or Sentry SaaS) for a backend and/or frontend: SDK init, environment variables, release/build tagging, sourcemap upload, and — critical for self-hosted Bugsink — a same-origin tunnel so CORS/mixed-content doesn't silently swallow browser errors. Currently covers Python and Rust backends and Vue frontends, with more stacks addable over time. Use this whenever the user asks to add error monitoring, crash reporting, exception tracking, hook up Sentry or Bugsink, or wants to see JS/Python/Rust errors from production — even if they only mention one side of the stack, or say things like 'track errors in prod' or 'set up crash reporting' without naming Bugsink/Sentry explicitly."
 ---
 
 # Bugsink / Sentry Setup
@@ -35,11 +35,13 @@ be diagnosed from both ends).
 
 - **`references/python.md`** — backend SDK init, ASGI lifespan gotcha,
   release/build metadata, the tunnel endpoint, sample-error route.
+- **`references/rust.md`** — backend SDK init, the pre-async-runtime init
+  gotcha, release/build metadata, the tunnel endpoint, sample-error route.
 - **`references/vue.md`** — frontend SDK init, tunnel probe-and-fallback,
   Pinia state scrubbing, sourcemap upload, sample-error test view.
 
-This skill only has those two so far. If a project needs another language or
-frontend framework, write a new `references/<name>.md` following the same
+This skill only has those three so far. If a project needs another language
+or frontend framework, write a new `references/<name>.md` following the same
 shape (SDK init → release tagging → tunnel-if-needed → sourcemap upload) and
 list it here — don't bloat this dispatcher file with it.
 
