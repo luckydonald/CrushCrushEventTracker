@@ -89,7 +89,7 @@ never carries that key — the merge falls back to whatever `ai/tool-settings/se
 from each server's `enabled` flag and — once at least one server exists — both arrays are always written
 (one may be empty), so toggling a server only changes an array's contents, not which keys are present.
 
-Skills follow the same pattern: the canonical file is `ai/skills/<slug>/SKILL.md`. `sync.py` symlinks `.claude/skills/<slug>/SKILL.md` and `.agents/skills/<slug>/SKILL.md` to the canonical path (Linux/Mac only — this repo does not support Windows checkouts). Always edit the canonical file, then run `sync.py`. `.claude/commands/<slug>.md` still gets a small generated text shim (a slash command pointing at the skill), since it isn't a mirror of the same file.
+Skills follow the same pattern: the canonical file is `ai/skills/<slug>/SKILL.md`. `sync.py` symlinks `.claude/skills/<slug>/SKILL.md` and `.agents/skills/<slug>/SKILL.md` to the canonical path (Linux/Mac only — this repo does not support Windows checkouts). Always edit the canonical file, then run `sync.py`. No `.claude/commands/<slug>.md` shim is generated: Claude Code's Terminal already lists skills directly in its `/` autocomplete (and Codex reads `.agents/skills` directly), so a command wrapper would just duplicate the skill.
 
 ### AI artifact routing (`scripts/°base/ai/hooks/_lib.py`)
 

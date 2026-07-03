@@ -1240,54 +1240,18 @@ class SkillsTests(unittest.TestCase):
             "SHARED_SKILLS",
             "AGENTS_SKILLS",
             "CLAUDE_SKILLS",
-            "CLAUDE_COMMANDS",
-            "CODEX_COMMANDS",
         ]
         previous = {name: getattr(paths, name) for name in names}
         paths.SHARED_SKILLS = root / "ai" / "skills"
         paths.AGENTS_SKILLS = root / ".agents" / "skills"
         paths.CLAUDE_SKILLS = root / ".claude" / "skills"
-        paths.CLAUDE_COMMANDS = root / ".claude" / "commands"
-        paths.CODEX_COMMANDS = root / ".codex" / "commands"
         try:
             yield
         finally:
             for name, value in previous.items():
                 setattr(paths, name, value)
 
-    def test_sync_skills_imports_claude_command_and_renders_wrappers(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            command = root / ".claude" / "commands" / "demo.md"
-            command.parent.mkdir(parents=True)
-            command.write_text(
-                "---\n"
-                "name: demo\n"
-                "description: Use demo: carefully.\n"
-                "---\n\n"
-                "# Demo\n\n"
-                "Full command body.\n",
-                encoding="utf-8",
-            )
-
-            with self.patched_skill_paths(root):
-                changed = skills._sync_skills(True)
-
-            shared = root / "ai" / "skills" / "demo" / "SKILL.md"
-            codex_skill = root / ".agents" / "skills" / "demo" / "SKILL.md"
-            wrapper = root / ".claude" / "skills" / "demo" / "SKILL.md"
-            self.assertIn(str(shared), changed)
-            self.assertTrue(shared.is_file())
-            self.assertIn('description: "Use demo: carefully."', shared.read_text(encoding="utf-8"))
-            self.assertIn("Full command body.", shared.read_text(encoding="utf-8"))
-            self.assertTrue(codex_skill.is_symlink())
-            self.assertTrue(wrapper.is_symlink())
-            self.assertEqual(codex_skill.resolve(), shared.resolve())
-            self.assertEqual(wrapper.resolve(), shared.resolve())
-            self.assertIn(paths.GENERATED_MARKER, command.read_text(encoding="utf-8"))
-            self.assertNotIn("Full command body.", command.read_text(encoding="utf-8"))
-
-    def test_sync_skills_imports_new_claude_skill_over_generated_wrapper(self):
+    def test_sync_skills_imports_new_claude_skill_over_shared_source(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shared = root / "ai" / "skills" / "demo" / "SKILL.md"
@@ -1298,13 +1262,6 @@ class SkillsTests(unittest.TestCase):
                 "description: Old shared source.\n"
                 "---\n\n"
                 "Old body.\n",
-                encoding="utf-8",
-            )
-
-            generated = root / ".claude" / "commands" / "demo.md"
-            generated.parent.mkdir(parents=True)
-            generated.write_text(
-                skills._render_claude_command_shim("demo", "Old shared source.", shared),
                 encoding="utf-8",
             )
 

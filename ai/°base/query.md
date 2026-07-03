@@ -2311,3 +2311,7 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ then run it now, to see it's handling the unmarked v1.5 properly.
 
+❯ Why are my plugins and skills listed multiple times?
+
+❯ Alright, let's clean it up.
+

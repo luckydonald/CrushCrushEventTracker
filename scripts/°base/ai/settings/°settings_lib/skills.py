@@ -80,29 +80,25 @@ def _iter_skill_source_paths() -> list[tuple[Path, str]]:
         result.extend((path, "codex_skill") for path in sorted(paths.AGENTS_SKILLS.glob("*/SKILL.md")))
     if paths.CLAUDE_SKILLS.is_dir():
         result.extend((path, "claude_skill") for path in sorted(paths.CLAUDE_SKILLS.glob("*/SKILL.md")))
-    if paths.CLAUDE_COMMANDS.is_dir():
-        result.extend((path, "claude_command") for path in sorted(paths.CLAUDE_COMMANDS.glob("*.md")))
-    if paths.CODEX_COMMANDS.is_dir():
-        result.extend((path, "codex_command") for path in sorted(paths.CODEX_COMMANDS.glob("*.md")))
     return result
 
 
 def _collect_skill_sources() -> tuple[dict[str, dict[str, Any]], dict[str, set[Path]]]:
     selected: dict[str, dict[str, Any]] = {}
-    claude_paths: dict[str, set[Path]] = {}
+    claude_skill_paths: dict[str, set[Path]] = {}
 
     for path, kind in _iter_skill_source_paths():
         source = _read_skill_source(path)
         if source is None:
             continue
         name = str(source["name"])
-        if kind.startswith("claude_"):
-            claude_paths.setdefault(name, set()).add(path)
+        if kind == "claude_skill":
+            claude_skill_paths.setdefault(name, set()).add(path)
         current = selected.get(name)
         if current is None or float(source["mtime"]) >= float(current["mtime"]):
             selected[name] = source
 
-    return selected, claude_paths
+    return selected, claude_skill_paths
 
 
 def _render_canonical_skill(name: str, description: str, body: str) -> str:
@@ -128,22 +124,9 @@ def _write_symlink_if_changed(link_path: Path, target_path: Path, apply: bool) -
     return [str(link_path)]
 
 
-def _render_claude_command_shim(name: str, description: str, shared_path: Path) -> str:
-    command_description = description or f"Invoke the {name} skill."
-    return (
-        f"---\n"
-        f"name: {_yaml_scalar(name)}\n"
-        f"description: {_yaml_scalar(command_description)}\n"
-        f"---\n\n"
-        f"{paths.GENERATED_MARKER}\n\n"
-        f"Use the `{name}` skill for this request. The canonical source is "
-        f"`{shared_path.as_posix()}`.\n"
-    )
-
-
 def _sync_skills(apply: bool) -> list[str]:
     changed: list[str] = []
-    sources, claude_paths = _collect_skill_sources()
+    sources, claude_skill_paths_by_name = _collect_skill_sources()
     if not sources:
         return changed
 
@@ -156,18 +139,10 @@ def _sync_skills(apply: bool) -> list[str]:
 
         codex_skill_path = paths.AGENTS_SKILLS / slug / "SKILL.md"
         claude_skill_paths = {paths.CLAUDE_SKILLS / slug / "SKILL.md"}
-        claude_command_paths = {paths.CLAUDE_COMMANDS / f"{slug}.md"}
-        for path in claude_paths.get(name, set()):
-            if path.name == "SKILL.md":
-                claude_skill_paths.add(path)
-            elif path.suffix == ".md":
-                claude_command_paths.add(path)
+        claude_skill_paths.update(claude_skill_paths_by_name.get(name, set()))
 
-        command_shim = _render_claude_command_shim(name, description, shared_path)
         changed.extend(_write_symlink_if_changed(codex_skill_path, shared_path, apply))
         for path in sorted(claude_skill_paths):
             changed.extend(_write_symlink_if_changed(path, shared_path, apply))
-        for path in sorted(claude_command_paths):
-            changed.extend(_write_text_if_changed(path, command_shim, apply))
 
     return changed
