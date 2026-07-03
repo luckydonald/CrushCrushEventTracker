@@ -59,9 +59,12 @@ Don't assume file layout — find the real ones for this project:
 
 Ask the user for the DSN(s) if they're not already in an env file — never
 invent one. Find out: is there one Bugsink project for both frontend and
-backend, or two separate DSNs? Is Bugsink reachable directly from a browser,
-or only from inside the backend's network (the common self-hosted case,
-which is exactly when the tunnel matters)?
+backend, or two separate DSNs? Usually it's two — most setups create a
+separate Sentry/Bugsink project per side, so default to wiring up two
+independent DSN env vars rather than assuming the frontend can just fall
+back to the backend's. Is Bugsink reachable directly from a browser, or
+only from inside the backend's network (the common self-hosted case, which
+is exactly when the tunnel matters)?
 
 ## Environment variables
 
@@ -74,7 +77,7 @@ an established different convention:
 | `SENTRY_ENVIRONMENT` | e.g. `production`, `development`. |
 | `SENTRY_RELEASE` | Optional override; defaults to the git commit (see the language guides). |
 | `SENTRY_TRACES_SAMPLE_RATE` | `0`–`1`; omit or `0` to disable tracing spans. |
-| `VITE_SENTRY_DSN` | Frontend DSN. In deployment config, default it to `SENTRY_DSN` so one value drives both — override only when frontend/backend report to different Bugsink projects. |
+| `VITE_SENTRY_DSN` | Frontend DSN. Usually a *different* value from `SENTRY_DSN` — frontend and backend are typically separate Sentry/Bugsink projects, so treat this as its own env var to configure rather than one that just inherits the backend's. Only default it to `SENTRY_DSN` if the user confirms both sides genuinely share one project. |
 | `VITE_SENTRY_ENVIRONMENT`, `VITE_SENTRY_RELEASE`, `VITE_SENTRY_TRACES_SAMPLE_RATE` | Frontend equivalents of the above. |
 
 Treat an empty-string DSN as "disabled," not an error — every init function
@@ -85,18 +88,20 @@ environment (e.g. off in local dev, on in production) with zero code branches.
 
 Wherever the deployment config lives (docker-compose, k8s manifests,
 platform-specific env config), pass the variables above through to both
-services, with the frontend DSN defaulting to the backend one:
+services as two independent values — since frontend and backend are usually
+separate DSNs, don't wire one to fall back to the other unless the user
+confirmed a single shared project:
 
 ```yaml
 environment:
   SENTRY_DSN: '${SENTRY_DSN:-}'
-  VITE_SENTRY_DSN: '${VITE_SENTRY_DSN:-${SENTRY_DSN:-}}'
+  VITE_SENTRY_DSN: '${VITE_SENTRY_DSN:-}'
   SENTRY_ENVIRONMENT: '${SENTRY_ENVIRONMENT:-production}'
 ```
 
-One `SENTRY_DSN` set at deploy time then enables reporting on both sides
-unless the operator explicitly overrides `VITE_SENTRY_DSN` for a separate
-frontend project.
+If the user *did* confirm both sides share one Bugsink project, it's fine to
+collapse this to `VITE_SENTRY_DSN: '${VITE_SENTRY_DSN:-${SENTRY_DSN:-}}'` so
+one value drives both — just don't make that the default assumption.
 
 ## Verify before calling it done
 

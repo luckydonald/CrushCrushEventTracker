@@ -2329,3 +2329,5 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ Update the LPLP style to allow code ticks in the first line of the commit message, and to not add length-based linebreaks to the body text of the commit message - instead keep the paragraphs or bullet points unsplit.
 
+❯ Add a hint to the sentry skill that usually frontend/backend are separate DSNs, and hence need separate env vars.
+
