@@ -2327,3 +2327,5 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ In case of merges, I want the sync check hook not block for the `.local` file variants. Furthermore, in case of merges, automatically sync, but keep a `settings.(local.)bak.YYYY-MM-DD_HH-MM-SS.json` around (similar with the other files)
 
+❯ Update the LPLP style to allow code ticks in the first line of the commit message, and to not add length-based linebreaks to the body text of the commit message - instead keep the paragraphs or bullet points unsplit.
+

@@ -53,6 +53,8 @@ Adopt these rules for every commit made this session:
    End every commit summary with a sentence separator: `.`, `:`, `,`, `!`, or `?`.
    Usually use `.` when the summary stands on its own and the body only adds context. Use `:` when the subject needs the body/details that follow to complete the thought.
    Both summary and body may contain pure-markdown for formatting.
+   Code ticks (`` `like this` ``) are allowed in the summary line itself — e.g. to name a function, file, or flag — not just in the body.
+   Do not hard-wrap the body at a fixed column width (e.g. 72 chars). Keep each paragraph or bullet point as one unbroken line, regardless of length; only break where a new paragraph or bullet genuinely starts.
 
    For normal use, multiple `[where]` parts can be written as one bracket with pipes, e.g. `[backend|frontend]`.
 
