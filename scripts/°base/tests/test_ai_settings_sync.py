@@ -1301,11 +1301,15 @@ class SkillsTests(unittest.TestCase):
             "SHARED_SKILLS",
             "AGENTS_SKILLS",
             "CLAUDE_SKILLS",
+            "CLAUDE_COMMANDS",
+            "CODEX_COMMANDS",
         ]
         previous = {name: getattr(paths, name) for name in names}
         paths.SHARED_SKILLS = root / "ai" / "skills"
         paths.AGENTS_SKILLS = root / ".agents" / "skills"
         paths.CLAUDE_SKILLS = root / ".claude" / "skills"
+        paths.CLAUDE_COMMANDS = root / ".claude" / "commands"
+        paths.CODEX_COMMANDS = root / ".codex" / "commands"
         try:
             yield
         finally:
@@ -1344,7 +1348,9 @@ class SkillsTests(unittest.TestCase):
             shared_text = shared.read_text(encoding="utf-8")
             self.assertIn("New Claude skill.", shared_text)
             self.assertIn("New body.", shared_text)
-            self.assertTrue(claude_skill.is_symlink())
+            # `_sync_skills` symlinks the whole skill directory (not each file
+            # individually) so multi-file skills mirror completely.
+            self.assertTrue(claude_skill.parent.is_symlink())
             self.assertEqual(claude_skill.resolve(), shared.resolve())
 
 

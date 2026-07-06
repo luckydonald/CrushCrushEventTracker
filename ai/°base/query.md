@@ -2333,3 +2333,5 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ the settings-to-claude part does not properly escape `{"type": "bash", "command": "…(…)…"}` to `"Bash(…\\(…\\)…)".
 
+❯ Fix the broken test or the reason it breaks.
+
