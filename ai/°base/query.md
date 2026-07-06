@@ -2337,3 +2337,9 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ Fix the reorder of `dae9933490c25c407dcd5fa0d5535140c7e3de08`.
 
+❯ Improve the `scripts/°base/init/link-subproject-claude.sh` to actually link the `.codex` folder and the `ai/tool-settings` folders, too.
+It should also get the same `AGENTS.md` -> `CLAUDE.md` symlink - moving `an possible `AGENTS.md` to `CLAUDE.md` for consistency.
+If files pre-exist, keep them as `{name}.YYYY-MM-DD_HH-MM-SS.bak.{ext}`.
+The symlinks and such shall be `git add`ed.
+Any root files I forgot which are needed for `claude`/`codex` to function in the subfolder shall be symlinked as well.
+
