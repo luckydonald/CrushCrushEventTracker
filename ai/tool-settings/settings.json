@@ -195,6 +195,8 @@
       {"type": "bash", "command": "env UV_CACHE_DIR=/tmp/uv-cache DOWNLOAD_LINK_LIVE=1 uv run --project scripts/°base python -m unittest scripts/°base/tests/test_download_link_live.py -v"},
       {"type": "bash", "command": "env UV_CACHE_DIR=/tmp/uv-cache ./scripts/°base/ai/references/download-link.py:*"},
       {"type": "bash", "command": "./scripts/°base/ai/references/download-link.py:*"},
+      {"type": "bash", "command": "../scripts/°base/init/link-subproject-claude.sh"},
+      {"type": "bash", "command": "mv .claude/settings.local.json \".claude.settings.local.json.$(date +%Y-%m-%d).bak\""},
       {"type": "mcp", "server": "bugsink", "tool": "list_projects"},
       {"type": "mcp", "server": "bugsink", "tool": "list_issues"},
       {"type": "mcp", "server": "bugsink", "tool": "get_issue"},

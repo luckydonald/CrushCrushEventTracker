@@ -194,6 +194,8 @@
       "Bash(env UV_CACHE_DIR=/tmp/uv-cache DOWNLOAD_LINK_LIVE=1 uv run --project scripts/°base python -m unittest scripts/°base/tests/test_download_link_live.py -v)",
       "Bash(env UV_CACHE_DIR=/tmp/uv-cache ./scripts/°base/ai/references/download-link.py:*)",
       "Bash(./scripts/°base/ai/references/download-link.py:*)",
+      "Bash(../scripts/°base/init/link-subproject-claude.sh)",
+      "Bash(mv .claude/settings.local.json \".claude.settings.local.json.$\\(date +%Y-%m-%d\\).bak\")",
       "mcp__bugsink__list_projects",
       "mcp__bugsink__list_issues",
       "mcp__bugsink__get_issue",
