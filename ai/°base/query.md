@@ -2331,3 +2331,5 @@ I want to have a way to easily call the skill with autocompletion. Codex allows 
 
 ❯ Add a hint to the sentry skill that usually frontend/backend are separate DSNs, and hence need separate env vars.
 
+❯ the settings-to-claude part does not properly escape `{"type": "bash", "command": "…(…)…"}` to `"Bash(…\\(…\\)…)".
+

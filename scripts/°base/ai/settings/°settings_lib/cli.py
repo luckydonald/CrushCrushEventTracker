@@ -22,6 +22,20 @@ from .json_io import _read_json, _same_json, _write_json, _write_text_if_changed
 from .skills import _sync_skills
 
 
+def _reorder_like(existing: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+    """Re-key `new` to follow `existing`'s top-level key order, appending any
+    keys `existing` doesn't have (in `new`'s order) at the end. `render_claude`/
+    `render_codex_hooks` always build their result in a fixed construction
+    order, so without this, a single unrelated content change (e.g. one
+    permission entry) would reorder every top-level key in the native file
+    and turn a one-line diff into a whole-file rewrite."""
+    ordered = {key: new[key] for key in existing if key in new}
+    for key, value in new.items():
+        if key not in ordered:
+            ordered[key] = value
+    return ordered
+
+
 def _bash_prefix_key(command: str) -> tuple[str, ...] | None:
     prefix = commands._bash_pattern_to_prefix(command)
     return tuple(prefix) if prefix is not None else None
@@ -253,6 +267,9 @@ def _apply_or_check(
         (claude_path, claude),
         (codex_path, codex),
     ):
+        existing = _read_json(path)
+        if existing:
+            data = _reorder_like(existing, data)
         if _same_json(path, data):
             continue
         changed.append(str(path))

@@ -37,6 +37,22 @@ _TYPE_TO_CLAUDE_TOOL: dict[str, str] = {
 }
 
 
+_UNESCAPED_PAREN = re.compile(r"(?<!\\)([()])")
+_ESCAPED_PAREN = re.compile(r"\\([()])")
+
+
+def _escape_command_parens(content: str) -> str:
+    """Escape literal `(`/`)` in a permission entry's content so Claude's
+    `Tool(content)` syntax doesn't mistake them for the pattern's own
+    delimiters — e.g. a bash command containing `$(date ...)`."""
+    return _UNESCAPED_PAREN.sub(lambda m: "\\" + m.group(1), content)
+
+
+def _unescape_command_parens(content: str) -> str:
+    """Inverse of `_escape_command_parens`."""
+    return _ESCAPED_PAREN.sub(lambda m: m.group(1), content)
+
+
 def _parse_claude_permission_entry(entry: Any) -> dict[str, Any]:
     """Upgrade a legacy Claude permission string (or pass through an already
     structured object) into the neutral `{"type": ..., ...}` schema."""
@@ -53,7 +69,7 @@ def _parse_claude_permission_entry(entry: Any) -> dict[str, Any]:
     tool, content = match.groups()
     entry_type = tool.lower()
     field = _TYPE_FIELD.get(entry_type, _DEFAULT_FIELD)
-    return {"type": entry_type, field: content}
+    return {"type": entry_type, field: _unescape_command_parens(content)}
 
 
 def _render_claude_permission_entry(entry: Any) -> str:
@@ -71,7 +87,7 @@ def _render_claude_permission_entry(entry: Any) -> str:
     tool = _TYPE_TO_CLAUDE_TOOL.get(entry_type, entry_type.capitalize())
     field = _TYPE_FIELD.get(entry_type, _DEFAULT_FIELD)
     content = entry.get(field, entry.get(_DEFAULT_FIELD, ""))
-    return f"{tool}({content})"
+    return f"{tool}({_escape_command_parens(str(content))})"
 
 
 # Characters that mean a command string can't be safely reduced to a single

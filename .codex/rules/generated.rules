@@ -92,12 +92,14 @@ prefix_rule(pattern = ["./scripts/°base/ai/settings/sync.py"], decision = "allo
 prefix_rule(pattern = ["env", "UV_CACHE_DIR=/tmp/uv-cache", "DOWNLOAD_LINK_LIVE=1", "uv", "run", "--project", "scripts/°base", "python", "-m", "unittest", "scripts/°base/tests/test_download_link_live.py", "-v"], decision = "allow")
 prefix_rule(pattern = ["env", "UV_CACHE_DIR=/tmp/uv-cache", "./scripts/°base/ai/references/download-link.py"], decision = "allow")
 prefix_rule(pattern = ["./scripts/°base/ai/references/download-link.py"], decision = "allow")
+prefix_rule(pattern = ["../scripts/°base/init/link-subproject-claude.sh"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 
-# 4 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
+# 5 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
 # {"type": "bash", "command": "echo \"exit: $?\""}
 # {"type": "bash", "command": "rm ai/git/pending-commit.md || echo 'was gone'"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git *"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *"}
+# {"type": "bash", "command": "mv .claude/settings.local.json \".claude.settings.local.json.$(date +%Y-%m-%d).bak\""}

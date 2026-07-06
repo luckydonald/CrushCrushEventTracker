@@ -359,6 +359,24 @@ class CommandsTests(unittest.TestCase):
         self.assertEqual(entry, {"type": "bash", "command": "git status:*"})
         self.assertEqual(commands._render_claude_permission_entry(entry), "Bash(git status:*)")
 
+    def test_render_bash_escapes_literal_parens(self):
+        entry = {"type": "bash", "command": 'mv foo ".bar.$(date +%Y-%m-%d).bak"'}
+        self.assertEqual(
+            commands._render_claude_permission_entry(entry),
+            'Bash(mv foo ".bar.$\\(date +%Y-%m-%d\\).bak")',
+        )
+
+    def test_parse_bash_unescapes_literal_parens(self):
+        entry = commands._parse_claude_permission_entry(
+            'Bash(mv foo ".bar.$\\(date +%Y-%m-%d\\).bak")'
+        )
+        self.assertEqual(entry, {"type": "bash", "command": 'mv foo ".bar.$(date +%Y-%m-%d).bak"'})
+
+    def test_parse_render_round_trip_bash_with_parens(self):
+        original = 'Bash(mv foo ".bar.$\\(date +%Y-%m-%d\\).bak")'
+        entry = commands._parse_claude_permission_entry(original)
+        self.assertEqual(commands._render_claude_permission_entry(entry), original)
+
     def test_parse_render_round_trip_read(self):
         entry = commands._parse_claude_permission_entry("Read(**/.env*)")
         self.assertEqual(entry, {"type": "read", "path": "**/.env*"})
@@ -1153,6 +1171,49 @@ class CliApplyOrCheckTests(unittest.TestCase):
 
             second_pass = cli._apply_or_check(shared_path, claude_path, codex_path, True, rules_path, config_path)
             self.assertEqual(second_pass, [])
+
+    def test_content_change_preserves_existing_native_key_order(self):
+        # Regression test: `render_claude` always builds its result dict in a
+        # fixed key order (hooks, permissions, enabledPlugins, ...). Without
+        # preserving the existing file's order, a single unrelated content
+        # change (e.g. one new permission) would reorder every top-level key
+        # in `.claude/settings.json` and turn a one-line diff into a
+        # whole-file rewrite.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            claude_path = root / ".claude" / "settings.json"
+            codex_path = root / ".codex" / "hooks.json"
+            rules_path = root / ".codex" / "rules" / "generated.rules"
+            config_path = root / ".codex" / "config.toml"
+
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"version": 1, "hooks": {}, '
+                '"permissions": {"allow": [{"type": "bash", "command": "tree:*"}], "deny": []}, '
+                '"enabledPlugins": {"demo@marketplace": true}}',
+                encoding="utf-8",
+            )
+
+            claude_path.parent.mkdir(parents=True)
+            claude_path.write_text(
+                '{"permissions": {"allow": ["Bash(tree:*)"], "deny": []}, '
+                '"enabledPlugins": {"demo@marketplace": true}, "hooks": {}}',
+                encoding="utf-8",
+            )
+
+            shared_path.write_text(
+                '{"version": 1, "hooks": {}, '
+                '"permissions": {"allow": [{"type": "bash", "command": "tree:*"}, '
+                '{"type": "bash", "command": "ls:*"}], "deny": []}, '
+                '"enabledPlugins": {"demo@marketplace": true}}',
+                encoding="utf-8",
+            )
+
+            cli._apply_or_check(shared_path, claude_path, codex_path, True, rules_path, config_path)
+
+            claude = json.loads(claude_path.read_text(encoding="utf-8"))
+            self.assertEqual(list(claude.keys()), ["permissions", "enabledPlugins", "hooks"])
 
     def test_exact_command_without_wildcard_does_not_duplicate_across_runs(self):
         # Regression test: `render_codex_rules` always emits a prefix rule (no
