@@ -2343,3 +2343,356 @@ If files pre-exist, keep them as `{name}.YYYY-MM-DD_HH-MM-SS.bak.{ext}`.
 The symlinks and such shall be `git add`ed.
 Any root files I forgot which are needed for `claude`/`codex` to function in the subfolder shall be symlinked as well.
 
+❯ /plan I need to create a tool for splitting off AI stuff & `base` from a project, as that project is not supposed to have this base or AI mentions in it.
+The general concept is that for a branch, AI versions can exist.
+Generally, there's the clean branch with any name, but examples could be `feature/ABC-123/something/mr1`, `feature/ABC-123_something`, `ABC-1234_foo`, `bugfix/foo-crash` or just `i-did-a-thing`.
+This now gets two additional branches, one for direct work and commits (unclean) and one for tracking commit relations etc. (history)
+
+type | branch name format | purpose
+--- | --- | ---
+clean | `{branch}` | the clean branch, not containing any mention of or commits from this base or anything related to AI assistant usage (prompts, refs, etc.). This one is save to release to the public or the customer.
+unclean | `ai/UNCLEAN/{branch}` | this is the branch to work on. It will allow you to commit ai, non-ai (code), or a mix of both as you want, making actually editing code etc. easier.
+history | `ai/history/{branch}` | this stores the metadata, and ai stuff, basically it's the left overs after you extract the clean parts from the unclean branch. So it contains every change which is not part of the code, so we can still reuse our AI instructions for later branches as well, e.g. `CLAUDE.md`. Also contains all metadata to sync the stripped down **clean** with the other branches.
+
+The general concept is to have those be synced automatically.
+There's also a `ai/history/master` branch (or whatever the repo's main branch is, `master`, `main`, `mane`, etc.),
+which will be holding the history of the AI stuff for after a **clean** variant was merged into the main branch. It then is the base for the next **unclean** and hence also the next **history** branch - while the main branch itself is the base for the new **clean** branch.
+
+#### `update-history-master`
+The script needs a `update-history-master` command, which does create a new base history.
+The master history is constructed like this in terms of commits:
+
+category | sorting | description
+--- | --- | ---
+`master` | comes first | all commits from the origin's current main branch)
+base | after `master` | this are merge commits of `base/base` into the `ai/history/master`.
+**history** | after `master` | commits of all **history** branches which **clean** branches were already merged into master.
+merge | after `master` | this are empty commits marking/referencing the last (= merge) commit merge of an **clean** branch which had **history** into master, so it comes after the rebased commits of that **history** branch.
+
+The difficult part is that after an update of **clean `master`**, the **`master` history** shall be rebased onto that.
+While that `master` is updated, we need to keep track of merges of **clean** branches which have an existing **history** or **unclean** variant, so we can cherry-pick those commits, too.
+
+With that general rebase strategy, and flattening the history of already-merged ai branches, it's gonna be difficult to support merging this `base`, and later on updates to the `base` to it occasionally.
+How can we handle that gracefully?
+
+Additionally, there should be a `--force-merge=<branch name>` option (multiple), which would force a manual history branch merge before it is actually included in the clean master.
+
+It does roughly the following:
+1. checkout `master`
+2. check if `master` is up to date, if not, ask whether we should `git pull` (default: N)
+3. checkout `base`
+4. check if `base` is up to date, if not, ask whether we should `git pull` (default: N)
+5. check out `ai/history/master`
+6. rebase `ai/history/master` onto `master`
+7. merge the most recent `base/base` into `ai/history/master`.
+
+The problem to think about is how we handle `base/base` merges. Merges doesn't really like rebases...
+Maybe the script manually rebases, processing the changes as usual until those would occur, then automatically merge the old merged commit of `base/base` freshly into `ai/history/master` (again), while applying the old conflict resolution once more (so if we can't rebase a merge, we instead recreate it).
+
+#### `sync-splits`
+This subcommand allows to sync **clean**, **unclean** and **history** versions of a branch.
+Those branches not created yet will be added.
+
+##### Generating **clean**
+Take **unclean** and strip all AI content, and outright drop ai-only commits.
+
+A branch's **clean** branch will start on the `master` branch, and add commits to that.
+
+##### Generating **history**
+Take **unclean** and strip all code content, but keep the commits even if empty.
+Add metadata to commits or add specifically crafted metadata commits to store everything needed to sync an **clean** branch with an **history** branch back to **unclean**.
+
+A branch's **history** branch will start on the `ai/history/master`, and add commits to that.
+
+##### Generating **unclean**
+This is the most difficult one, as you need to merge **clean** and **history** back.
+
+Steps:
+1. Start from `history/master` (i.e. the specific commit of `history/master` the branches **history** is based on, so that all the previous AI stuff is contained.
+2. Cherry-pick the commits from **clean** and **history** in order.
+
+In that there can be different commits to process:
+1. code only
+    - the commit exists only in **clean**, and there's no relating **history** for it
+      - e.g. it is a quick commit added after the last sync, i.e. to hotfix something, or if ai was not needed.
+2. history only
+    - this commit exist only in **history** and there's no **clean** commit matching.
+      - e.g. just an update to `CLAUDE.md` without any code changes.
+3. code + history
+   - the commit is in both other branches, and can be merged back into a single commit.
+     - e.g. prompt/query file update + the actually implemented changes.
+
+A branch's **unclean** branch will start on the `ai/history/master`, and add commits to that.
+
+#### `rebase-branches-to-master`
+This one takes all of the three branches and rebases it onto the current `master` variants.
+
+- **clean**
+    - This one will be rebased onto the also **clean** `master` branch.
+- **history**
+    - This will be rebased onto the`ai/history/master` branch.
+- **unclean**
+    - This will be rebased onto the **history** branch just created.
+
+Also think about how to handle one or two of them branches missing.
+
+
+---
+
+Additionally, we need:
+
+1. branch push name check
+   1. do not allow **unclean** or **history** format-named branches to be pushed to a remote called `origin`.
+2. branch push content check
+   1. block ai or ai-containing commits to be pushed if the branch name is not **unclean** format.
+   2. block code or code-containing commits to be pushed if the branch name is not **history** format.
+
+❯ Task Notification:
+> - Task `a1260db04034a4aba` <kbd>completed</kbd>
+> - Tool `toolu_01BRvXudN746k2NDHzP48wjK`
+> - > Agent "Explore existing git tooling scripts in base repo" finished
+> - [Query (`2224` chars, `2.2 KB`)](output/agents/005.a1260db04034a4aba/prompt.md)
+> - [Answer (`11672` chars, `11.5 KB`)](output/agents/005.a1260db04034a4aba/result.md)
+> - [Raw log (`552544` chars, `542 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a1260db04034a4aba.output)
+> - `28` tools, `108934` tokens, `1.9888 s`
+
+❯ Task Notification:
+> - Task `a8f5227679955d0c4` <kbd>completed</kbd>
+> - Tool `toolu_01FWBHxs5EzwAkLdrAE73Kor`
+> - > Agent "Explore AGENTS.md and base project conventions" finished
+> - [Query (`1971` chars, `1.95 KB`)](output/agents/006.a8f5227679955d0c4/prompt.md)
+> - [Answer (`17316` chars, `17 KB`)](output/agents/006.a8f5227679955d0c4/result.md)
+> - [Raw log (`231070` chars, `228 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a8f5227679955d0c4.output)
+> - `16` tools, `48001` tokens, `2.19657 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. This is a large feature (4 subcommands + push-protection hooks + a rebase-recreate-merge strategy for history-master). How should I scope the plan?
+>>    - Foundation first (Recommended)
+>>      ```text
+>>      Phase 1 (this plan):
+>>      - branch model + naming helpers
+>>      - AI-vs-code file/commit classifier
+>>      - sync-splits: unclean -> clean, unclean -> history
+>>      - pre-push hook: name + content checks
+>>      
+>>      Phase 2 (later plan):
+>>      - update-history-master (rebase + base/base merge recreation)
+>>      - rebase-branches-to-master (all 3 types)
+>>      - unclean reconstruction from clean+history (cherry-pick merge-back)
+>>      ```
+>> 2. How should generated clean/history commits stay correlated so `sync-splits` (unclean generation) can later reassemble them?
+>>    - Git trailer referencing source commit (Recommended)
+>>      ```text
+>>      commit message example:
+>>      
+>>      Add export button
+>>      
+>>      X-Base-Split-Source: 8f3a1c2
+>>      X-Base-Split-Kind: code
+>>      ```
+>> 3. What should count as "AI content" to strip for clean / keep for history?
+>>    - Path + message convention (Recommended)
+>>      ```text
+>>      AI paths:
+>>        ai/**
+>>        .claude/**
+>>        .codex/**
+>>        ai/tool-settings/**
+>>        .mcp.json
+>>        AGENTS.md (when symlink to CLAUDE.md)
+>>      
+>>      AI-only commit if:
+>>        all changed paths in AI paths
+>>        OR subject matches /^(\[.*\]\s*)?ai:/
+>>      ```
+>> 4. Where should this new tool live and how should it be invoked, following repo convention?
+>>    - scripts/°base/git/split.py + °split_lib package (Recommended)
+>>      ```text
+>>      scripts/°base/git/split.py
+>>      scripts/°base/git/°split_lib/
+>>        __init__.py
+>>        cli.py            # argparse subcommands
+>>        branches.py       # naming/detection helpers
+>>        classify.py       # AI-vs-code commit/file classifier
+>>        sync_splits.py
+>>        history_master.py
+>>        push_checks.py
+>>      ```
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Scope** (1/4) <kbd>Single Select</kbd><br>
+>> This is a large feature (4 subcommands + push-protection hooks + a rebase-recreate-merge strategy for history-master). How should I scope the plan?
+> - [ ] 1\. Foundation first (Recommended)
+>   - _Plan+build: branch-type detection, AI-vs-code commit classification, `sync-splits` (clean/history generation from unclean), and push-protection hooks. Defer `update-history-master` and the full `rebase-branches-to-master` cross-branch rebase (the hardest, most conflict-prone pieces) to a follow-up plan once the foundation is proven._
+>   - ```
+>     Phase 1 (this plan):
+>     - branch model + naming helpers
+>     - AI-vs-code file/commit classifier
+>     - sync-splits: unclean -> clean, unclean -> history
+>     - pre-push hook: name + content checks
+>
+>     Phase 2 (later plan):
+>     - update-history-master (rebase + base/base merge recreation)
+>     - rebase-branches-to-master (all 3 types)
+>     - unclean reconstruction from clean+history (cherry-pick merge-back)
+>     ```
+> - [ ] 2\. Full scope in one plan
+>   - _Design all four subcommands (update-history-master, sync-splits, rebase-branches-to-master) and push hooks together now, even though update-history-master's rebase/merge-recreation logic is still conceptually unresolved._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+>> **Correlation** (2/4) <kbd>Single Select</kbd><br>
+>> How should generated clean/history commits stay correlated so `sync-splits` (unclean generation) can later reassemble them?
+> - [ ] 1\. Git trailer referencing source commit (Recommended)
+>   - _Every generated clean/history commit gets a trailer like `X-Base-Split-Source: <unclean-sha>` pointing back to the original unclean commit it was derived from. Cheap, survives rebases if preserved, greppable, no extra files._
+>   - ```
+>     commit message example:
+>
+>     Add export button
+>
+>     X-Base-Split-Source: 8f3a1c2
+>     X-Base-Split-Kind: code
+>     ```
+> - [ ] 2\. Dedicated metadata commits/files
+>   - _Store the clean<->history<->unclean commit mapping in a tracked metadata file (e.g. JSON) updated via its own commits on the history branch, instead of embedding it in every commit message._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+>> **AI boundary** (3/4) <kbd>Single Select</kbd><br>
+>> What should count as "AI content" to strip for clean / keep for history?
+> - [ ] 1\. Path + message convention (Recommended)
+>   - _A file is AI content if it's under ai/**, .claude/**, .codex/**, ai/tool-settings/**, .mcp.json, or is an AGENTS.md/CLAUDE.md symlink pair — matching this repo's existing convention. A commit is AI-only if every changed path matches that set, or its subject starts with `ai:` (optionally after a `[where]` tag)._
+>   - ```
+>     AI paths:
+>       ai/**
+>       .claude/**
+>       .codex/**
+>       ai/tool-settings/**
+>       .mcp.json
+>       AGENTS.md (when symlink to CLAUDE.md)
+>
+>     AI-only commit if:
+>       all changed paths in AI paths
+>       OR subject matches /^(\[.*\]\s*)?ai:/
+>     ```
+> - [ ] 2\. Something narrower/different
+>   - _Tell me the exact boundary you want instead (e.g. exclude CLAUDE.md from stripping since consuming projects may want to keep their own instructions, or a different path list)._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+>> **Entry point** (4/4) <kbd>Single Select</kbd><br>
+>> Where should this new tool live and how should it be invoked, following repo convention?
+> - [ ] 1\. scripts/°base/git/split.py + °split_lib package (Recommended)
+>   - _Thin argparse shim `scripts/°base/git/split.py` delegating to `scripts/°base/git/°split_lib/cli.py`, with subcommands `sync-splits`, `update-history-master`, `rebase-branches-to-master` — mirrors the existing ai/settings/sync.py -> °settings_lib pattern._
+>   - ```
+>     scripts/°base/git/split.py
+>     scripts/°base/git/°split_lib/
+>       __init__.py
+>       cli.py            # argparse subcommands
+>       branches.py       # naming/detection helpers
+>       classify.py       # AI-vs-code commit/file classifier
+>       sync_splits.py
+>       history_master.py
+>       push_checks.py
+>     ```
+> - [ ] 2\. Different location/name
+>   - _Tell me where you'd prefer this to live instead._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Your spec says: (1) block AI-containing commits from push unless branch is unclean-format, and (2) block code-containing commits from push unless branch is history-format. Taken literally, rule (1) would also block a `history`-format branch from pushing its own legitimate AI content (since history branches are supposed to hold AI content), and rule (2) would block a `clean`-format branch from pushing its own legitimate code. Which is correct?
+>>    - Each format has its own allowed content (Recommended)
+>>      ```text
+>>      format   | AI commits | code commits
+>>      ---------|-----------|-------------
+>>      unclean  | allowed    | allowed
+>>      clean    | blocked    | allowed
+>>      history  | allowed    | blocked
+>>      ```
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Push rule fix** (1/1) <kbd>Single Select</kbd><br>
+>> Your spec says: (1) block AI-containing commits from push unless branch is unclean-format, and (2) block code-containing commits from push unless branch is history-format. Taken literally, rule (1) would also block a `history`-format branch from pushing its own legitimate AI content (since history branches are supposed to hold AI content), and rule (2) would block a `clean`-format branch from pushing its own legitimate code. Which is correct?
+> - [ ] 1\. Each format has its own allowed content (Recommended)
+>   - _unclean: AI + code both allowed. clean: code allowed, AI blocked. history: AI allowed, code blocked. i.e. rule (1) really means "blocked unless unclean OR history", rule (2) really means "blocked unless unclean OR clean"._
+>   - ```
+>     format   | AI commits | code commits
+>     ---------|-----------|-------------
+>     unclean  | allowed    | allowed
+>     clean    | blocked    | allowed
+>     history  | allowed    | blocked
+>     ```
+> - [ ] 2\. Literal reading
+>   - _Exactly as written: AI-containing commits are only ever allowed on unclean-format branches (blocked even on history), and code-containing commits are only ever allowed on history-format branches (blocked even on clean). Clean branches could never push anything under this reading, so this would need clean to be exempted from both checks entirely._
+>   - ```text
+>     format   | AI commits | code commits
+>     ---------|-----------|-------------
+>     unclean  | allowed    | allowed
+>     clean    | blocked    | blocked (?)
+>     history  | blocked    | allowed
+>     ```
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
+❯ Task Notification:
+> - Task `aa0735f78be2cc83e` <kbd>completed</kbd>
+> - Tool `toolu_0117bUZE9ZUXh7wdnwxU6xzf`
+> - > Agent "Design phase-1 git branch-split foundation" finished
+> - [Query (`8412` chars, `8.28 KB`)](output/agents/007.aa0735f78be2cc83e/prompt.md)
+> - [Answer (`14980` chars, `14.7 KB`)](output/agents/007.aa0735f78be2cc83e/result.md)
+> - [Raw log (`395392` chars, `387 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/aa0735f78be2cc83e.output)
+> - `28` tools, `83539` tokens, `7.54358 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. The design agent found that the `ai:`-subject regex we set (`^(\[.*\]\s*)?ai:`) doesn't actually match this repo's real commit convention, e.g. `[base] topic: ai: Run: ...` (topic sits between the bracket and `ai:`). Since this only matters for the edge case of a commit that touches zero AI/base paths but still has an ai-flavored subject, how should the regex work?
+>>    - Match real convention (Recommended)
+>>      ```text
+>>      Matches:
+>>        ai: updated prompt
+>>        [base] topic: ai: Run: ...
+>>        [dumper] init script: ai: Run: ...
+>>      
+>>      Doesn't match:
+>>        aisle: fix typo
+>>        said: hello
+>>      ```
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Subject regex** (1/1) <kbd>Single Select</kbd><br>
+>> The design agent found that the `ai:`-subject regex we set (`^(\[.*\]\s*)?ai:`) doesn't actually match this repo's real commit convention, e.g. `[base] topic: ai: Run: ...` (topic sits between the bracket and `ai:`). Since this only matters for the edge case of a commit that touches zero AI/base paths but still has an ai-flavored subject, how should the regex work?
+> - [ ] 1\. Match real convention (Recommended)
+>   - _Loosen the regex to match an optional `[...]` tag, then any text, then `ai:` anywhere in the subject — e.g. `^(\[.*\]\s*)?.*\bai:` — so it correctly flags real commits like `[base] topic: ai: Run: ...`._
+>   - ```
+>     Matches:
+>       ai: updated prompt
+>       [base] topic: ai: Run: ...
+>       [dumper] init script: ai: Run: ...
+>
+>     Doesn't match:
+>       aisle: fix typo
+>       said: hello
+>     ```
+> - [ ] 2\. Keep as originally specified
+>   - _Leave the narrower regex as-is (only matches when `ai:` immediately follows an optional single bracket tag) — it will under-flag real `[where] topic: ai: Run:` commits that touch zero AI/base paths, relying entirely on path-based classification instead._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
