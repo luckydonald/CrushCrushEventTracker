@@ -2896,3 +2896,14 @@ Can we pipe into `uv`, and would that make sense? Please explain options before 
 
 ❯ python 3 is fine then.
 
+❯ /plan You mentionend:
+
+> One thing surfaced during end-to-end testing that's worth your attention separately: chaining bootstrap-branch → forward sync-splits on the same branch currently duplicates
+> that branch's pre-existing commits onto clean. Root cause: reconstruct_unclean tags commits it builds with X-Base-Unclean-Reconstructed-From, not X-Base-Split-Source, so the
+> forward direction doesn't recognize clean's tip as already covered. This is a real, pre-existing gap between Phase 2 and Phase 3, not something introduced today — flagging
+> it rather than fixing it silently since it needs its own decision on the right correlation fix. Want me to plan that next?
+
+Yes, do fix that.
+
+❯ Good. For now keep commiting, using a `[base] [ssp] ` prefix instead only `[base]`.
+

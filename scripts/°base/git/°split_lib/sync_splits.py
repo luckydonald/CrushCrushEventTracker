@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from . import branches, classify, git_ops, identity, trailers, tree_ops
+from . import sync_unclean
 
 SOURCE_TRAILER = "X-Base-Split-Source"
 KIND_TRAILER = "X-Base-Split-Kind"
@@ -31,6 +32,35 @@ def find_last_synced_source(target_ref: str, cwd: Path) -> str | None:
         return None
     message = git_ops.commit_message(tip, cwd)
     return trailers.read_trailer_value(message, SOURCE_TRAILER, cwd)
+
+
+def find_reconstruction_correlated_cursor(unclean_ref: str, target_ref: str, cwd: Path) -> str | None:
+    """Fallback cursor for the first forward run after `sync_unclean.
+    reconstruct_unclean` built `unclean_ref` from a clean-only/history-only
+    branch (e.g. via `bootstrap-branch`).
+
+    That reverse direction tags commits it creates on `unclean_ref` with
+    `sync_unclean.RECON_TRAILER`, not `SOURCE_TRAILER` -- so `target_ref`'s
+    own tip carries no trailer `find_last_synced_source` can read, even
+    though its content is already fully represented on `unclean_ref`.
+    Walk `unclean_ref` newest-first and return the first commit whose
+    reconstruction trailer resolves to a real commit that is `target_ref`'s
+    tip or an ancestor of it -- i.e. the furthest-forward point already
+    covered, so replay can resume strictly after it instead of duplicating
+    everything back to `merge-base(unclean_ref, lower_bound_ref)`.
+    """
+    target_tip = git_ops.rev_parse(target_ref, cwd)
+    if target_tip is None:
+        return None
+
+    for sha in reversed(git_ops.rev_list_reverse(unclean_ref, cwd)):
+        message = git_ops.commit_message(sha, cwd)
+        candidate = trailers.read_trailer_value(message, sync_unclean.RECON_TRAILER, cwd)
+        if candidate is None or not git_ops.rev_exists(candidate, cwd):
+            continue
+        if candidate == target_tip or git_ops.is_ancestor(candidate, target_tip, cwd):
+            return sha
+    return None
 
 
 def commits_to_replay(
@@ -159,6 +189,8 @@ def sync_branch(
 
     # --- clean pass ---
     clean_last_source = find_last_synced_source(clean_ref, cwd)
+    if clean_last_source is None:
+        clean_last_source = find_reconstruction_correlated_cursor(unclean_ref, clean_ref, cwd)
     clean_source_shas = commits_to_replay(unclean_ref, clean_last_source, main_branch, cwd)
 
     source_to_clean_tree: dict[str, str] = {}
@@ -194,6 +226,8 @@ def sync_branch(
 
     # --- history pass ---
     history_last_source = find_last_synced_source(history_ref, cwd)
+    if history_last_source is None:
+        history_last_source = find_reconstruction_correlated_cursor(unclean_ref, history_ref, cwd)
     history_source_shas = commits_to_replay(unclean_ref, history_last_source, history_main_ref, cwd)
 
     history_commits_created = 0

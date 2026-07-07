@@ -17,6 +17,8 @@ classify = importlib.import_module("°split_lib.classify")
 git_ops = importlib.import_module("°split_lib.git_ops")
 trailers = importlib.import_module("°split_lib.trailers")
 sync_splits = importlib.import_module("°split_lib.sync_splits")
+sync_unclean = importlib.import_module("°split_lib.sync_unclean")
+bootstrap = importlib.import_module("°split_lib.bootstrap")
 
 
 class SyncSplitsTestBase(unittest.TestCase):
@@ -300,6 +302,65 @@ class DryRunTests(SyncSplitsTestBase):
         self.assertEqual(result.clean_commits_created, 1)
         self.assertEqual(result.history_commits_created, 2)
         self.assertEqual(result.clean_commits_skipped_ai_only, 1)
+
+
+class ReconstructionCursorFallbackTests(SyncSplitsTestBase):
+    def test_find_reconstruction_correlated_cursor_finds_newest_match(self):
+        git(["checkout", "-b", "feature/clean-only"], self.repo)
+        make_commit(self.repo, "src/one.py", "add one")
+        clean_tip = git(["rev-parse", "HEAD"], self.repo)
+        git(["checkout", "master"], self.repo)
+
+        git(["checkout", "-b", branches.unclean_name("feature/clean-only")], self.repo)
+        message = trailers.write_trailers(
+            "reconstructed commit\n", {sync_unclean.RECON_TRAILER: clean_tip}, self.repo
+        )
+        msg_file = self.repo / ".commitmsg-tmp"
+        msg_file.write_text(message)
+        try:
+            git(["commit", "--allow-empty", "-F", str(msg_file)], self.repo)
+        finally:
+            msg_file.unlink(missing_ok=True)
+        unclean_sha = git(["rev-parse", "HEAD"], self.repo)
+        git(["checkout", "master"], self.repo)
+
+        cursor = sync_splits.find_reconstruction_correlated_cursor(
+            branches.unclean_name("feature/clean-only"), "feature/clean-only", self.repo
+        )
+        self.assertEqual(cursor, unclean_sha)
+
+    def test_find_reconstruction_correlated_cursor_returns_none_when_no_match(self):
+        self.make_unclean("feature/fresh2")
+        make_commit(self.repo, "src/one.py", "add one")
+
+        cursor = sync_splits.find_reconstruction_correlated_cursor(
+            branches.unclean_name("feature/fresh2"), "master", self.repo
+        )
+        self.assertIsNone(cursor)
+
+
+class BootstrapThenForwardSyncTests(SyncSplitsTestBase):
+    def test_forward_sync_after_bootstrap_reconstruction_does_not_duplicate(self):
+        git(["checkout", "-b", "feature/clean-only"], self.repo)
+        make_commit(self.repo, "src/one.py", "add one")
+        make_commit(self.repo, "src/two.py", "add two")
+        git(["checkout", "master"], self.repo)
+
+        clean_commit_count_before = int(
+            git(["rev-list", "--count", "master..feature/clean-only"], self.repo)
+        )
+
+        result = bootstrap.bootstrap_branch(
+            "feature/clean-only", repo_root=self.repo, main_branch="master"
+        )
+        self.assertTrue(result["ok"])
+
+        sync_splits.sync_branch("feature/clean-only", repo_root=self.repo, main_branch="master")
+
+        clean_commit_count_after = int(
+            git(["rev-list", "--count", "master..feature/clean-only"], self.repo)
+        )
+        self.assertEqual(clean_commit_count_after, clean_commit_count_before)
 
 
 class DiscoverUncleanBranchesTests(SyncSplitsTestBase):
