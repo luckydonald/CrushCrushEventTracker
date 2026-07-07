@@ -2696,3 +2696,118 @@ Additionally, we need:
 > </details>
 >
 
+❯ /plan part 2 then.
+
+❯ Task Notification:
+> - Task `a80951b12e37c8497` <kbd>completed</kbd>
+> - Tool `toolu_01GXPPahwch5kybFY2SeJ8Y9`
+> - > Agent "Explore trailer/commit-tree precedent for split tool" finished
+> - [Query (`3208` chars, `3.16 KB`)](output/agents/008.a80951b12e37c8497/prompt.md)
+> - [Answer (`10173` chars, `10 KB`)](output/agents/008.a80951b12e37c8497/result.md)
+> - [Raw log (`152465` chars, `150 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a80951b12e37c8497.output)
+> - `10` tools, `36162` tokens, `0.952283 s`
+
+❯ Task Notification:
+> - Task `ace55d9e6c53fb031` <kbd>completed</kbd>
+> - Tool `toolu_01CHwYsFixW9WmedJbq5imxV`
+> - > Agent "Design sync-splits clean+history generation" finished
+> - [Query (`8184` chars, `8.04 KB`)](output/agents/009.ace55d9e6c53fb031/prompt.md)
+> - [Answer (`35099` chars, `34.4 KB`)](output/agents/009.ace55d9e6c53fb031/result.md)
+> - [Raw log (`244802` chars, `240 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/ace55d9e6c53fb031.output)
+> - `17` tools, `40475` tokens, `3.22585 s`
+
+❯ Task Notification:
+> - Task `a45cbe832fd2cd064` <kbd>completed</kbd>
+> - Tool `toolu_01VM5JmD4pV4M1xkXSh58MTu`
+> - > Agent "Design unclean reconstruction from clean+history" finished
+> - [Query (`8022` chars, `7.88 KB`)](output/agents/010.a45cbe832fd2cd064/prompt.md)
+> - [Answer (`36018` chars, `35.4 KB`)](output/agents/010.a45cbe832fd2cd064/result.md)
+> - [Raw log (`176893` chars, `173 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a45cbe832fd2cd064.output)
+> - `14` tools, `33254` tokens, `3.16442 s`
+
+❯ Task Notification:
+> - Task `aabee86b159467ae2` <kbd>completed</kbd>
+> - Tool `toolu_01K9T8bepRkJiHvGuwVya682`
+> - > Agent "Design history-master rebase and cross-branch rebase" finished
+> - [Query (`9697` chars, `9.52 KB`)](output/agents/011.aabee86b159467ae2/prompt.md)
+> - [Answer (`19350` chars, `19 KB`)](output/agents/011.aabee86b159467ae2/result.md)
+> - [Raw log (`316336` chars, `310 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/aabee86b159467ae2.output)
+> - `21` tools, `65801` tokens, `5.80757 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Phase 2 splits into three independently-hard subsystems: (A) sync-splits forward (unclean→clean/history, needs new tree-splitting/trailer machinery), (B) unclean reconstruction (clean+history→unclean, the ordering/correlation problem you called "the most difficult one"), (C) update-history-master + rebase-branches-to-master (the base/base merge-recreation problem). B and C both depend on the trailers that A produces. How much should this plan cover?
+>>    - All three (A+B+C) now
+>> 2. update-history-master needs to detect which clean branches were newly merged into master, to pull in their history. Branch-name-in-merge-commit-subject detection breaks completely for GitHub squash-merges (no second parent, no branch name). How should this be handled?
+>>    - Require a trailer on the merge/squash commit
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Phase 2 scope** (1/2) <kbd>Single Select</kbd><br>
+>> Phase 2 splits into three independently-hard subsystems: (A) sync-splits forward (unclean→clean/history, needs new tree-splitting/trailer machinery), (B) unclean reconstruction (clean+history→unclean, the ordering/correlation problem you called "the most difficult one"), (C) update-history-master + rebase-branches-to-master (the base/base merge-recreation problem). B and C both depend on the trailers that A produces. How much should this plan cover?
+> - [ ] 1\. A only (Recommended)
+>   - _Plan+implement just sync-splits forward generation (unclean→clean, unclean→history): trailer scheme, tree-splitting via git plumbing, cursor tracking, new-branch creation. B and C get their own follow-up plans once A's trailer scheme is proven in practice._
+>   - ```
+>     This plan (A):
+>     - trailers.py, tree_split.py, sync_splits.py (forward only)
+>     - X-Base-Split-Source/-Kind trailer scheme
+>     - commit-by-commit tree-splitting replay
+>     - ref-based cursor tracking
+>
+>     Deferred:
+>     - B: unclean reconstruction (ordering/correlation)
+>     - C: update-history-master + rebase-branches-to-master
+>     ```
+> - [ ] 2\. A + C now, defer B
+>   - _Also plan+implement update-history-master/rebase-branches-to-master now (doesn't depend on reconstruction), leaving only the hardest piece — unclean reconstruction — for later._
+> - [x] 3\. All three (A+B+C) now
+>   - _Plan all three subsystems in this pass, accepting that B and C's designs rest on assumptions about A that haven't been implemented/tested yet._
+> - [ ] 4\. _Notes: Add notes on this design._
+>
+>> **Merge detection** (2/2) <kbd>Single Select</kbd><br>
+>> update-history-master needs to detect which clean branches were newly merged into master, to pull in their history. Branch-name-in-merge-commit-subject detection breaks completely for GitHub squash-merges (no second parent, no branch name). How should this be handled?
+> - [ ] 1\. Require true merges, no squash (Recommended)
+>   - _Document that branches participating in the clean/unclean/history split must be merged via a real merge commit (GitHub "Create a merge commit", not squash/rebase-merge) so the second parent + branch name are reliably detectable. update-history-master relies on this; --force-merge remains the manual recovery path when it's violated._
+>   - ```
+>     GitHub merge button setting:
+>       [x] Allow merge commits
+>       [ ] Allow squash merging   <- disable for split branches
+>       [ ] Allow rebase merging   <- disable for split branches
+>     ```
+> - [x] 2\. Require a trailer on the merge/squash commit
+>   - _Instead of a repo-wide merge-strategy restriction, require whoever merges the PR (or a bot) to add an `X-Base-Split-Clean-Branch: <name>` trailer to the final commit message, working with squash merges too but requiring extra process discipline at merge time._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
+❯ Task Notification:
+> - Task `a0787ac1f3d36b67e` <kbd>completed</kbd>
+> - Tool `toolu_016KortWxfxCTQ8bVYV5isDu`
+> - > Agent "Implement sync_splits.py forward direction" finished
+> - [Query (`8423` chars, `8.29 KB`)](output/agents/012.a0787ac1f3d36b67e/prompt.md)
+> - [Answer (`2570` chars, `2.53 KB`)](output/agents/012.a0787ac1f3d36b67e/result.md)
+> - [Raw log (`266676` chars, `261 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a0787ac1f3d36b67e.output)
+> - `19` tools, `65920` tokens, `3.5276 s`
+
+❯ Task Notification:
+> - Task `aebf39c931242b355` <kbd>completed</kbd>
+> - Tool `toolu_019adApM3cQM8LziVJgneYBR`
+> - > Agent "Implement sync_unclean.py reconstruction direction" finished
+> - [Query (`10326` chars, `10.2 KB`)](output/agents/013.aebf39c931242b355/prompt.md)
+> - [Answer (`3200` chars, `3.15 KB`)](output/agents/013.aebf39c931242b355/result.md)
+> - [Raw log (`533483` chars, `522 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/aebf39c931242b355.output)
+> - `33` tools, `119189` tokens, `11.9324 s`
+
+❯ Task Notification:
+> - Task `a598976ff098d379a` <kbd>completed</kbd>
+> - Tool `toolu_01FtA6Njwzum9mtccE7QsvQk`
+> - > Agent "Implement history_master.py and rebase_to_master.py" finished
+> - [Query (`11126` chars, `10.9 KB`)](output/agents/014.a598976ff098d379a/prompt.md)
+> - [Answer (`3452` chars, `3.4 KB`)](output/agents/014.a598976ff098d379a/result.md)
+> - [Raw log (`886443` chars, `867 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a598976ff098d379a.output)
+> - `51` tools, `175380` tokens, `16.3696 s`
+

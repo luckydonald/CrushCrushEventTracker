@@ -9,6 +9,7 @@ Usage:
 
 from __future__ import annotations
 
+import importlib
 import os
 import shlex
 import shutil
@@ -17,11 +18,12 @@ import sys
 import tempfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+_identity = importlib.import_module("°split_lib.identity")
+NEW_AUTHOR, NEW_NAME, NEW_EMAIL = _identity.BOT_AUTHOR, _identity.BOT_NAME, _identity.BOT_EMAIL
+
 UPSTREAM = "origin/mane"
 CLAUDE_EMAIL = "41898282+claude[bot]@users.noreply.github.com"
-NEW_NAME = "✨❯ Lucky Lucy"
-NEW_EMAIL = "claude._.ai._.code@luckydonald.de"
-NEW_AUTHOR = f"{NEW_NAME} <{NEW_EMAIL}>"
 
 
 def capture(*args: str) -> str:
@@ -63,6 +65,9 @@ def main(argv: list[str] | None = None) -> int:
     tmp = Path(tempfile.mkdtemp(prefix="rebase-strip-claude-"))
     exec_script = tmp / script_path.name
     shutil.copy2(script_path, exec_script)
+    # The relocated copy still imports °split_lib.identity by path relative to
+    # its own location, so it needs a sibling copy of the package too.
+    shutil.copytree(script_path.parent / "°split_lib", tmp / "°split_lib")
     exec_cmd = shell_join([sys.executable, str(exec_script), "--amend-step"])
     try:
         subprocess.run(["git", "rebase", merge_base, "--exec", exec_cmd], check=True)
