@@ -53,3 +53,51 @@ Additionally, using @ai/references/https/developers.openai.com/codex/mcp.md and 
 While at it configure it directly with `envmcp` to use `ai/.env` of a repo, see @ai/references/https/github.com/griffithsbs/envmcp/blob/9dc9d6510aa07f999095b7bb5eed636428eebec5/README.md for that tool.
 
 - [x] Done
+
+---
+
+/plan I need to create a tool for splitting off AI stuff & `base` from a project, as that project is not supposed to have this base or AI mentions in it.
+The general concept is that for a branch, AI versions can exist.
+Generally, there's the clean branch with any name, but examples could be `feature/ABC-123/something/mr1`, `feature/ABC-123_something`, `ABC-1234_foo`, `bugfix/foo-crash` or just `i-did-a-thing`.
+This now gets two additional branches, one for direct work and commits (unclean) and one for tracking commit relations etc. (history)
+
+type | branch name format | purpose
+--- | --- | ---
+clean | `{branch}` | the clean branch, not containing any mention of or commits from this base or anything related to AI assistant usage (prompts, refs, etc.). This one is save to release to the public or the customer.
+unclean | `ai/UNCLEAN/{branch}` | this is the branch to work on. It will allow you to commit ai, non-ai (code), or a mix of both as you want, making actually editing code etc. easier.
+history | `ai/history/{branch}` | this stores the metadata, and ai stuff, basically it's the left overs after you extract the clean parts from the unclean branch. So it contains every change which is not part of the code, so we can still reuse our AI instructions for later branches as well, e.g. `CLAUDE.md`.
+
+The general concept is to have those be synced automatically.
+There's also a `ai/history/master` branch (or whatever the repo's main branch is, `master`, `main`, `mane`, etc.),
+which will be holding the history of the AI stuff for after a **clean** variant was merged into the main branch. It then is the base for the next **unclean** and hence also the next **history** branch - while the main branch itself is the base for the new **clean** branch.
+
+#### `update-history-master`
+The script needs a `update-history-master` command, which does create a new base history.
+The master history is constructed like this in terms of commits:
+
+category | sorting | description
+--- | --- | ---
+`master` | comes first | all commits from the origin's current main branch)
+base | after `master` | this are merge commits of `base/base` into the `ai/history/master`.
+**history** | after `master` | commits of all **history** branches which **clean** branches were already merged into master.
+merge | after `master` | this are empty commits marking/referencing the last (= merge) commit merge of an **clean** branch which had **history** into master, so it comes after the rebased commits of that **history** branch.
+
+The difficult part is that after an update of **clean `master`**, the **`master` history** shall be rebased onto that.
+While that `master` is updated, we need to keep track of merges of **clean** branches which have an existing **history** or **unclean** variant, so we can rebase those commits, too.
+
+
+
+
+
+
+
+Additionally, we need:
+
+1. branch push name check
+   1. do not allow **unclean** or **history** format-named branches to be pushed to a remote called `origin`.
+2. branch push content check
+   1. block ai or ai-containing commits to be pushed if the branch name is not **unclean** format.
+   2. block code or code-containing commits to be pushed if the branch name is not **history** format.
+3.
+
+- [ ] Done
