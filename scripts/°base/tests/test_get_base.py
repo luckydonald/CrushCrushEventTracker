@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _git_test_helpers import git, init_repo, make_commit  # noqa: E402
 
 SCRIPT = Path(__file__).resolve().parents[1] / "git" / "get-base.py"
+SPLIT_LIB_ROOT = Path(__file__).resolve().parents[1] / "git" / "°split_lib"
 
 
 def load_script_module():
@@ -45,6 +46,17 @@ class GetBaseTests(unittest.TestCase):
 
     def _add_real_base_remote(self):
         git(["remote", "add", "base", str(self.base_repo)], self.repo)
+
+    def _seed_real_split_lib(self):
+        """Copy the real branches.py/__init__.py into the fake base remote's
+        tree, so auto_argv's `importlib.import_module("°split_lib.branches")`
+        (against the worktree, once created) actually resolves."""
+        dest = self.base_repo / "scripts" / "°base" / "git" / "°split_lib"
+        dest.mkdir(parents=True, exist_ok=True)
+        for name in ("__init__.py", "branches.py"):
+            (dest / name).write_text((SPLIT_LIB_ROOT / name).read_text())
+        git(["add", "."], self.base_repo)
+        git(["commit", "-m", "seed real °split_lib.branches"], self.base_repo)
 
     def test_ensure_base_remote_adds_when_missing(self):
         self.module.ensure_base_remote(self.repo, "someuser")
@@ -108,6 +120,143 @@ class GetBaseTests(unittest.TestCase):
 
         self.assertEqual(git(["status", "--porcelain"], self.repo), status_before)
         self.assertEqual(git(["rev-parse", "HEAD"], self.repo), head_before)
+
+
+class AutoArgvTests(unittest.TestCase):
+    def setUp(self):
+        self.module = load_script_module()
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.repo = Path(self._tmp.name)
+        init_repo(self.repo, branch="master")
+        make_commit(self.repo, "README.md", "initial commit")
+
+        base_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_tmp.cleanup)
+        self.base_repo = Path(base_tmp.name)
+        git(["clone", str(self.repo), str(self.base_repo)], self.repo)
+        git(["config", "user.email", "test@example.com"], self.base_repo)
+        git(["config", "user.name", "Test"], self.base_repo)
+        dest = self.base_repo / "scripts" / "°base" / "git" / "°split_lib"
+        dest.mkdir(parents=True, exist_ok=True)
+        for name in ("__init__.py", "branches.py"):
+            (dest / name).write_text((SPLIT_LIB_ROOT / name).read_text())
+        git(["add", "."], self.base_repo)
+        git(["commit", "-m", "seed real °split_lib.branches"], self.base_repo)
+        git(["branch", "-m", "base"], self.base_repo)
+
+        git(["remote", "add", "base", str(self.base_repo)], self.repo)
+        self.module.fetch_base(self.repo)
+        self.worktree = self.module.ensure_worktree(self.repo)
+
+    def test_on_main_branch_runs_update_history_master(self):
+        git(["checkout", "master"], self.repo)
+        self.assertEqual(
+            self.module.auto_argv(self.repo, self.worktree),
+            ["update-history-master", "--yes"],
+        )
+
+    def test_on_history_master_runs_update_history_master(self):
+        git(["checkout", "-b", "ai/history/master"], self.repo)
+        self.assertEqual(
+            self.module.auto_argv(self.repo, self.worktree),
+            ["update-history-master", "--yes"],
+        )
+
+    def test_on_clean_feature_branch_runs_bootstrap_branch(self):
+        git(["checkout", "-b", "feature"], self.repo)
+        self.assertEqual(
+            self.module.auto_argv(self.repo, self.worktree),
+            ["bootstrap-branch", "feature"],
+        )
+
+    def test_on_unclean_branch_runs_forward_sync(self):
+        git(["checkout", "-b", "ai/UNCLEAN/feature"], self.repo)
+        self.assertEqual(
+            self.module.auto_argv(self.repo, self.worktree),
+            ["sync-splits", "feature", "--direction=to-clean-history"],
+        )
+
+    def test_on_non_master_history_branch_runs_forward_sync(self):
+        git(["checkout", "-b", "ai/history/feature"], self.repo)
+        self.assertEqual(
+            self.module.auto_argv(self.repo, self.worktree),
+            ["sync-splits", "feature", "--direction=to-clean-history"],
+        )
+
+    def test_detached_head_refuses(self):
+        head_sha = git(["rev-parse", "HEAD"], self.repo)
+        git(["checkout", "--detach", head_sha], self.repo)
+        self.assertIsNone(self.module.auto_argv(self.repo, self.worktree))
+
+
+class MainAutoModeTests(unittest.TestCase):
+    def setUp(self):
+        self.module = load_script_module()
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.repo = Path(self._tmp.name)
+        init_repo(self.repo, branch="master")
+        make_commit(self.repo, "README.md", "initial commit")
+
+        base_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_tmp.cleanup)
+        self.base_repo = Path(base_tmp.name)
+        git(["clone", str(self.repo), str(self.base_repo)], self.repo)
+        git(["config", "user.email", "test@example.com"], self.base_repo)
+        git(["config", "user.name", "Test"], self.base_repo)
+        dest = self.base_repo / "scripts" / "°base" / "git" / "°split_lib"
+        dest.mkdir(parents=True, exist_ok=True)
+        for name in ("__init__.py", "branches.py"):
+            (dest / name).write_text((SPLIT_LIB_ROOT / name).read_text())
+        (self.base_repo / "scripts" / "°base" / "git" / "split.py").write_text("# stand-in\n")
+        git(["add", "."], self.base_repo)
+        git(["commit", "-m", "seed"], self.base_repo)
+        git(["branch", "-m", "base"], self.base_repo)
+
+        git(["remote", "add", "base", str(self.base_repo)], self.repo)
+
+    def test_empty_argv_triggers_auto_detection(self):
+        git(["checkout", "-b", "feature"], self.repo)
+
+        captured = {}
+
+        def fake_execvp(executable, args):
+            captured["args"] = args
+
+        with mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+            code = self.module.main([])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(captured["args"][-2:], ["bootstrap-branch", "feature"])
+
+    def test_nonempty_argv_bypasses_auto_detection(self):
+        git(["checkout", "-b", "feature"], self.repo)
+
+        captured = {}
+
+        def fake_execvp(executable, args):
+            captured["args"] = args
+
+        with mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+            self.module.main(["update-history-master", "--yes"])
+
+        self.assertEqual(captured["args"][-2:], ["update-history-master", "--yes"])
+
+    def test_detached_head_with_empty_argv_refuses(self):
+        head_sha = git(["rev-parse", "HEAD"], self.repo)
+        git(["checkout", "--detach", head_sha], self.repo)
+
+        with mock.patch.object(self.module.os, "execvp") as execvp, \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+            code = self.module.main([])
+
+        self.assertEqual(code, 1)
+        execvp.assert_not_called()
 
 
 if __name__ == "__main__":

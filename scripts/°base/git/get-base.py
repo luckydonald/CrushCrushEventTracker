@@ -9,11 +9,16 @@ touching the currently checked-out branch or working tree.
 Deliberately stdlib-only (no imports from `°split_lib`), since none of that
 exists yet when this file is fetched standalone -- it's meant to be run as:
 
-    curl -fsSL https://raw.githubusercontent.com/luckydonald/base/master/scripts/°base/git/get-base.py | python3 - bootstrap-branch feature
+    curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
 
 or locally, once a copy is reachable on disk:
 
     python3 scripts/°base/git/get-base.py update-history-master --yes
+
+With no arguments at all, it figures out what to do from the branch you're
+currently on (see `auto_argv`) -- e.g. on your main branch it runs
+`update-history-master --yes`; on a clean feature branch it runs
+`bootstrap-branch <branch>`.
 
 Env:
     BASE_GIT_USERNAME  GitHub username/org the `base` remote points at (default: luckydonald)
@@ -25,6 +30,7 @@ its own branch called `base`.
 
 from __future__ import annotations
 
+import importlib
 import os
 import subprocess
 import sys
@@ -90,6 +96,55 @@ def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
     os.execvp(sys.executable, [sys.executable, str(split_py), "--repo-root", str(repo_root), *argv])
 
 
+def current_branch(repo_root: Path) -> str:
+    result = _run(["branch", "--show-current"], cwd=repo_root, check=False)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
+    """Figure out what to run from the currently checked-out branch (in the
+    *original* repo, not the worktree), reusing `°split_lib.branches` from
+    the worktree (which already exists by the time this is called) rather
+    than duplicating its classification regexes.
+
+    Returns None when it can't confidently decide (detached HEAD, or the
+    branch can't be resolved) -- callers should refuse rather than guess.
+    """
+    branch = current_branch(repo_root)
+    if not branch:
+        return None
+
+    sys.path.insert(0, str(worktree / "scripts" / "°base" / "git"))
+    branches = importlib.import_module("°split_lib.branches")
+
+    main_branch = branches.detect_main_branch(repo_root)
+
+    if branch == main_branch:
+        return ["update-history-master", "--yes"]
+
+    classification = branches.classify_branch(branch, main_branch=main_branch)
+
+    if classification.is_history_master:
+        return ["update-history-master", "--yes"]
+
+    if classification.format is branches.BranchFormat.CLEAN:
+        return ["bootstrap-branch", classification.base_name]
+
+    # UNCLEAN or non-master HISTORY: both mean "push my latest commits
+    # forward into clean+history for this branch".
+    return ["sync-splits", classification.base_name, "--direction=to-clean-history"]
+
+
+USAGE = """\
+get-base.py: could not determine what to do from the current branch (detached HEAD?).
+Run a subcommand explicitly, e.g.:
+  get-base.py bootstrap-branch <branch>
+  get-base.py update-history-master --yes
+  get-base.py sync-splits <branch> --direction=to-clean-history
+  get-base.py rebase-branches-to-master <branch>
+"""
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     username = os.environ.get("BASE_GIT_USERNAME", DEFAULT_USERNAME)
@@ -98,6 +153,13 @@ def main(argv: list[str] | None = None) -> int:
     ensure_base_remote(repo_root, username)
     fetch_base(repo_root)
     worktree = ensure_worktree(repo_root)
+
+    if not argv:
+        argv = auto_argv(repo_root, worktree)
+        if argv is None:
+            print(USAGE, file=sys.stderr, end="")
+            return 1
+
     delegate(repo_root, worktree, argv)
     return 0  # unreachable once delegate() execs, kept for testability
 

@@ -28,6 +28,7 @@ This history is intentionally rooted at `empty/init` from `https://github.com/Em
     * [Claude GitHub issue agent](#claude-github-issue-agent)
     * [Codex GitHub issue agent](#codex-github-issue-agent)
     * [Monorepo subfolders: per-subfolder `.claude/`](#monorepo-subfolders-per-subfolder-claude)
+    * [Branch splitting (clean/unclean/history)](#branch-splitting-cleanuncleanhistory)
 <!-- TOC -->
 
 # Add This To Your Repo
@@ -277,3 +278,23 @@ cd some_project
 This creates a relative symlink `some_project/.claude → ../.claude`, so the same `.claude/settings.json` and `.claude/hooks/permission-check.py` apply. The hooks themselves locate `scripts/°base/` via `git rev-parse --show-toplevel`, so they work from any depth. AI artifacts then land under the subfolder — `some_project/ai/query.md`, `some_project/ai/plans/…` — while commits still go to the single monorepo git, with git-root-relative paths like `some_project/ai/query.md`.
 
 The helper is idempotent (no-ops if the symlink already points at the right place), refuses to clobber a non-symlink `.claude/`, and exits cleanly at the git root, so it's safe to re-run or wire into your own setup script.
+
+### Branch splitting (clean/unclean/history)
+
+This base can keep a "clean" branch (no AI/base mentions, safe to publish) in sync with an `ai/UNCLEAN/{branch}` working branch (where AI and code commits mix freely) and an `ai/history/{branch}` branch (the AI-only leftovers). The tooling for this lives under `scripts/°base/git/°split_lib/`, but since it's itself classified as AI/base content, it never exists on a clean checkout — so it ships with a standalone launcher instead.
+
+The simplest way to run it, from any branch of any repo, whether or not `base` has ever been merged in:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -
+```
+
+With no extra arguments it figures out what to do from your current branch: on your main branch it runs `update-history-master --yes`; on a clean feature branch it runs `bootstrap-branch <branch>`; on an `ai/UNCLEAN/*` or `ai/history/*` branch it pushes your latest commits forward with `sync-splits <branch> --direction=to-clean-history`.
+
+To run a specific subcommand instead, append it after the script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
+```
+
+`get-base.py` adds a `base` remote (name always literally `base`, so it's never confused with `origin`) if missing, fetches it, sets up a worktree at `.git/base-tools`, and delegates to the real tool there — it never touches your currently checked-out branch or working tree. If your GitHub username differs from `luckydonald`, set `BASE_GIT_USERNAME` first.

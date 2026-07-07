@@ -2844,3 +2844,55 @@ Note it should be possible to spam it in any branch or repo with or without base
 
 ❯ Move that after the curl one, though
 
+❯ /plan The curl command needs to be documented in the `base`'s `README.md`.
+I want a parameterless version where it does the right thing automatically, as I will not remember `bootstrap-branch feature` or `update-history-master --yes`.
+Also it's better to write the full branch, `https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/<path>`, not just trusting `/master` to exist.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. For the parameterless auto-mode, I've got two cases pinned down from your examples: on the main branch → `update-history-master --yes`; on a clean feature branch → `bootstrap-branch <branch>`. What should it do when you're currently on an `ai/UNCLEAN/*` branch (i.e. you're actively working and just want to push your progress forward)?
+>>    - sync-splits --direction=to-clean-history (Recommended)
+>>      ```text
+>>      on ai/UNCLEAN/feature-x ->
+>>        split.py sync-splits feature-x --direction=to-clean-history
+>>      ```
+>> 2. And when you're on an `ai/history/*` branch directly (not `ai/history/master`)?
+>>    - Same as unclean: forward-sync
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Unclean auto-action** (1/2) <kbd>Single Select</kbd><br>
+>> For the parameterless auto-mode, I've got two cases pinned down from your examples: on the main branch → `update-history-master --yes`; on a clean feature branch → `bootstrap-branch <branch>`. What should it do when you're currently on an `ai/UNCLEAN/*` branch (i.e. you're actively working and just want to push your progress forward)?
+> - [ ] 1\. sync-splits --direction=to-clean-history (Recommended)
+>   - _Treat being on your unclean branch as "I want my latest commits reflected in clean+history now" — runs the forward split for that branch._
+>   - ```
+>     on ai/UNCLEAN/feature-x ->
+>       split.py sync-splits feature-x --direction=to-clean-history
+>     ```
+> - [ ] 2\. Refuse and print usage
+>   - _Don't guess on unclean branches specifically — print available subcommands and exit, since "what to sync" could be ambiguous (maybe you just want to commit more first)._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+>> **History auto-action** (2/2) <kbd>Single Select</kbd><br>
+>> And when you're on an `ai/history/*` branch directly (not `ai/history/master`)?
+> - [ ] 1\. Refuse and print usage (Recommended)
+>   - _History branches aren't usually where you'd manually be checked out to run a workflow command — refuse rather than guess, print available subcommands._
+>   - ```
+>     on ai/history/feature-x ->
+>       "nothing to auto-run from a history branch; run a subcommand explicitly"
+>     ```
+> - [x] 2\. Same as unclean: forward-sync
+>   - _Treat it the same as being on the corresponding unclean branch and run sync-splits --direction=to-clean-history for that base branch._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+
+❯ In that URL, encode the `°` as `%C2%B0` just to be sure.
+Can we pipe into `uv`, and would that make sense? Please explain options before continuing.
+
+❯ python 3 is fine then.
+
