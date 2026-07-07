@@ -137,13 +137,20 @@ In that there can be different commits to process:
 
 A branch's **unclean** branch will start on the `ai/history/master`, and add commits to that.
 
-#### `rebase-to-master`
+#### `rebase-branches-to-master`
 This one takes all of the three branches and rebases it onto the current `master` variants.
 
+- **clean**
+    - This one will be rebased onto the also **clean** `master` branch.
+- **history**
+    - This will be rebased onto the`ai/history/master` branch.
+- **unclean**
+    - This will be rebased onto the **history** branch just created.
+
+Also think about how to handle one or two of them branches missing.
 
 
-
-
+---
 
 Additionally, we need:
 
@@ -152,6 +159,5 @@ Additionally, we need:
 2. branch push content check
    1. block ai or ai-containing commits to be pushed if the branch name is not **unclean** format.
    2. block code or code-containing commits to be pushed if the branch name is not **history** format.
-3.
 
 - [ ] Done
