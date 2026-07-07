@@ -148,7 +148,14 @@ def sync_branch(
     history_main_ref = branches.history_name(main_branch)
 
     clean_tip = ensure_branch_started(clean_ref, main_branch, cwd, dry_run=dry_run)
+
+    history_existed = git_ops.rev_parse(history_ref, cwd) is not None
     history_tip = ensure_branch_started(history_ref, history_main_ref, cwd, dry_run=dry_run)
+    if not history_existed and not dry_run:
+        # Record which ai/history/master commit this branch's history forked
+        # from, so update-history-master can later replay only the commits
+        # unique to it without relying on a merge-base fallback.
+        git_ops.create_branch(branches.history_fork_point_ref(base_branch), history_tip, cwd)
 
     # --- clean pass ---
     clean_last_source = find_last_synced_source(clean_ref, cwd)

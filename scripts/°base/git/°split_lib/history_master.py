@@ -31,7 +31,6 @@ MERGE_MARKER_TRAILER = "X-Base-Split-Merge-Marker-For"
 STATE_FILENAME = "BASE_SPLIT_HISTORY_MASTER_STATE"
 SCRATCH_BRANCH = "_base_split_scratch"
 SCRATCH_REF = f"refs/heads/{SCRATCH_BRANCH}"
-FORK_POINT_REF_TEMPLATE = "refs/base-split/history-master-fork-point/{branch}"
 BASE_REMOTE_REF = "refs/remotes/base/base"
 
 
@@ -470,7 +469,7 @@ def _build_plan(
         history_branch_name = branches.history_name(branch_name)
         history_branch_tip = git_ops.rev_parse(f"refs/heads/{history_branch_name}", cwd)
         if history_branch_tip is not None:
-            fork_point = git_ops.rev_parse(FORK_POINT_REF_TEMPLATE.format(branch=branch_name), cwd)
+            fork_point = git_ops.rev_parse(branches.history_fork_point_ref(branch_name), cwd)
             if fork_point is None:
                 # Fallback when (A)'s fork-point ref hasn't been written for
                 # this branch (older branch, or (A) hasn't run yet): the plan

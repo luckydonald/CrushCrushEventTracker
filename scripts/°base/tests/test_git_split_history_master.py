@@ -166,6 +166,52 @@ class HistoryMasterTests(unittest.TestCase):
         content = git_ops.show_path_at(recreated, "shared.txt", self.repo_root).decode()
         self.assertEqual(content, "from base\n")
 
+    def test_master_is_never_mutated_by_a_base_merge(self) -> None:
+        # Regression test for the invariant that adopting/updating base can
+        # never touch `master` (and therefore never any clean branch) --
+        # only `ai/history/master` ever receives base/base content.
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        git(["clone", str(self.repo_root), str(base_repo_root)], self.repo_root)
+        git(["config", "user.email", "test@example.com"], base_repo_root)
+        git(["config", "user.name", "Test"], base_repo_root)
+        make_commit(base_repo_root, "shared.txt", "base adds shared.txt", content="from base\n")
+        base_sha = git(["rev-parse", "HEAD"], base_repo_root)
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+
+        master_sha_before = git(["rev-parse", "master"], self.repo_root)
+
+        # First run: creates ai/history/master from master's tip (pure
+        # ancestry, no base/base content yet) -- must not touch master.
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), master_sha_before)
+
+        # Manually fold base/base into ai/history/master directly (mirrors
+        # the base-merge-recreation test's setup) -- master must still be
+        # untouched afterward, and a subsequent run must also leave it alone.
+        git(["checkout", "ai/history/master"], self.repo_root)
+        merge_proc = git_ops.merge_no_commit(base_sha, self.repo_root)
+        self.assertEqual(merge_proc.returncode, 0, merge_proc.stderr)
+        git(["commit", "--no-edit"], self.repo_root)
+        merge_sha = git(["rev-parse", "HEAD"], self.repo_root)
+        new_message = trailers.write_trailers(
+            git_ops.commit_message(merge_sha, self.repo_root),
+            {"X-Base-History-Merge-Kind": "base-merge", "X-Base-History-Merge-Sha": base_sha},
+            self.repo_root,
+        )
+        git(["commit", "--amend", "-m", new_message], self.repo_root)
+        git(["checkout", "master"], self.repo_root)
+
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), master_sha_before)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), master_sha_before)
+
     def test_force_merge_recovery_widens_search_window(self) -> None:
         # A branch merge commit lands on master, tagged with the required
         # trailer, but *before* the point update-history-master last ran --

@@ -197,6 +197,31 @@ class FreshBranchCreationTests(SyncSplitsTestBase):
         history_first_parent = git(["rev-parse", f"{history_first}^"], self.repo)
         self.assertEqual(history_first_parent, history_master_tip)
 
+    def test_fresh_history_branch_writes_fork_point_ref(self):
+        history_master_tip = git_ops.rev_parse(branches.history_name("master"), self.repo)
+
+        self.make_unclean("feature/fresh")
+        make_commit(self.repo, "src/one.py", "add one")
+
+        sync_splits.sync_branch("feature/fresh", repo_root=self.repo, main_branch="master")
+
+        fork_point = git_ops.rev_parse(branches.history_fork_point_ref("feature/fresh"), self.repo)
+        self.assertEqual(fork_point, history_master_tip)
+
+    def test_fork_point_ref_not_rewritten_when_history_already_exists(self):
+        self.make_unclean("feature/fresh")
+        make_commit(self.repo, "src/one.py", "add one")
+        sync_splits.sync_branch("feature/fresh", repo_root=self.repo, main_branch="master")
+
+        fork_point_ref = branches.history_fork_point_ref("feature/fresh")
+        original_fork_point = git_ops.rev_parse(fork_point_ref, self.repo)
+
+        git(["checkout", branches.unclean_name("feature/fresh")], self.repo)
+        make_commit(self.repo, "src/two.py", "add two")
+        sync_splits.sync_branch("feature/fresh", repo_root=self.repo, main_branch="master")
+
+        self.assertEqual(git_ops.rev_parse(fork_point_ref, self.repo), original_fork_point)
+
 
 class IdempotentReRunTests(SyncSplitsTestBase):
     def test_second_run_only_adds_new_commit(self):

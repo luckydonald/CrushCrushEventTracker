@@ -15,6 +15,12 @@ from pathlib import Path
 UNCLEAN_RE = re.compile(r"^ai/UNCLEAN/(.+)$")
 HISTORY_RE = re.compile(r"^ai/history/(.+)$")
 
+FORK_POINT_REF_TEMPLATE = "refs/base-split/history-master-fork-point/{branch}"
+
+
+def history_fork_point_ref(base_branch: str) -> str:
+    return FORK_POINT_REF_TEMPLATE.format(branch=base_branch)
+
 
 class BranchFormat(str, Enum):
     CLEAN = "clean"

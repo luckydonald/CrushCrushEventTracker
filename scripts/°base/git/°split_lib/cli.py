@@ -5,10 +5,17 @@ import sys
 from pathlib import Path
 
 from . import branches, classify, git_ops, push_checks
+from . import bootstrap as bootstrap_lib
 from . import history_master as history_master_lib
 from . import rebase_to_master as rebase_to_master_lib
 from . import sync_splits as sync_splits_lib
 from . import sync_unclean as sync_unclean_lib
+
+
+def _resolve_repo_root(args: argparse.Namespace) -> Path:
+    if getattr(args, "repo_root", None) is not None:
+        return Path(args.repo_root)
+    return git_ops.repo_root()
 
 
 def _parse_ref_lines(text: str) -> list[push_checks.RefUpdate]:
@@ -130,8 +137,27 @@ def _rebase_branches_to_master(args: argparse.Namespace, *, repo_root: Path, mai
     return exit_code
 
 
+def _bootstrap_branch(args: argparse.Namespace, *, repo_root: Path, main_branch: str) -> int:
+    result = bootstrap_lib.bootstrap_branch(
+        args.branch, repo_root=repo_root, main_branch=main_branch, dry_run=args.dry_run
+    )
+    if not result["ok"]:
+        print(f"{args.branch}: {result['error']}", file=sys.stderr)
+        return 1
+    print(f"{args.branch}: {result}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="split.py")
+    parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=None,
+        help="Target repo to operate on. Defaults to the repo containing cwd. "
+        "Lets the tool be invoked from elsewhere (e.g. a standalone clone or "
+        "worktree) without cd'ing into the target repo first.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     check_push = subparsers.add_parser(
@@ -167,27 +193,39 @@ def main(argv: list[str] | None = None) -> int:
     rebase_branches.add_argument("--yes", action="store_true")
     rebase_branches.add_argument("--dry-run", action="store_true")
 
+    bootstrap_branch = subparsers.add_parser(
+        "bootstrap-branch",
+        help="Start the split workflow for a branch that only exists as clean so far.",
+    )
+    bootstrap_branch.add_argument("branch", help="Base branch name (must already exist as a clean branch).")
+    bootstrap_branch.add_argument("--dry-run", action="store_true")
+
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
     if args.command == "check-push":
         stdin_text = sys.stdin.read()
-        root = git_ops.repo_root()
+        root = _resolve_repo_root(args)
         return _check_push(args.remote_name, args.remote_url, stdin_text, repo_root=root)
 
     if args.command == "sync-splits":
-        root = git_ops.repo_root()
+        root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
         return _sync_splits(args, repo_root=root, main_branch=main_branch)
 
     if args.command == "update-history-master":
-        root = git_ops.repo_root()
+        root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
         return _update_history_master(args, repo_root=root, main_branch=main_branch)
 
     if args.command == "rebase-branches-to-master":
-        root = git_ops.repo_root()
+        root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
         return _rebase_branches_to_master(args, repo_root=root, main_branch=main_branch)
+
+    if args.command == "bootstrap-branch":
+        root = _resolve_repo_root(args)
+        main_branch = branches.detect_main_branch(root)
+        return _bootstrap_branch(args, repo_root=root, main_branch=main_branch)
 
     parser.error(f"Unknown command: {args.command}")
     return 2

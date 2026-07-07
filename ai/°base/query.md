@@ -2476,7 +2476,7 @@ Additionally, we need:
 >>      - AI-vs-code file/commit classifier
 >>      - sync-splits: unclean -> clean, unclean -> history
 >>      - pre-push hook: name + content checks
->>      
+>>
 >>      Phase 2 (later plan):
 >>      - update-history-master (rebase + base/base merge recreation)
 >>      - rebase-branches-to-master (all 3 types)
@@ -2486,9 +2486,9 @@ Additionally, we need:
 >>    - Git trailer referencing source commit (Recommended)
 >>      ```text
 >>      commit message example:
->>      
+>>
 >>      Add export button
->>      
+>>
 >>      X-Base-Split-Source: 8f3a1c2
 >>      X-Base-Split-Kind: code
 >>      ```
@@ -2502,7 +2502,7 @@ Additionally, we need:
 >>        ai/tool-settings/**
 >>        .mcp.json
 >>        AGENTS.md (when symlink to CLAUDE.md)
->>      
+>>
 >>      AI-only commit if:
 >>        all changed paths in AI paths
 >>        OR subject matches /^(\[.*\]\s*)?ai:/
@@ -2665,7 +2665,7 @@ Additionally, we need:
 >>        ai: updated prompt
 >>        [base] topic: ai: Run: ...
 >>        [dumper] init script: ai: Run: ...
->>      
+>>
 >>      Doesn't match:
 >>        aisle: fix typo
 >>        said: hello
@@ -2810,4 +2810,37 @@ Additionally, we need:
 > - [Answer (`3452` chars, `3.4 KB`)](output/agents/014.a598976ff098d379a/result.md)
 > - [Raw log (`886443` chars, `867 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a598976ff098d379a.output)
 > - `51` tools, `175380` tokens, `16.3696 s`
+
+❯ /plan I guess phase 3 then, I need a way to get it started from a clean branch.
+
+❯ Task Notification:
+> - Task `a2a1e6cb9f6c262e1` <kbd>completed</kbd>
+> - Tool `toolu_01MHgihU8wCkWf5NK3g3ZRp1`
+> - > Agent "Explore reconstruct_unclean bootstrap gap" finished
+> - [Query (`3388` chars, `3.34 KB`)](output/agents/015.a2a1e6cb9f6c262e1/prompt.md)
+> - [Answer (`14933` chars, `14.7 KB`)](output/agents/015.a2a1e6cb9f6c262e1/result.md)
+> - [Raw log (`246471` chars, `241 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/5f38f4ba-0ce0-4e78-b9e6-2e81d245a371/tasks/a2a1e6cb9f6c262e1.output)
+> - `12` tools, `53382` tokens, `1.54753 s`
+
+❯ That's good, keep that. However, what I meant is, that if I'm in a clean branch, by definition will not have the scripts available, as they are to be classified AI content (base, to be specific).
+What are my options here?
+
+❯ There's also the case that I might have never even checked out or added `base/base` to an repository, which I feel is related but not exactly the same.
+
+❯ No, for the "no base in project", it would need to go into a possibly new `ai/history/master` anyways - we can't touch the `master`.
+
+❯ What I was thinking was more like one of these `curl raw.github…` kinda snippets which would execute a self-contained python script doing at least the setup - that is, adding & fetching the remote, under an settable `BASE_GIT_USERNAME=luckydonald` (for an `luckydonald@github.com` remote address).
+This script can be just in this base repo, but quickly accessable via network piping magic.
+it would set up the `base` remote, and then execute the rest via local worktree.
+Note it should be possible to spam it in any branch or repo with or without base, and work correctly.
+
+❯ The remote is expected to always be named `base`, to not mix it up with `origin` or any other remote which may have an unrelated branch named `base`.
+
+❯ Explain `curl -fsSL https://raw.githubusercontent.com/luckydonald/base/master/scripts/°base/git/get-base.py | python3 - bootstrap-branch feature`
+
+❯ Add this very explainer to the plan file, that helped.
+
+❯ Similar put in a explainer of `update-history-master --yes` there as well, then we're ready to exit plan mode.
+
+❯ Move that after the curl one, though
 
