@@ -386,6 +386,73 @@ class CheckoutSyncTests(unittest.TestCase):
         self.assertEqual(git(["rev-parse", "master"], self.repo_root), master_sha_before)
         self.assertEqual((self.repo_root / "root.txt").read_text(), "dirty local edit\n")
 
+    def _make_conflicting_replay_with_third_branch_checked_out(self) -> None:
+        """Diverge master/ai/history/master (real content conflict) and leave
+        an unrelated third branch checked out -- regression setup for the
+        discovered bug: every replay step runs through the scratch branch and
+        always leaves HEAD detached when it's done, regardless of what (if
+        anything) was checked out before the run started."""
+        git(["checkout", "master"], self.repo_root)
+        (self.repo_root / "conflict.txt").write_text("line1\nline2\nline3\n")
+        git(["add", "conflict.txt"], self.repo_root)
+        git(["commit", "-m", "add conflict.txt"], self.repo_root)
+        git(["branch", "-f", "ai/history/master"], self.repo_root)
+
+        (self.repo_root / "conflict.txt").write_text("line1\nCHANGED-ON-MASTER\nline3\n")
+        git(["commit", "-am", "master changes line2"], self.repo_root)
+
+        git(["checkout", "ai/history/master"], self.repo_root)
+        (self.repo_root / "conflict.txt").write_text("line1\nCHANGED-ON-HISTORY\nline3\n")
+        git(["commit", "-am", "history-master already changed line2 differently"], self.repo_root)
+
+        git(["checkout", "-b", "some-other-branch", "master"], self.repo_root)
+
+    def test_third_branch_checked_out_is_restored_after_a_successful_run(self) -> None:
+        git(["branch", "ai/history/master"], self.repo_root)
+        make_commit(self.repo_root, "master2.txt", "master advances")
+        git(["checkout", "-b", "some-other-branch", "master"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "some-other-branch")
+
+    def test_already_detached_stays_detached_after_a_successful_run(self) -> None:
+        git(["branch", "ai/history/master"], self.repo_root)
+        make_commit(self.repo_root, "master2.txt", "master advances")
+        git(["checkout", "--detach", "master"], self.repo_root)
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "")
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "")
+
+    def test_third_branch_checked_out_survives_a_conflict_continue_round_trip(self) -> None:
+        self._make_conflicting_replay_with_third_branch_checked_out()
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", yes=True)
+        self.assertEqual(result["status"], "conflict")
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "_base_split_scratch")
+
+        git(["checkout", "--theirs", "--", "conflict.txt"], self.repo_root)
+        git(["add", "conflict.txt"], self.repo_root)
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", continue_=True)
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "some-other-branch")
+
+    def test_third_branch_checked_out_survives_an_abort(self) -> None:
+        self._make_conflicting_replay_with_third_branch_checked_out()
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", yes=True)
+        self.assertEqual(result["status"], "conflict")
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", abort=True)
+
+        self.assertEqual(result["status"], "aborted")
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "some-other-branch")
+
     def test_history_ref_checkout_stays_in_sync_after_replay(self) -> None:
         history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
 

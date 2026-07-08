@@ -223,6 +223,38 @@ def _sync_checkout_if_current(ref_short_name: str, new_sha: str, cwd: Path) -> N
     _git(["reset", "--hard", new_sha], cwd, check=True)
 
 
+def _current_checkout(cwd: Path) -> str | None:
+    """The branch currently checked out in `cwd`, or `None` if HEAD is
+    already detached (`git symbolic-ref` exits non-zero in that case --
+    that's the expected way to detect it, not an error).
+    """
+    result = _git(["symbolic-ref", "--short", "-q", "HEAD"], cwd)
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def _restore_checkout(original: str | None, cwd: Path) -> None:
+    """Best-effort: check `original` back out if it was captured (see
+    `_current_checkout`). Every step this tool takes runs through the
+    `_base_split_scratch` scratch branch, which always leaves HEAD detached
+    when it's done (see `_checkout_scratch`/`_cleanup_scratch`) -- without
+    this, a run that started on `master` (or any branch that isn't the one
+    this tool moves) ends with the user silently dropped into detached HEAD.
+    Never raises: a cosmetic restore failing (e.g. the branch was deleted
+    meanwhile) shouldn't turn an otherwise-successful run into a failure.
+    """
+    if original is None:
+        return
+    result = _git(["checkout", original], cwd)
+    if result.returncode != 0:
+        logger.warning(
+            "could not restore checkout onto %r after finishing (left on detached HEAD): %s",
+            original,
+            (result.stderr or result.stdout).strip(),
+        )
+
+
 def _pull_master(cwd: Path, main_branch: str) -> None:
     fetch = _git(["fetch", "origin", main_branch], cwd)
     if fetch.returncode != 0:
@@ -630,6 +662,7 @@ def _do_abort(repo_root: Path) -> dict:
             logger.debug("$ git merge --abort")
             git_ops.merge_abort(repo_root)
     _cleanup_scratch(repo_root)
+    _restore_checkout(state.get("original_checkout"), repo_root)
     _clear_state(repo_root)
     logger.info("aborted; state cleared")
     return {"status": "aborted"}
@@ -699,6 +732,7 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
     _refuse_if_checked_out_dirty(history_ref_short, cwd)
     git_ops.move_ref(history_ref, new_tip, original_sha, cwd)
     _sync_checkout_if_current(history_ref_short, new_tip, cwd)
+    _restore_checkout(state.get("original_checkout"), cwd)
     _clear_state(repo_root)
     logger.info("%s -> %s (resumed)", history_ref_short, new_tip[:8])
     return {"status": "ok", "history_master": new_tip}
@@ -732,6 +766,13 @@ def update_history_master(
             "A previous update-history-master run is mid-conflict. "
             "Run with --continue to resume, or --abort to cancel."
         )
+
+    # Every replay step runs through the scratch branch and leaves HEAD
+    # detached when done (see _checkout_scratch/_cleanup_scratch) -- capture
+    # whatever was checked out before we start so it can be restored at the
+    # end (or, if this run conflicts, persisted into the state file so a
+    # later --continue/--abort invocation can still restore it).
+    original_checkout = _current_checkout(cwd)
 
     if pull_master or yes:
         _pull_master(cwd, main_branch)
@@ -777,6 +818,7 @@ def update_history_master(
                 "force_merge": force_merge,
                 "original_sha": old_history_sha,
                 "pending": conflict,
+                "original_checkout": original_checkout,
             },
         )
         return {"status": "conflict", "pending": conflict}
@@ -797,6 +839,7 @@ def update_history_master(
                     "force_merge": force_merge,
                     "original_sha": old_history_sha,
                     "pending": pending,
+                    "original_checkout": original_checkout,
                 },
             )
             return {"status": "conflict", "pending": pending}
@@ -807,6 +850,8 @@ def update_history_master(
         _refuse_if_checked_out_dirty(history_ref_name, cwd)
         git_ops.move_ref(history_ref, tip, old_history_sha, cwd)
         _sync_checkout_if_current(history_ref_name, tip, cwd)
+
+    _restore_checkout(original_checkout, cwd)
 
     logger.info("%s -> %s (%s)", history_ref_name, tip[:8], "created" if first_run else "updated")
     return {
