@@ -23,6 +23,7 @@ This history is intentionally rooted at `empty/init` from `https://github.com/Em
   * [Setup: b) Rebase Onto `base/base`](#setup-b-rebase-onto-basebase)
   * [Setup: c) Merge `base/base`](#setup-c-merge-basebase)
     * [All code for c) as a single copy pastable one:](#all-code-for-c-as-a-single-copy-pastable-one)
+      * [Fix user](#fix-user)
   * [After Adopting The Base](#after-adopting-the-base)
     * [Git LFS](#git-lfs)
     * [Claude GitHub issue agent](#claude-github-issue-agent)
@@ -30,6 +31,7 @@ This history is intentionally rooted at `empty/init` from `https://github.com/Em
     * [Monorepo subfolders: per-subfolder `.claude/`](#monorepo-subfolders-per-subfolder-claude)
     * [Branch splitting (clean/unclean/history)](#branch-splitting-cleanuncleanhistory)
 <!-- TOC -->
+
 
 # Add This To Your Repo
 
