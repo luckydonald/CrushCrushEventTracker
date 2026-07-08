@@ -952,6 +952,8 @@ coverage/
 # # output folders
 **/ai/output/debug/
 **/ai/°base/output/debug/
+# # `split.py` recovery state output
+**/.rebase-recovery.tmp
 
 
 ######################################
