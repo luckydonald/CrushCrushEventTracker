@@ -3011,3 +3011,46 @@ None of the expandable questions are marked `- [x] `. Though the `<summary>` has
 Additionally, while at it, remove the answers from the summary part, only keep the questions there. It's too verbose for a summary.
 
 
+❯ /plan the prompt-asked ai hook shall check for file mentions in the format @subdir/file.foo or `subdir/file.foo`, and if untracked by git automatically commit them after commiting to `query.md` regularly, with the message `ai: referenced file for task added.`. If already tracked, it shall just be added.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. When a mentioned file resolves relative to a path — should it be relative to the subproject root (where Claude was launched, e.g. a monorepo subfolder) or the git repo root?
+>> 2. Should the untracked-file commit run even when the referenced file doesn't otherwise change (i.e., commit purely because it was mentioned and exists but was never added to git before)?
+>> 3. For already-tracked mentioned files, "just be added" — should this mean only `git add` (stage, no commit), leaving them staged for the user's next real commit?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Path base** (1/3) <kbd>Single Select</kbd><br>
+>> When a mentioned file resolves relative to a path — should it be relative to the subproject root (where Claude was launched, e.g. a monorepo subfolder) or the git repo root?
+> - [x] 1\. Subproject root (Recommended)
+>   - _Matches how ai artifacts/query.md are already rooted (resolve_log_path uses _subproject_root()) — consistent for monorepo setups where CLAUDE_PROJECT_DIR is a subfolder of the git repo._
+> - [ ] 2\. Git repo root
+>   - _Always resolve relative to the top-level git root, ignoring subproject nesting._
+> - [ ] 3\. _Type something._
+>
+>> **Commit scope** (2/3) <kbd>Single Select</kbd><br>
+>> Should the untracked-file commit run even when the referenced file doesn't otherwise change (i.e., commit purely because it was mentioned and exists but was never added to git before)?
+> - [ ] 1\. Yes — commit any untracked, existing, mentioned file (Recommended)
+>   - _If the path exists on disk, is untracked, and matches the @mention/backtick pattern, git add + commit it in its own commit with message 'ai: referenced file for task added.', right after the query.md commit._
+> - [ ] 2\. Only for files under ai/ or plans
+>   - _Restrict this behavior to files within the AI artifact tree, to avoid accidentally auto-committing arbitrary source files the user only mentioned in passing._
+> - [x] 3\. _Type something:_
+>   - > Yes — commit any untracked, existing, mentioned file (Recommended). For for files under `ai/`, it shall also ignore `.gitignore` rules which could otherwise prevent that.
+>
+>> **Tracked handling** (3/3) <kbd>Single Select</kbd><br>
+>> For already-tracked mentioned files, "just be added" — should this mean only `git add` (stage, no commit), leaving them staged for the user's next real commit?
+> - [x] 1\. git add only, no commit (Recommended)
+>   - _Stage the file so it rides along with whatever commit comes next (matches the literal wording 'shall just be added' vs. the explicit 'commit' instruction for untracked files)._
+> - [ ] 2\. git add and also commit with the same message
+>   - _Treat tracked and untracked mentions identically — always stage AND commit with 'ai: referenced file for task added.'_
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+❯ do not cram more stuff into `scripts/°base/ai/hooks/_lib.py` - instead separate it in multiple files in `scripts/°base/ai/hooks/°*libs`, following the format of e.g. `°split_lib` or `°dllink_lib`.
+

@@ -1154,6 +1154,98 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertTrue((compact_dir / "001").is_dir(), "first compact → 001")
             self.assertTrue((compact_dir / "002").is_dir(), "second compact → 002")
 
+    def test_referenced_file_mention_untracked_gets_own_commit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            (repo / "sub").mkdir(parents=True, exist_ok=True)
+            (repo / "sub" / "file.txt").write_text("hello\n", encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "please check @sub/file.txt for bugs"}, "claude")
+
+            self.assertEqual(last_subject(repo), "[base] ai: referenced file for task added.")
+            subjects = run_git(repo, "log", "--pretty=%s").stdout.strip().splitlines()
+            self.assertIn("[base] ai: updated prompt", subjects)
+            tracked = run_git(repo, "ls-files", "--", "sub/file.txt").stdout.strip()
+            self.assertEqual(tracked, "sub/file.txt")
+
+    def test_referenced_file_mention_tracked_only_staged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "myproject"
+            init_repo(repo, "https://github.com/example/consumer.git")
+            (repo / "sub").mkdir(parents=True, exist_ok=True)
+            (repo / "sub" / "file.txt").write_text("v1\n", encoding="utf-8")
+            run_git(repo, "add", "sub/file.txt")
+            run_git(repo, "commit", "-m", "add file")
+            (repo / "sub" / "file.txt").write_text("v2\n", encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "see `sub/file.txt` for context"}, "claude")
+
+            self.assertEqual(last_subject(repo), "ai: updated prompt")
+            staged = run_git(repo, "diff", "--cached", "--name-only").stdout.strip().splitlines()
+            self.assertIn("sub/file.txt", staged)
+
+    def test_referenced_file_mention_gitignored_ai_path_force_added(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            (repo / ".gitignore").write_text("ai/°base/scratch/\n", encoding="utf-8")
+            run_git(repo, "add", ".gitignore")
+            run_git(repo, "commit", "-m", "add gitignore")
+            (repo / "ai" / "°base" / "scratch").mkdir(parents=True, exist_ok=True)
+            (repo / "ai" / "°base" / "scratch" / "notes.md").write_text("notes\n", encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "see @ai/°base/scratch/notes.md"}, "claude")
+
+            self.assertEqual(last_subject(repo), "[base] ai: referenced file for task added.")
+            tracked = run_git(
+                repo, "-c", "core.quotepath=false", "ls-files", "--", "ai/°base/scratch/notes.md"
+            ).stdout.strip()
+            self.assertEqual(tracked, "ai/°base/scratch/notes.md")
+
+    def test_referenced_file_mention_missing_file_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "myproject"
+            init_repo(repo, "https://github.com/example/consumer.git")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "see @sub/does-not-exist.txt"}, "claude")
+
+            self.assertEqual(last_subject(repo), "ai: updated prompt")
+
+
+class ReffilesLibMentionsTests(unittest.TestCase):
+    """Unit tests for °reffiles_lib.mentions, imported via importlib like °split_lib."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import importlib
+
+        lib_root = Path(__file__).resolve().parents[1] / "ai" / "hooks"
+        sys.path.insert(0, str(lib_root))
+        cls.mentions = importlib.import_module("°reffiles_lib.mentions")
+
+    def test_extracts_at_mention_and_backtick_path(self):
+        prompt = "look at @sub/file.txt and also `other/dir/file.md` please"
+        self.assertEqual(
+            self.mentions.extract_candidate_paths(prompt),
+            ["sub/file.txt", "other/dir/file.md"],
+        )
+
+    def test_strips_trailing_punctuation(self):
+        prompt = "see @sub/file.txt, and (`other/file.md`)."
+        self.assertEqual(
+            self.mentions.extract_candidate_paths(prompt),
+            ["sub/file.txt", "other/file.md"],
+        )
+
+    def test_ignores_non_path_tokens(self):
+        prompt = "ping @someone and `just_a_word` about this"
+        self.assertEqual(self.mentions.extract_candidate_paths(prompt), [])
+
+    def test_dedupes_repeated_mentions(self):
+        prompt = "see @sub/file.txt and again `sub/file.txt`"
+        self.assertEqual(self.mentions.extract_candidate_paths(prompt), ["sub/file.txt"])
+
 
 if __name__ == "__main__":
     unittest.main()

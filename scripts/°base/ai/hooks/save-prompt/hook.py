@@ -9,6 +9,7 @@ and Explore results to ai/output/explore/NNN.task-id/ (or °base equivalents).
 """
 from __future__ import annotations
 
+import importlib
 import json
 import re
 import subprocess
@@ -18,7 +19,16 @@ from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import append_and_commit, base_ai_commit_subject, dump_debug_payload, read_payload, resolve_log_path  # noqa: E402
+from _lib import (  # noqa: E402
+    append_and_commit,
+    base_ai_commit_subject,
+    dump_debug_payload,
+    read_payload,
+    resolve_log_path,
+    _subproject_root,
+)
+
+reffiles_lib = importlib.import_module("°reffiles_lib")
 
 PREFIXES = {"claude": "❯", "codex": "›"}
 DEFAULT_PREFIX = "⩼"
@@ -693,6 +703,7 @@ def main() -> int:
         return 0
     if prompt.strip() in SKIP_PROMPTS:
         return 0
+    raw_prompt = prompt
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     preformatted_prompt = False
@@ -745,6 +756,7 @@ def main() -> int:
         default_commit_msg="ai: updated prompt",
         extra_paths=entry.extra_paths,
     )
+    reffiles_lib.handle_referenced_files(raw_prompt, _subproject_root())
     return 0
 
 
