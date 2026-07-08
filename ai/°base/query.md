@@ -2907,3 +2907,7 @@ Yes, do fix that.
 
 ❯ Good. For now keep commiting, using a `[base] [ssp] ` prefix instead only `[base]`.
 
+❯ Add this as a special case to the skill for bugsink.
+
+❯ as an optional separate file.
+

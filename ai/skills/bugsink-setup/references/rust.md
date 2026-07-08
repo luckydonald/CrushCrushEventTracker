@@ -123,6 +123,12 @@ a `build-time.txt`) into the image in a stage that still has access to
 since the running container usually has no `.git` at all. Use the git commit
 as `release` and the build time as `dist`.
 
+If this project is a subdirectory of a bigger monorepo deployed via a
+platform-managed "Base Directory" (Coolify and similar), `.git` usually
+isn't reachable from *any* build stage, not just hard to get to — see
+`monorepo-deploys.md` for the build-arg-based fix and a real crash this
+caused when skipped.
+
 This step is optional in the sense that Sentry works without it (fall back
 to `sentry::release_name!()` if this backend has no sibling stack to stay in
 sync with) — but skip the cross-stack alignment and every future "which

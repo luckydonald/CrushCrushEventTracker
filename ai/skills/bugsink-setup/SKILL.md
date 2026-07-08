@@ -45,6 +45,10 @@ or frontend framework, write a new `references/<name>.md` following the same
 shape (SDK init → release tagging → tunnel-if-needed → sourcemap upload) and
 list it here — don't bloat this dispatcher file with it.
 
+There's also **`references/monorepo-deploys.md`**, an optional addendum
+(not a stack guide, so it isn't in the list above) covering a deploy
+topology gotcha — see "Orient yourself" below for when it applies.
+
 ## Orient yourself before writing anything
 
 Don't assume file layout — find the real ones for this project:
@@ -56,6 +60,12 @@ Don't assume file layout — find the real ones for this project:
 - The frontend's `main.ts`/`main.js` entrypoint and its Vite config.
 - Whether either side already has partial Sentry code (an old attempt, a
   `sentry.py`/`sentry.ts` stub) — extend it instead of starting over.
+- Whether this project is a subdirectory of a bigger monorepo, deployed via
+  a platform-managed "Base Directory" or equivalent subdirectory scoping
+  (Coolify and similar). If so, read `references/monorepo-deploys.md`
+  before writing the release/build-metadata step — `.git` is very often
+  unreachable from that kind of build, and the generic "bake it in a stage
+  that still has `.git`" advice doesn't apply.
 
 Ask the user for the DSN(s) if they're not already in an env file — never
 invent one. Find out: is there one Bugsink project for both frontend and

@@ -87,6 +87,12 @@ running container usually doesn't have `.git` available at all. Use the git
 commit hash as `release` (not a hand-maintained version string — it's always
 accurate and needs no bump step) and the build time as `dist`.
 
+If this project is a subdirectory of a bigger monorepo deployed via a
+platform-managed "Base Directory" (Coolify and similar), `.git` usually
+isn't reachable from *any* build stage, not just hard to get to — see
+`monorepo-deploys.md` for the build-arg-based fix and a real crash this
+caused when skipped.
+
 If the frontend also resolves build metadata (see `vue.md`), keep both
 sides' fallback chains in sync so the same deploy reports the same
 `git_commit`/`build_time` tags from both ends — that's what makes
