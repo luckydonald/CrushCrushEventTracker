@@ -52,6 +52,13 @@ def run_hook(
 ) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["CLAUDE_PROJECT_DIR"] = str(repo.resolve())
+    # Don't let this test process's own (possibly Copilot CLI) ambient
+    # environment leak into simulated hook invocations: tests exercise
+    # specific tool identities via CLI args/payloads and must not be skipped
+    # by the cross-tool-duplicate guard just because the *test runner*
+    # happens to be running under Copilot CLI.
+    env.pop("COPILOT_CLI", None)
+    env.pop("COPILOT_AGENT_SESSION_ID", None)
     if extra_env:
         env.update(extra_env)
     result = subprocess.run(
@@ -1211,6 +1218,97 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             run_hook(repo, PROMPT_HOOK, {"prompt": "see @sub/does-not-exist.txt"}, "claude")
 
             self.assertEqual(last_subject(repo), "ai: updated prompt")
+
+    def test_copilot_plan_marker_prompt_rendered_as_slash_plan(self):
+        """Copilot CLI's `/plan` mode prepends a literal `[[PLAN]] ` marker to the
+        submitted prompt (not a typed slash command); it should be rendered using
+        the same `/plan ...` convention already used for Claude's typed prompts."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "[[PLAN]] Investigate the bug."}, "copilot")
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "◆ /plan Investigate the bug.\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_copilot_harness_task_complete_reminder_is_not_logged(self):
+        """The harness-injected autonomous-continuation nudge is not something the
+        user typed and must be skipped rather than committed to query.md."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            reminder = (
+                "You have not yet marked the task as complete using the task_complete tool. "
+                "If you were planning, stop planning and start implementing."
+            )
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": reminder}, "copilot")
+
+            self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
+            self.assertEqual(last_subject(repo), "init")
+
+    def test_copilot_cross_read_duplicate_firing_is_skipped(self):
+        """When the actually-running harness is Copilot (detected via env vars)
+        but this firing's baked-in CLI arg says `claude` — i.e. it came from
+        Copilot's unconditional cross-read of `.claude/settings.json` alongside
+        its own native `.github/hooks/generated.json` — the redundant duplicate
+        firing must be skipped entirely, leaving no trace in query.md."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {"prompt": "Capture this prompt"},
+                "claude",
+                extra_env={"COPILOT_CLI": "1"},
+            )
+
+            self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
+            self.assertEqual(last_subject(repo), "init")
+
+    def test_copilot_native_firing_not_treated_as_duplicate(self):
+        """The genuine native firing (ai_tool == 'copilot') still runs normally
+        even when Copilot's env markers are present."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {"prompt": "Capture this prompt"},
+                "copilot",
+                extra_env={"COPILOT_CLI": "1"},
+            )
+
+            self.assertEqual(
+                (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8"),
+                "◆ Capture this prompt\n\n",
+            )
+            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+
+    def test_copilot_record_memory_is_noop_even_on_session_start(self):
+        """record-memory has no CLI arg to compare, so it must unconditionally
+        no-op whenever the detected harness is Copilot (no local memory-file
+        representation exists to sync from under Copilot)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {"hook_event_name": "SessionStart", "session_id": "abc123"},
+                extra_env={"COPILOT_CLI": "1"},
+            )
+
+            self.assertEqual(last_subject(repo), "init")
 
 
 class ReffilesLibMentionsTests(unittest.TestCase):

@@ -32,6 +32,7 @@ from _lib import (  # noqa: E402
     base_ai_commit_subject,
     dump_debug_payload,
     read_payload,
+    running_copilot,
 )
 
 
@@ -300,6 +301,14 @@ def _uninstall_legacy_all(subproject: Path, src_dir: Path) -> None:
 
 
 def main() -> int:
+    # Copilot Memory is a cloud/server-side feature with no local file
+    # representation to hardlink from (confirmed via official docs), and
+    # `.github/hooks/generated.json` unconditionally renders this hook's
+    # entries alongside Claude's — stay a safe no-op under Copilot rather
+    # than doing wasted (and, via the `.claude/settings.json` cross-read,
+    # duplicated) work that can never find a source directory.
+    if running_copilot():
+        return 0
     if _git_root() is None:
         return 0
     subproject = _subproject_root()

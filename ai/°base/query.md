@@ -3272,3 +3272,17 @@ Keep working autonomously until the task is truly finished, then call task_compl
 
 ❯ commit without amending for now, I will fix this commit manually
 
+◆ [[PLAN]] Have a look at commit `6b46749e304dc8acb6aabca7b9e93378282c0b09` to `4196168d48400370bff9149f3761c8605171f4cf`.
+Those mostly are wrong additions to `query.md` - tool responses which instead should go to the `output/agents` or similar. You can see your own history and compare those.
+Also you can check the last files in `ai/°base/output/debug/*.json` for the specific input. If you find a few representative ones, you many `git add` them, and use them in unit tests.
+While at it, also check the TODO updates earlier (when you marked todos as done), which should cause a commit, too.
+
+❯ [[PLAN]] Have a look at commit `6b46749e304dc8acb6aabca7b9e93378282c0b09` to `4196168d48400370bff9149f3761c8605171f4cf`.
+Those mostly are wrong additions to `query.md` - tool responses which instead should go to the `output/agents` or similar. You can see your own history and compare those.
+Also you can check the last files in `ai/°base/output/debug/*.json` for the specific input. If you find a few representative ones, you many `git add` them, and use them in unit tests.
+While at it, also check the TODO updates earlier (when you marked todos as done), which should cause a commit, too.
+
+◆ The commit `092e22a520dcae1ce329467182922895eff78f12` is surely rather an (Subagent) accidentially commiting it's query.
+
+◆ Alright, squash the branch since `6b46749e304dc8acb6aabca7b9e93378282c0b09` into multiple commits, i.e. keeping a commit for each plan state.
+

@@ -16,7 +16,7 @@ from pathlib import Path
 from pydantic import BaseModel, StrictBool, StrictInt, computed_field
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import append_and_commit, dump_debug_payload, read_payload, resolve_log_path, slugify  # noqa: E402
+from _lib import append_and_commit, dump_debug_payload, is_cross_tool_duplicate, read_payload, resolve_log_path, slugify  # noqa: E402
 
 
 class Choice(BaseModel):
@@ -511,6 +511,8 @@ def main() -> int:
         return 0
 
     payload = read_payload()
+    if is_cross_tool_duplicate(args.tool_name):
+        return 0
     dump_debug_payload(payload, "save-decision")
 
     questions = parse_payload(payload)

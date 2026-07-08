@@ -23,6 +23,7 @@ from _lib import (  # noqa: E402
     append_and_commit,
     base_ai_commit_subject,
     dump_debug_payload,
+    is_cross_tool_duplicate,
     read_payload,
     resolve_log_path,
     _subproject_root,
@@ -45,6 +46,21 @@ CLAUDE_GITHUB_WORKER_PREFIX = (
     "Think carefully as you analyze the context and respond appropriately. "
     "Here's the context for your current task:"
 )
+# Copilot CLI's `/plan` mode prepends this literal marker to the submitted
+# prompt rather than having the user type a slash command; rendered using the
+# same `/plan ...` convention already used for Claude's literal `/plan` prompts.
+COPILOT_PLAN_MARKER = "[[PLAN]] "
+# Harness-injected autonomous-continuation nudge, not something the user
+# typed — must never be logged as a real prompt.
+HARNESS_TASK_COMPLETE_REMINDER_PREFIX = (
+    "You have not yet marked the task as complete using the task_complete tool."
+)
+
+
+def _strip_copilot_plan_prompt(prompt: str) -> str:
+    if prompt.startswith(COPILOT_PLAN_MARKER):
+        return "/plan " + prompt[len(COPILOT_PLAN_MARKER):]
+    return prompt
 
 # Single-command prompts we never want to log: internal tooling invocations
 # and the most common "please commit now" reminders.
@@ -695,6 +711,8 @@ def main() -> int:
     prefix = PREFIXES.get(ai_tool, DEFAULT_PREFIX)
 
     payload = read_payload()
+    if is_cross_tool_duplicate(ai_tool):
+        return 0
     dump_debug_payload(payload, "save-prompt")
     prompt = payload.get("prompt") or payload.get("user_prompt") or ""
     if not prompt and isinstance(payload.get("tool_input"), dict):
@@ -703,12 +721,17 @@ def main() -> int:
         return 0
     if prompt.strip() in SKIP_PROMPTS:
         return 0
+    if prompt.strip().startswith(HARNESS_TASK_COMPLETE_REMINDER_PREFIX):
+        return 0
     raw_prompt = prompt
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     preformatted_prompt = False
     entry = PromptLogEntry(prompt)
-    if ai_tool == "codex":
+    if ai_tool == "copilot":
+        prompt = _strip_copilot_plan_prompt(prompt)
+        entry = PromptLogEntry(prompt)
+    elif ai_tool == "codex":
         entry = _strip_codex_forwarded_plan_prompt(prompt, log_path.parent / "plans")
         prompt = entry.text
         preformatted_prompt = entry.preformatted

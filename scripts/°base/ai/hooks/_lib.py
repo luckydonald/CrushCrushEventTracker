@@ -93,6 +93,35 @@ def base_ai_commit_subject(msg: str) -> str:
     return msg
 
 
+def running_copilot() -> bool:
+    """True when this process is actually running under Copilot CLI, per its
+    own env markers. Unlike Claude's/Codex's markers, these are set directly
+    by the Copilot CLI process itself for every hook invocation."""
+    return bool(os.environ.get("COPILOT_CLI") or os.environ.get("COPILOT_AGENT_SESSION_ID"))
+
+
+def is_cross_tool_duplicate(ai_tool: str) -> bool:
+    """True when this hook invocation is a redundant duplicate caused by
+    Copilot CLI's unconditional cross-read of `.claude/settings.json`
+    alongside its own native `.github/hooks/*.json` config: when both files
+    define a hook for the same event, Copilot runs *both*, once per config
+    source. The two firings differ only in the baked-in ``ai_tool`` CLI
+    argument (``'copilot'`` from the native config, ``'claude'``/``'codex'``
+    from the cross-read Claude config) — this detects the mismatch so the
+    caller can skip the redundant one.
+
+    Detection is intentionally narrow: it only fires when the environment
+    unambiguously marks the *actually running* harness as Copilot
+    (``COPILOT_CLI``/``COPILOT_AGENT_SESSION_ID``), since ambient variables
+    like ``CLAUDE_CODE_SSE_PORT`` can leak into a Copilot CLI process from
+    the surrounding shell/IDE and are not reliable signals on their own.
+    Returns ``False`` (never a duplicate) for Claude, Codex, and any other
+    harness, and for manual/test invocations where no such env var is set.
+    """
+    running_copilot_ = running_copilot()
+    return running_copilot_ and ai_tool != "copilot"
+
+
 def _subproject_root() -> Path:
     """The directory Claude was launched from. Claude Code sets
     ``CLAUDE_PROJECT_DIR`` for hook commands; manual invocations and the test

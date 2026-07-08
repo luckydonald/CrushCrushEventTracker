@@ -25,7 +25,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import base_ai_commit_subject, dump_debug_payload, read_payload, resolve_log_path, slugify  # noqa: E402
+from _lib import base_ai_commit_subject, dump_debug_payload, is_cross_tool_duplicate, read_payload, resolve_log_path, slugify  # noqa: E402
 
 _STATE_FILE = Path(tempfile.gettempdir()) / "save-plan-state.json"
 
@@ -382,6 +382,8 @@ def _handle_todo_capture(session_id: str, tool_input: dict) -> int:
 def main() -> int:
     ai_tool = sys.argv[1] if len(sys.argv) > 1 else "claude"
     payload = read_payload()
+    if is_cross_tool_duplicate(ai_tool):
+        return 0
     dump_debug_payload(payload, "save-plan")
     session_id = payload.get("session_id", "")
     tool_name = payload.get("tool_name", "")
