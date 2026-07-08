@@ -150,11 +150,12 @@ Other statuses (`aborted`, `dry_run`) keep their current simple output.
 Add `ai/°base/errors/18.expected.md` showing the corrected, narrated console
 output for this same scenario, matching the `N.md`/`N.expected.md` convention.
 
-## Part B — use the instrumented tool to finish the ssp split
+## Part B — fix `ssp` for real (manually and/or via the now-instrumented script)
 
 Executed directly in `/home/user/Documents/PycharmProjects/abelmann/hansecom/ssp`
 (outside this session's own repo — every mutating step called out and
-checked before moving on):
+checked before moving on). Keep notes as this happens — anything confusing,
+surprising, or manual-intervention-requiring is exactly Part C's input.
 
 1. `python3 <base>/scripts/°base/git/split.py --repo-root <ssp> update-history-master --abort`
    — clears the stale state file and `_base_split_scratch` branch.
@@ -168,22 +169,45 @@ checked before moving on):
    `api/application/applications/166/index.json` — read both sides and
    resolve mechanically (standard cherry-pick reconciliation: adopt the
    incoming commit's changes, adapted to whatever already changed
-   underneath), `git add`, then `update-history-master --continue`.
+   underneath), `git add`, then `update-history-master --continue`. If the
+   script's own recovery path doesn't cleanly get us there, resolve directly
+   with plain git commands instead of fighting the tool — that mismatch is
+   itself a Part C finding.
 4. Repeat for any further conflicts. If a resolution isn't mechanical — needs
    a business-logic judgment call about the SSP application rather than
    "reconcile two diffs" — stop and ask rather than guess.
-5. Once `status: ok`, verify: `ai/history/master` moved to a real new tip,
-   `master` reflects the already-happened pull, and nothing else regressed
-   versus the `errors/18.md` "before" table.
+5. Once `status: ok` (or manually confirmed equivalent), verify:
+   `ai/history/master` moved to a real new tip, `master` reflects the
+   already-happened pull, and nothing else regressed versus the `errors/18.md`
+   "before" table.
 6. Leave the pile of pre-existing untracked debris in the worktree
    (`branches.*.txt`, `gitblah-0jep`, `notes/`, `openapi/`, etc.) untouched —
    unrelated to this task.
-7. Fold anything this run reveals that Part A didn't anticipate back into the
-   tool (further hardening) before calling it done.
+
+## Part C — feed what Part B taught us back into the script
+
+A dedicated pass, after `ssp` is actually unstuck — not folded silently into
+Part B. Go through the notes from Part B and turn each rough edge into a
+concrete fix, for example (fill in for real once Part B has actually run):
+
+- Any point where the log output (even the new instrumented version) still
+  didn't say enough, or said too much.
+- Any point where `--continue`/`--abort` didn't behave as documented, or a
+  manual git command was needed instead of the tool.
+- Any additional stale-state-like mismatches beyond the one already found
+  (§Part A.4) between what the state file believes and what git actually
+  shows.
+- Whether the conflict-resolution step itself suggests the tool could detect
+  or avoid this specific class of conflict earlier (e.g. duplicate content
+  already present on the target line).
+
+Each finding gets its own small, targeted fix + test — not a speculative
+rewrite. If Part B turns up nothing beyond what Part A already fixed, say so
+explicitly rather than inventing changes to fill this section.
 
 ## Verification
 
 - Re-run the full `scripts/°base` test suite after the Part A code changes,
-  before touching `ssp`.
+  before touching `ssp`, and again after any Part C fixes.
 - Confirm the `ssp` run in Part B produces readable console output
   end-to-end, with the full detail recoverable from `.rebase-recovery.tmp`.

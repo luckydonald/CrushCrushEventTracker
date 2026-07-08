@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +22,35 @@ def _resolve_repo_root(args: argparse.Namespace) -> Path:
     return git_ops.repo_root()
 
 
+def _build_logger(repo_root: Path) -> logging.Logger:
+    """One logger per invocation, shared with history_master.py via a fixed
+    name (see history_master_lib.LOGGER_NAME) -- console gets a terse,
+    readable narration (INFO+); the full detail (every git command run, ref
+    snapshots, rollback commands) always lands in .rebase-recovery.tmp
+    (DEBUG), so nothing is lost even when the console stays quiet.
+    """
+    logger = logging.getLogger(history_master_lib.LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    for handler in list(logger.handlers):
+        logger.removeHandler(handler)
+        handler.close()
+
+    plain = logging.Formatter("%(message)s")
+
+    console = logging.StreamHandler(sys.stdout)
+    console.setLevel(logging.INFO)
+    console.setFormatter(plain)
+    logger.addHandler(console)
+
+    file_handler = logging.FileHandler(repo_root / recovery.RECOVERY_FILENAME)
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(plain)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
 def _run_with_recovery(
     *,
     repo_root: Path,
@@ -33,22 +63,37 @@ def _run_with_recovery(
     """Snapshot every ref an invocation could touch and log undo commands
     for it *before* running anything -- so recovery info survives even a
     crash mid-operation. See scripts/°base/git/°split_lib/recovery.py.
+
+    The full ref table + rollback commands always go to .rebase-recovery.tmp
+    (DEBUG); the console (INFO) only gets a one-line pointer to it, plus the
+    full "after" summary if the run didn't cleanly succeed -- that's the
+    detail actually worth seeing without going and opening the file.
     """
     if dry_run:
         return run_fn()
 
-    watched = recovery.resolve_watched_refs(branch, main_branch, repo_root)
-    before = recovery.snapshot(watched, repo_root)
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    entry = recovery.format_recovery_entry(invocation, before, timestamp)
-    print(entry)
-    recovery.write_recovery_log(repo_root, entry)
-
+    logger = _build_logger(repo_root)
     try:
-        return run_fn()
+        watched = recovery.resolve_watched_refs(branch, main_branch, repo_root)
+        before = recovery.snapshot(watched, repo_root)
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = recovery.format_recovery_entry(invocation, before, timestamp)
+        logger.debug(entry)
+        logger.info("snapshotted %d ref(s) -> %s", len(watched), repo_root / recovery.RECOVERY_FILENAME)
+
+        try:
+            return run_fn()
+        finally:
+            after = recovery.snapshot(watched, repo_root)
+            summary = recovery.format_after_summary(before, after)
+            if before != after:
+                logger.info(summary)
+            else:
+                logger.debug(summary)
     finally:
-        after = recovery.snapshot(watched, repo_root)
-        print(recovery.format_after_summary(before, after))
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+            handler.close()
 
 
 def _parse_ref_lines(text: str) -> list[push_checks.RefUpdate]:
@@ -134,7 +179,24 @@ def _sync_splits(args: argparse.Namespace, *, repo_root: Path, main_branch: str)
     return exit_code
 
 
+_CONFLICT_NEXT_STEPS = """\
+Choose one:
+
+  [1] Resolve and continue
+      - Resolve the conflict in the working tree (branch `{scratch_branch}`)
+      - git add <resolved files>
+      - scripts/°base/git/split.py --repo-root {repo_root} update-history-master --continue
+
+  [2] Abort this run (keeps any already-pulled `{main_branch}`)
+      - scripts/°base/git/split.py --repo-root {repo_root} update-history-master --abort
+
+  [3] Full manual rollback (only if [2] isn't enough, e.g. to also undo the
+      `{main_branch}` pull) -- see the ref table and `git update-ref` commands
+      already logged to .rebase-recovery.tmp for this run."""
+
+
 def _update_history_master(args: argparse.Namespace, *, repo_root: Path, main_branch: str) -> int:
+    logger = logging.getLogger(history_master_lib.LOGGER_NAME)
     try:
         result = history_master_lib.update_history_master(
             repo_root=repo_root,
@@ -148,10 +210,29 @@ def _update_history_master(args: argparse.Namespace, *, repo_root: Path, main_br
             dry_run=args.dry_run,
         )
     except history_master_lib.HistoryMasterError as exc:
-        print(f"update-history-master: {exc}", file=sys.stderr)
+        logger.error("update-history-master: %s", exc)
         return 1
-    print(result)
-    return 0 if result.get("status") != "conflict" else 1
+
+    logger.debug("result: %r", result)
+    if result.get("status") == "conflict":
+        pending = result.get("pending", {})
+        message = result.get("message") or pending.get("message") or pending.get("detail")
+        block = "== CONFLICT ==\n"
+        if message:
+            block += f"{message}\n\n"
+        block += _CONFLICT_NEXT_STEPS.format(
+            scratch_branch=history_master_lib.SCRATCH_BRANCH,
+            repo_root=repo_root,
+            main_branch=main_branch,
+        )
+        logger.warning(block)
+        return 1
+
+    if result.get("status") not in ("ok", "aborted", "no-op") or args.dry_run:
+        # dry-run / unrecognized shapes: fall back to the raw dict so nothing
+        # is silently hidden.
+        logger.info("%r", result)
+    return 0
 
 
 def _rebase_branches_to_master(args: argparse.Namespace, *, repo_root: Path, main_branch: str) -> int:

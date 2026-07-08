@@ -15,6 +15,7 @@ picture.
 from __future__ import annotations
 
 import json
+import logging
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -32,6 +33,16 @@ STATE_FILENAME = "BASE_SPLIT_HISTORY_MASTER_STATE"
 SCRATCH_BRANCH = "_base_split_scratch"
 SCRATCH_REF = f"refs/heads/{SCRATCH_BRANCH}"
 BASE_REMOTE_REF = "refs/remotes/base/base"
+
+# Fixed name (not `logging.getLogger(__name__)`) so cli.py can attach handlers
+# to exactly this logger without needing to know this module's dotted path
+# (which, thanks to the `°split_lib` package name, is awkward to spell out).
+LOGGER_NAME = "base-split.history-master"
+logger = logging.getLogger(LOGGER_NAME)
+# Standard library-code practice: stay silent when nothing (cli.py, a test)
+# has attached real handlers, instead of falling back to logging's WARNING+
+# "handler of last resort" on stderr.
+logger.addHandler(logging.NullHandler())
 
 
 class HistoryMasterError(RuntimeError):
@@ -79,9 +90,28 @@ class MergeConflict(HistoryMasterError):
 
 
 def _git(args: list[str], cwd: Path, *, check: bool = False) -> subprocess.CompletedProcess:
+    logger.debug("$ git %s", " ".join(args))
     result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    _log_completed(result)
     if check and result.returncode != 0:
         raise HistoryMasterError(f"git {' '.join(args)} failed: {result.stderr or result.stdout}")
+    return result
+
+
+def _log_completed(result: subprocess.CompletedProcess, *, label: str | None = None) -> subprocess.CompletedProcess:
+    """DEBUG-log the outcome of a `git_ops.py` call (frozen/shared plumbing
+    that doesn't log itself -- see the module docstring). Called at each
+    call site instead of touching git_ops.py.
+    """
+    prefix = f"{label}: " if label else ""
+    if result.returncode == 0:
+        logger.debug("%src=0", prefix)
+        return result
+    logger.debug("%src=%s", prefix, result.returncode)
+    if result.stderr and result.stderr.strip():
+        logger.debug("  stderr: %s", result.stderr.strip())
+    if result.stdout and result.stdout.strip():
+        logger.debug("  stdout: %s", result.stdout.strip())
     return result
 
 
@@ -260,7 +290,7 @@ def replay_commit(sha: str, onto: str, cwd: Path) -> str:
     `X-Base-Split-*` trailers on it) is preserved verbatim by cherry-pick.
     """
     _checkout_scratch(onto, cwd)
-    result = git_ops.cherry_pick(sha, cwd)
+    result = _log_completed(git_ops.cherry_pick(sha, cwd), label=f"cherry-pick {sha}")
     if result.returncode != 0:
         if _is_empty_cherry_pick(result, cwd):
             # git_ops.cherry_pick() can't pass --allow-empty (it's shared,
@@ -293,10 +323,11 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
         )
 
     _checkout_scratch(onto, cwd)
-    result = git_ops.merge_no_commit(base_old_sha, cwd)
+    result = _log_completed(git_ops.merge_no_commit(base_old_sha, cwd), label=f"merge (recreate) {base_old_sha}")
     if result.returncode != 0:
         conflicted = _conflicted_paths(cwd)
         if not conflicted:
+            logger.debug("$ git merge --abort")
             git_ops.merge_abort(cwd)
             _cleanup_scratch(cwd)
             raise HistoryMasterError(
@@ -342,12 +373,27 @@ def _fold_base(base_sha: str, onto: str, cwd: Path) -> str:
     """Fold a genuinely-new `base/base` tip into history-master. Unlike
     `recreate_base_merge`, there's no prior resolution to reuse here, so real
     conflicts are surfaced for manual resolution rather than auto-resolved.
+
+    `base/base` is, by design, a separate template repo with no shared
+    ancestor with a fresh consuming repo (see README.md "Setup: c) Merge
+    base/base" -- initial adoption there is documented as
+    `git merge --allow-unrelated-histories --no-ff base/base`). The very
+    first fold onto a given history-master line hits exactly that case, so
+    detect it here (rather than gating on "first run" bookkeeping, which
+    doesn't cover a repo that adopted `base/base` after the fact) and pass
+    the flag only when it's actually needed.
     """
     _checkout_scratch(onto, cwd)
-    result = git_ops.merge_no_commit(base_sha, cwd)
+    unrelated = git_ops.merge_base(onto, base_sha, cwd) is None
+    merge_args = ["merge", "--no-commit", "--no-ff"]
+    if unrelated:
+        merge_args.append("--allow-unrelated-histories")
+    merge_args.append(base_sha)
+    result = _git(merge_args, cwd)
     if result.returncode != 0:
         conflicted = _conflicted_paths(cwd)
         if not conflicted:
+            logger.debug("$ git merge --abort")
             git_ops.merge_abort(cwd)
             _cleanup_scratch(cwd)
             raise HistoryMasterError(f"merge of {base_sha} onto {onto} failed: {result.stderr}")
@@ -423,16 +469,40 @@ def _execute_step(step: dict, tip: str, cwd: Path) -> str:
     raise HistoryMasterError(f"unknown step kind {kind!r}")
 
 
+def _describe_step(step: dict, cwd: Path) -> str:
+    kind = step["kind"]
+    if kind == "commit":
+        sha = step["sha"]
+        try:
+            subject = git_ops.subject_for_commit(sha, cwd)
+        except subprocess.CalledProcessError:
+            subject = ""
+        return f"commit {sha[:8]} {subject!r}"
+    if kind == "base_merge":
+        return f"recreate base-merge {step['sha'][:8]}"
+    if kind == "marker":
+        return f"merge marker for branch {step.get('branch', '')!r}"
+    if kind == "base_fold":
+        return f"fold base {step['sha'][:8]}"
+    return repr(step)
+
+
 def _run_steps(steps: list[dict], tip: str, cwd: Path) -> tuple[str, list[dict], dict | None]:
     remaining = list(steps)
+    total = len(steps)
     while remaining:
         step = remaining[0]
+        idx = total - len(remaining) + 1
+        logger.info("[%d/%d] %s", idx, total, _describe_step(step, cwd))
         try:
             tip = _execute_step(step, tip, cwd)
-        except CherryPickConflict:
-            return tip, remaining, {"kind": "cherry-pick", "step": step}
-        except MergeConflict:
-            return tip, remaining, {"kind": "merge", "step": step}
+        except CherryPickConflict as exc:
+            logger.warning("  -> CONFLICT")
+            return tip, remaining, {"kind": "cherry-pick", "step": step, "message": str(exc)}
+        except MergeConflict as exc:
+            logger.warning("  -> CONFLICT")
+            return tip, remaining, {"kind": "merge", "step": step, "message": str(exc)}
+        logger.info("  -> ok (%s)", tip[:8])
         remaining.pop(0)
     return tip, [], None
 
@@ -526,18 +596,42 @@ def _build_plan(
     return steps, replay_start_tip, old_master_sha
 
 
+def _pending_git_marker(pending: dict) -> str:
+    return "CHERRY_PICK_HEAD" if pending["kind"] == "cherry-pick" else "MERGE_HEAD"
+
+
+def _pending_git_op_missing(pending: dict, repo_root: Path) -> bool:
+    """True if the state file claims a pending cherry-pick/merge but git shows
+    no such operation actually in progress -- e.g. someone ran a raw
+    `git cherry-pick --abort` by hand instead of going through this tool's
+    own --abort, leaving the state file orphaned (observed live in the wild:
+    see ai/°base/errors/18.md).
+    """
+    return not (repo_root / ".git" / _pending_git_marker(pending)).exists()
+
+
 def _do_abort(repo_root: Path) -> dict:
     state = _read_state(repo_root)
     if state is None:
+        logger.info("nothing to abort (no update-history-master run in progress)")
         return {"status": "no-op", "detail": "no update-history-master run is in progress"}
     pending = state.get("pending")
     if pending is not None:
-        if pending["kind"] == "cherry-pick":
+        if _pending_git_op_missing(pending, repo_root):
+            logger.info(
+                "state file says a %s was pending, but git shows none in progress "
+                "(already resolved/aborted outside the tool) -- clearing stale state only",
+                pending["kind"],
+            )
+        elif pending["kind"] == "cherry-pick":
+            logger.debug("$ git cherry-pick --abort")
             git_ops.cherry_pick_abort(repo_root)
         elif pending["kind"] == "merge":
+            logger.debug("$ git merge --abort")
             git_ops.merge_abort(repo_root)
     _cleanup_scratch(repo_root)
     _clear_state(repo_root)
+    logger.info("aborted; state cleared")
     return {"status": "aborted"}
 
 
@@ -551,10 +645,22 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
     remaining = state["remaining"]
     pending = state.get("pending")
 
+    if pending is not None and _pending_git_op_missing(pending, repo_root):
+        marker = _pending_git_marker(pending)
+        raise HistoryMasterError(
+            f"Saved state says a {pending['kind']} is still pending, but git shows no "
+            f"{marker} in progress (most likely someone ran a raw `git {pending['kind']} "
+            "--abort` by hand instead of this tool's own --abort). Run "
+            "`update-history-master --abort` to clear this stale state, then re-run normally "
+            "(nothing already applied is lost -- the target ref is only ever moved once the "
+            "whole plan finishes)."
+        )
+
     if pending is not None:
         step = pending["step"]
         if pending["kind"] == "cherry-pick":
-            result = git_ops.cherry_pick_continue(cwd)
+            logger.debug("$ git cherry-pick --continue")
+            result = _log_completed(git_ops.cherry_pick_continue(cwd))
             if result.returncode != 0:
                 _write_state(repo_root, state)
                 return {"status": "conflict", "pending": pending, "detail": result.stderr or result.stdout}
@@ -583,17 +689,10 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
     if base_sha is not None and not git_ops.is_ancestor(base_sha, new_tip, cwd):
         try:
             new_tip = _fold_base(base_sha, new_tip, cwd)
-        except MergeConflict:
-            _write_state(
-                repo_root,
-                {
-                    **state,
-                    "remaining": [],
-                    "tip": new_tip,
-                    "pending": {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}},
-                },
-            )
-            return {"status": "conflict", "pending": {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}}}
+        except MergeConflict as exc:
+            pending = {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}, "message": str(exc)}
+            _write_state(repo_root, {**state, "remaining": [], "tip": new_tip, "pending": pending})
+            return {"status": "conflict", "pending": pending}
 
     original_sha = state.get("original_sha")
     history_ref_short = history_ref.removeprefix("refs/heads/")
@@ -601,6 +700,7 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
     git_ops.move_ref(history_ref, new_tip, original_sha, cwd)
     _sync_checkout_if_current(history_ref_short, new_tip, cwd)
     _clear_state(repo_root)
+    logger.info("%s -> %s (resumed)", history_ref_short, new_tip[:8])
     return {"status": "ok", "history_master": new_tip}
 
 
@@ -657,6 +757,7 @@ def update_history_master(
         old_history_sha=old_history_sha,
         force_merge=force_merge,
     )
+    logger.info("planned %d step(s) (%s)", len(steps), "first run" if first_run else f"replaying onto {history_ref_name}")
 
     if dry_run:
         return {
@@ -686,7 +787,8 @@ def update_history_master(
         try:
             tip = _fold_base(base_sha, tip, cwd)
             base_merge_result = tip
-        except MergeConflict:
+        except MergeConflict as exc:
+            pending = {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}, "message": str(exc)}
             _write_state(
                 repo_root,
                 {
@@ -694,10 +796,10 @@ def update_history_master(
                     "tip": tip,
                     "force_merge": force_merge,
                     "original_sha": old_history_sha,
-                    "pending": {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}},
+                    "pending": pending,
                 },
             )
-            return {"status": "conflict", "pending": {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}}}
+            return {"status": "conflict", "pending": pending}
 
     if first_run:
         git_ops.create_branch(history_ref, tip, cwd)
@@ -706,6 +808,7 @@ def update_history_master(
         git_ops.move_ref(history_ref, tip, old_history_sha, cwd)
         _sync_checkout_if_current(history_ref_name, tip, cwd)
 
+    logger.info("%s -> %s (%s)", history_ref_name, tip[:8], "created" if first_run else "updated")
     return {
         "status": "ok",
         "history_master": tip,

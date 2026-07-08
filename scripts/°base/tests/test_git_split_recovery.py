@@ -126,12 +126,17 @@ class CliIntegrationTests(RecoveryTestBase):
         self.assertEqual(code, 0)
 
         output = buf.getvalue()
-        self.assertIn("#### Run", output)
-        self.assertIn("git update-ref -d 'refs/heads/feature' || true", output)
+        # Console output stays terse -- the full ref table + undo commands are
+        # only ever meant to be read when something needs recovering, so they
+        # go to the log file, not stdout, on a clean run.
+        self.assertIn("snapshotted", output)
+        self.assertNotIn("#### Run", output)
+        self.assertNotIn("git update-ref -d 'refs/heads/feature' || true", output)
 
         recovery_file = self.repo / recovery.RECOVERY_FILENAME
         self.assertTrue(recovery_file.exists())
         logged = recovery_file.read_text()
+        self.assertIn("#### Run", logged)
         self.assertIn("git update-ref -d 'refs/heads/feature' || true", logged)
 
         # sync-splits must have actually created these for the undo commands
@@ -150,6 +155,44 @@ class CliIntegrationTests(RecoveryTestBase):
 
         self.assertEqual(git_ops.rev_parse("feature", self.repo), clean_before)
         self.assertEqual(git_ops.rev_parse("ai/history/feature", self.repo), history_before)
+
+    def test_update_history_master_conflict_shows_recovery_options_on_console_only(self):
+        # Diverge master and ai/history/master on the same line of the same
+        # file so replaying master's new commit onto history-master's tip
+        # conflicts for real.
+        make_commit(self.repo, "conflict.txt", "add conflict.txt", content="line1\nline2\nline3\n")
+        git(["branch", "-f", "ai/history/master"], self.repo)
+        make_commit(self.repo, "conflict.txt", "master changes line2", content="line1\nCHANGED-ON-MASTER\nline3\n")
+
+        git(["checkout", "ai/history/master"], self.repo)
+        make_commit(
+            self.repo,
+            "conflict.txt",
+            "history-master already changed line2 differently",
+            content="line1\nCHANGED-ON-HISTORY\nline3\n",
+        )
+        git(["checkout", "master"], self.repo)
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = cli.main(["--repo-root", str(self.repo), "update-history-master", "--yes"])
+        self.assertEqual(code, 1)
+
+        output = buf.getvalue()
+        self.assertIn("== CONFLICT ==", output)
+        self.assertIn("--continue", output)
+        self.assertIn("--abort", output)
+        # The full ref table/rollback commands stay out of the console --
+        # only the short pointer line and the conflict block belong there.
+        self.assertNotIn("#### Run", output)
+
+        logged = (self.repo / recovery.RECOVERY_FILENAME).read_text()
+        self.assertIn("#### Run", logged)
+        self.assertIn("git update-ref", logged)
+        # Every underlying git invocation is logged at DEBUG (file-only).
+        self.assertIn("$ git checkout --detach HEAD", logged)
+        self.assertIn("cherry-pick", logged)
+        self.assertIn("rc=1", logged)
 
     def test_dry_run_skips_recovery_logging(self):
         self.make_unclean("feature")

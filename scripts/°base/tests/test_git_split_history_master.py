@@ -166,6 +166,31 @@ class HistoryMasterTests(unittest.TestCase):
         content = git_ops.show_path_at(recreated, "shared.txt", self.repo_root).decode()
         self.assertEqual(content, "from base\n")
 
+    def test_first_base_fold_allows_unrelated_histories(self) -> None:
+        # `base/base` is, by design, a separate template repo with no shared
+        # ancestor with a freshly-adopting consuming repo (see README.md
+        # "Setup: c) Merge base/base"). The very first fold onto a fresh
+        # history-master line must succeed via --allow-unrelated-histories
+        # instead of git refusing with "refusing to merge unrelated
+        # histories" (observed live: see ai/°base/errors/18.md).
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(base_repo_root, "template.txt", "base template file")
+        base_sha = git(["rev-parse", "HEAD"], base_repo_root)
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+        self.assertIsNone(git_ops.merge_base("master", base_sha, self.repo_root))
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["base_merge"], result["history_master"])
+        content = git_ops.show_path_at(result["history_master"], "template.txt", self.repo_root).decode()
+        self.assertEqual(content, "base template file")
+
     def test_master_is_never_mutated_by_a_base_merge(self) -> None:
         # Regression test for the invariant that adopting/updating base can
         # never touch `master` (and therefore never any clean branch) --
@@ -254,6 +279,56 @@ class HistoryMasterTests(unittest.TestCase):
             repo_root=self.repo_root, main_branch="master", force_merge=["feature"]
         )
         self.assertEqual(result["status"], "ok")
+
+    def _make_conflicting_replay(self) -> None:
+        """Diverge master and ai/history/master on the same line of the same
+        file, so replaying master's new commit onto history-master's tip
+        conflicts for real."""
+        (self.repo_root / "conflict.txt").write_text("line1\nline2\nline3\n")
+        git(["add", "conflict.txt"], self.repo_root)
+        git(["commit", "-m", "add conflict.txt"], self.repo_root)
+        git(["branch", "-f", "ai/history/master"], self.repo_root)
+
+        (self.repo_root / "conflict.txt").write_text("line1\nCHANGED-ON-MASTER\nline3\n")
+        git(["commit", "-am", "master changes line2"], self.repo_root)
+
+        git(["checkout", "ai/history/master"], self.repo_root)
+        (self.repo_root / "conflict.txt").write_text("line1\nCHANGED-ON-HISTORY\nline3\n")
+        git(["commit", "-am", "history-master already changed line2 differently"], self.repo_root)
+        git(["checkout", "master"], self.repo_root)
+
+    def test_conflict_carries_the_human_readable_message(self) -> None:
+        self._make_conflicting_replay()
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", yes=True)
+
+        self.assertEqual(result["status"], "conflict")
+        message = result["pending"]["message"]
+        self.assertIn("--continue", message)
+        self.assertIn("--abort", message)
+
+    def test_continue_detects_state_orphaned_by_a_manual_abort(self) -> None:
+        self._make_conflicting_replay()
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", yes=True)
+        self.assertEqual(result["status"], "conflict")
+
+        # Simulate someone bypassing the tool and running the raw git command
+        # by hand -- git's own state (CHERRY_PICK_HEAD) is now gone, but the
+        # tool's persisted state file still claims a pending cherry-pick
+        # (this is exactly what was found live in ai/°base/errors/18.md).
+        git(["cherry-pick", "--abort"], self.repo_root)
+        self.assertTrue((self.repo_root / ".git" / "BASE_SPLIT_HISTORY_MASTER_STATE").exists())
+
+        with self.assertRaises(history_master.HistoryMasterError) as ctx:
+            history_master.update_history_master(repo_root=self.repo_root, main_branch="master", continue_=True)
+        self.assertIn("stale state", str(ctx.exception))
+        self.assertIn("--abort", str(ctx.exception))
+
+        # --abort still cleanly recovers from here (doesn't blow up trying to
+        # abort a git operation that's already gone).
+        abort_result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master", abort=True)
+        self.assertEqual(abort_result["status"], "aborted")
+        self.assertFalse((self.repo_root / ".git" / "BASE_SPLIT_HISTORY_MASTER_STATE").exists())
 
 
 class CheckoutSyncTests(unittest.TestCase):
