@@ -275,29 +275,55 @@ def _parse_copilot(payload: dict) -> list[Question]:
     a single question, a flat list of choice strings (no label/description/
     preview), and an allow_freeform flag instead of multiSelect. There is
     exactly one question per call.
+
+    Two things confirmed only from real hook payloads (not the published
+    docs) and easy to get wrong:
+    - `tool_name` is *always* reported as the Claude-mapped name
+      (`AskUserQuestion`), never the literal `ask_user` runtime name — per
+      hooks-reference.md's runtime→Claude tool name table, PostToolUse
+      payloads always use the Claude name. So this parser must be selected
+      via the CLI `ai_tool` argv (or a payload-shape heuristic), not by
+      checking `tool_name == "ask_user"`.
+    - The answer lives in `tool_result.text_result_for_llm` (a human-readable
+      string), not a Claude-style `tool_response` dict. It is prefixed with
+      "User selected: <label>" when a listed choice was picked, or
+      "User responded: <text>" for a freeform/no-match answer; empty/absent
+      when the question timed out unanswered.
     """
     tool_input = payload.get("tool_input") or {}
     qtext = tool_input.get("question", "")
     raw_choices = [c for c in (tool_input.get("choices") or []) if isinstance(c, str)]
     allow_freeform = bool(tool_input.get("allow_freeform", True))
 
-    raw_response = payload.get("tool_response") or ""
-    if isinstance(raw_response, str):
-        try:
-            parsed = json.loads(raw_response)
-        except (json.JSONDecodeError, ValueError):
+    tool_result = payload.get("tool_result")
+    text_result = tool_result.get("text_result_for_llm", "") if isinstance(tool_result, dict) else ""
+    if not text_result:
+        # Backward/test compatibility with the originally-assumed
+        # `tool_response` shape (a JSON object/string carrying "answer").
+        raw_response = payload.get("tool_response") or ""
+        if isinstance(raw_response, str):
+            try:
+                parsed = json.loads(raw_response)
+            except (json.JSONDecodeError, ValueError):
+                parsed = raw_response
+        else:
             parsed = raw_response
-    else:
-        parsed = raw_response
+        text_result = (
+            parsed.get("answer", "") if isinstance(parsed, dict)
+            else parsed if isinstance(parsed, str)
+            else ""
+        )
 
-    if isinstance(parsed, dict):
-        answer = parsed.get("answer", "")
-    elif isinstance(parsed, str):
-        answer = parsed
+    if text_result.startswith("User selected: "):
+        answer = text_result[len("User selected: "):]
+        direct_other = False
+    elif text_result.startswith("User responded: "):
+        answer = text_result[len("User responded: "):]
+        direct_other = True
     else:
-        answer = ""
+        answer = text_result
+        direct_other = allow_freeform and bool(answer) and answer not in raw_choices
 
-    direct_other = allow_freeform and bool(answer) and answer not in raw_choices
     choices: list[Choice] = [
         Choice(
             label=label,
@@ -316,12 +342,36 @@ def _parse_copilot(payload: dict) -> list[Question]:
     )]
 
 
-def parse_payload(payload: dict) -> list[Question]:
-    """Dispatch to the correct parser based on tool_name in the hook payload."""
+def _looks_like_copilot_payload(payload: dict) -> bool:
+    """Shape-based fallback detector for Copilot's flat ask_user schema, used
+    when no CLI `ai_tool` argv is available to disambiguate (e.g. `--preview`
+    mode or direct/manual payload testing). Copilot's `tool_input` has a
+    singular `question` string and never Claude's nested `questions` list."""
+    tool_input = payload.get("tool_input")
+    return isinstance(tool_input, dict) and "question" in tool_input and "questions" not in tool_input
+
+
+def parse_payload(payload: dict, ai_tool: str | None = None) -> list[Question]:
+    """Dispatch to the correct parser.
+
+    Prefers the CLI `ai_tool` argv (passed by every generated hook config) as
+    the source of truth, since Copilot's PostToolUse payload always reports
+    `tool_name` as the Claude-mapped name (`AskUserQuestion`), making
+    `tool_name` alone insufficient to detect a Copilot `ask_user` call. Falls
+    back to `tool_name`/payload-shape inference when no CLI arg is given
+    (`--preview` mode, tests, or manual invocations).
+    """
+    if ai_tool == "copilot":
+        return _parse_copilot(payload)
+    if ai_tool == "codex":
+        return _parse_codex(payload)
+    if ai_tool == "claude":
+        return _parse_claude(payload)
+
     tool_name = payload.get("tool_name")
     if tool_name == "request_user_input":
         return _parse_codex(payload)
-    if tool_name == "ask_user":
+    if tool_name == "ask_user" or _looks_like_copilot_payload(payload):
         return _parse_copilot(payload)
     return _parse_claude(payload)
 
@@ -488,6 +538,22 @@ def _resolve_preview_path(value: str, script_dir: Path, cwd: Path) -> Path:
     )
 
 
+def _infer_tool(payload: dict, ai_tool: str) -> str:
+    """Resolve the rendering/parsing tool identity: prefer the CLI `ai_tool`
+    argv (passed by every generated hook config) since Copilot's PostToolUse
+    payload always reports `tool_name` as the Claude-mapped name
+    (`AskUserQuestion`), never the literal `ask_user` runtime name. Falls
+    back to `tool_name`/payload-shape inference when no CLI arg is given."""
+    if ai_tool in ("claude", "codex", "copilot"):
+        return ai_tool
+    tool_name = payload.get("tool_name")
+    if tool_name == "request_user_input":
+        return "codex"
+    if tool_name == "ask_user" or _looks_like_copilot_payload(payload):
+        return "copilot"
+    return "claude"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("tool_name", nargs="?", default="unknown")
@@ -501,12 +567,11 @@ def main() -> int:
             cwd=Path.cwd(),
         )
         payload = json.loads(path.read_text(encoding="utf-8"))
-        questions = parse_payload(payload)
+        tool = _infer_tool(payload, args.tool_name)
+        questions = parse_payload(payload, ai_tool=tool)
         if not questions:
             print("(no questions parsed)", file=sys.stderr)
             return 1
-        tool_name = payload.get("tool_name")
-        tool = "codex" if tool_name == "request_user_input" else ("copilot" if tool_name == "ask_user" else "claude")
         sys.stdout.write(_render_block(questions, tool=tool))
         return 0
 
@@ -515,12 +580,11 @@ def main() -> int:
         return 0
     dump_debug_payload(payload, "save-decision")
 
-    questions = parse_payload(payload)
+    tool = _infer_tool(payload, args.tool_name)
+    questions = parse_payload(payload, ai_tool=tool)
     if not questions:
         return 0
 
-    tool_name = payload.get("tool_name")
-    tool = "codex" if tool_name == "request_user_input" else ("copilot" if tool_name == "ask_user" else "claude")
     block = _render_block(questions, tool=tool)
     slug = slugify(questions[0].question, fallback="decision")
 

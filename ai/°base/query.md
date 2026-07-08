@@ -3286,3 +3286,7 @@ While at it, also check the TODO updates earlier (when you marked todos as done)
 
 ◆ Alright, squash the branch since `6b46749e304dc8acb6aabca7b9e93378282c0b09` into multiple commits, i.e. keeping a commit for each plan state.
 
+◆ /plan ask me all the types of questions you have available.
+
+◆ Alright, none of those question caused a question added to the `query.md` log.
+
