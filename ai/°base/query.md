@@ -3353,3 +3353,5 @@ The plan shall have basically the same line as the later commit but in _current 
 > </details>
 >
 
+❯ Add that memory to the the SKILL, instead.
+

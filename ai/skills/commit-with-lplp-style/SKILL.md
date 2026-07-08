@@ -84,6 +84,8 @@ Adopt these rules for every commit made this session:
 6. Once this skill is activated, keep commiting after every completed task automatically without asking again.
    If the user responds with a simple `commit` or similar (`commit plz`, `keep commiting`, etc.), this means they want to remind you, to follow the "keep automatically committing" instruction, which you should already anyway.
 
+7. **Never rewrite already-committed history just because you noticed a gap.** If you spot a stray `ai:` auto-commit left un-folded somewhere in existing history (e.g. a leftover `ai: updated prompt` because an unexpected commit landed in between), do not rebase/`reset --soft`/amend it away on your own initiative — ask the user first (e.g. via `AskUserQuestion`) whether they want it cleaned up. Rules 1–6 above are about commits you are making *right now* to finish the current task; they are not standing permission to rewrite arbitrary prior history whenever this skill happens to be active. An explicit cleanup request from the user (e.g. "clean up the commits since last push") still authorizes the full procedure below.
+
 ## Cleaning up stray `ai:` auto-commits
 
 Use this procedure before merging or review when the branch has stray prompt/decision commits mixed into the history.
