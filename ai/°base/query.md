@@ -3323,3 +3323,7 @@ While at it, also check the TODO updates earlier (when you marked todos as done)
 > - [Raw log (`370303` chars, `362 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/bd057432-52a3-4fad-8478-454be4c9c79e/tasks/aa37767ddf7b415bd.output)
 > - `22` tools, `66822` tokens, `2.07957 s`
 
+❯ /commit-with-lplp-style, but this time properly clean up the commits since last push. This means that features shall be stay separate commits, and once a plan is changed, that cuts a new version. Only if there's edits to the plan file within second, and those don't overlap, those plan commits may be squashed into one.
+
+❯ if it's basically planning only for the upcoming code commit, instead of `ai: Run: fixed foobar` name it `ai: Plan: fix foobar`, and any additional plan updates `ai: Plan update: fix foobar`. Having those raw `ai:` auto-commits is usually not wanted.
+
