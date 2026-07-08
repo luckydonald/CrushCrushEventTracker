@@ -40,7 +40,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "AskUserQuestion|request_user_input",
+        "matcher": "AskUserQuestion|request_user_input|ask_user",
         "hooks": [
           {
             "type": "command",
@@ -60,7 +60,17 @@
         ]
       },
       {
-        "matcher": "Write|Edit|ExitPlanMode",
+        "matcher": "Write|Edit|ExitPlanMode|create|edit|exit_plan_mode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-plan/hook.py\" 'claude'",
+            "async": true
+          }
+        ]
+      },
+      {
+        "matcher": "TodoWrite|update_todo",
         "hooks": [
           {
             "type": "command",

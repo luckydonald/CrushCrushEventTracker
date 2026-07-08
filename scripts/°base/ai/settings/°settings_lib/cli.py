@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from . import codex_rules, codex_toml, commands, mcp_servers, paths
-from .hooks import CURRENT_VERSION, _shared_extras, _merge, _normalize_native, render_claude, render_codex_hooks
+from .hooks import CURRENT_VERSION, _shared_extras, _merge, _normalize_native, render_claude, render_codex_hooks, render_copilot_hooks
 from .json_io import _read_json, _same_json, _write_json, _write_text_if_changed
 from .skills import _sync_skills
 
@@ -195,6 +195,7 @@ def _load_layer(
     codex_rules_path: Path | None = None,
     codex_config_path: Path | None = None,
     claude_mcp_path: Path | None = None,
+    copilot_path: Path | None = None,
 ) -> dict[str, Any]:
     shared_source = _read_json(shared_path)
     shared = deepcopy(shared_source)
@@ -203,7 +204,10 @@ def _load_layer(
 
     native_sources: list[tuple[float, dict[str, Any]]] = []
     mcp_native_sources: list[tuple[float, dict[str, Any]]] = []
-    for path in (claude_path, codex_path):
+    native_paths = [claude_path, codex_path]
+    if copilot_path is not None:
+        native_paths.append(copilot_path)
+    for path in native_paths:
         if path.is_file():
             native_sources.append((path.stat().st_mtime, _read_json(path)))
     codex_config_text: str | None = None
@@ -255,18 +259,23 @@ def _apply_or_check(
     codex_config_path: Path | None = None,
     claude_mcp_path: Path | None = None,
     backup_timestamp: str | None = None,
+    copilot_path: Path | None = None,
 ) -> list[str]:
     changed: list[str] = []
-    shared = _load_layer(shared_path, claude_path, codex_path, codex_rules_path, codex_config_path, claude_mcp_path)
+    shared = _load_layer(shared_path, claude_path, codex_path, codex_rules_path, codex_config_path, claude_mcp_path, copilot_path)
     claude = render_claude(shared)
     codex = render_codex_hooks(shared)
     git_root = paths._git_root()
 
-    for path, data in (
+    render_targets = [
         (shared_path, shared),
         (claude_path, claude),
         (codex_path, codex),
-    ):
+    ]
+    if copilot_path is not None:
+        render_targets.append((copilot_path, render_copilot_hooks(shared)))
+
+    for path, data in render_targets:
         existing = _read_json(path)
         if existing:
             data = _reorder_like(existing, data)
@@ -346,9 +355,15 @@ def main(argv: list[str] | None = None) -> int:
         paths.CODEX_PROJECT_CONFIG,
         paths.CLAUDE_MCP,
         backup_timestamp,
+        paths.COPILOT_HOOKS,
     )
     changed_local: list[str] = []
-    if paths.LOCAL_SHARED.is_file() or paths.CLAUDE_LOCAL.is_file() or paths.CODEX_LOCAL_HOOKS.is_file():
+    if (
+        paths.LOCAL_SHARED.is_file()
+        or paths.CLAUDE_LOCAL.is_file()
+        or paths.CODEX_LOCAL_HOOKS.is_file()
+        or paths.COPILOT_LOCAL_HOOKS.is_file()
+    ):
         changed_local = _apply_or_check(
             paths.LOCAL_SHARED,
             paths.CLAUDE_LOCAL,
@@ -358,6 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             None,
             None,
             backup_timestamp,
+            paths.COPILOT_LOCAL_HOOKS,
         )
     changed_skills = _sync_skills(apply)
     changed = changed_main + changed_local + changed_skills

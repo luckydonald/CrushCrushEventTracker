@@ -123,9 +123,9 @@ class RenderFromDebugTests(unittest.TestCase):
                 )
 
                 payload = json.loads((_DEBUG_DIR / filename).read_text(encoding='utf-8'))
-                is_codex = typ == 'codex'
+                tool = 'codex' if typ == 'codex' else 'claude'
                 questions = _hook.parse_payload(payload)
-                actual = _hook._render_block(questions, is_codex=is_codex)
+                actual = _hook._render_block(questions, tool=tool)
                 self.assertEqual(actual, entry['output'])
 
 

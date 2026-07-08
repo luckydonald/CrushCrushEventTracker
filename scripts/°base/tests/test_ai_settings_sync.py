@@ -192,6 +192,111 @@ class HooksTests(unittest.TestCase):
 
         self.assertNotIn("async", hook)
 
+    def test_render_copilot_rewrites_tool_arg(self):
+        shared = {
+            "hooks": {
+                "UserPromptSubmit": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 scripts/°base/ai/hooks/save-prompt/hook.py 'claude'",
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        rendered = hooks.render_copilot_hooks(shared)
+        command = rendered["hooks"]["UserPromptSubmit"][0]["hooks"][0]["bash"]
+
+        self.assertIn("'copilot'", command)
+        self.assertNotIn("'claude'", command)
+
+    def test_render_copilot_uses_bash_and_timeout_sec(self):
+        shared = {
+            "hooks": {
+                "SessionStart": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 hook.py",
+                                "timeout": 5,
+                                "statusMessage": "Doing a thing",
+                                "async": True,
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        rendered = hooks.render_copilot_hooks(shared)
+        hook = rendered["hooks"]["SessionStart"][0]["hooks"][0]
+
+        self.assertEqual(hook["bash"], "python3 hook.py")
+        self.assertNotIn("command", hook)
+        self.assertEqual(hook["timeoutSec"], 5)
+        self.assertNotIn("timeout", hook)
+        self.assertNotIn("statusMessage", hook)
+        self.assertNotIn("async", hook)
+
+    def test_render_copilot_top_level_shape_has_version_and_no_extra_keys(self):
+        shared = {"hooks": {}, "permissions": {"allow": ["Bash(git status:*)"]}}
+
+        rendered = hooks.render_copilot_hooks(shared)
+
+        self.assertEqual(rendered["version"], 1)
+        self.assertEqual(set(rendered.keys()), {"version", "hooks"})
+
+    def test_render_copilot_matches_claude_matcher(self):
+        shared = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "Write|Edit|ExitPlanMode|create|edit|exit_plan_mode",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 scripts/°base/ai/hooks/save-plan/hook.py 'claude'",
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+
+        rendered = hooks.render_copilot_hooks(shared)
+        entry = rendered["hooks"]["PostToolUse"][0]
+
+        self.assertEqual(entry["matcher"], "Write|Edit|ExitPlanMode|create|edit|exit_plan_mode")
+        self.assertIn("'copilot'", entry["hooks"][0]["bash"])
+
+    def test_normalize_native_accepts_copilot_bash_and_timeout_sec(self):
+        native = {
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "bash": "python3 scripts/°base/ai/hooks/save-plan/hook.py 'copilot'",
+                                "timeoutSec": 7,
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        normalized = hooks._normalize_native(native)
+        hook = normalized["hooks"]["Stop"][0]["hooks"][0]
+
+        self.assertIn("'claude'", hook["command"])
+        self.assertEqual(hook["timeout"], 7)
+
     def test_render_claude_keeps_permissions(self):
         shared = {
             "hooks": {},

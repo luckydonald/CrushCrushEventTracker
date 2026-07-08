@@ -103,7 +103,17 @@ def _normalize_native(data: dict[str, Any]) -> dict[str, Any]:
                 continue
             for hook in entry.get("hooks") or []:
                 if isinstance(hook, dict):
-                    hook["command"] = _neutralize_command(str(hook.get("command") or ""))
+                    raw_command = hook.get("command")
+                    if raw_command is None:
+                        raw_command = hook.pop("bash", None) or hook.pop("powershell", None)
+                    else:
+                        hook.pop("bash", None)
+                        hook.pop("powershell", None)
+                    hook["command"] = _neutralize_command(str(raw_command or ""))
+                    if "timeout" not in hook and "timeoutSec" in hook:
+                        hook["timeout"] = hook.pop("timeoutSec")
+                    else:
+                        hook.pop("timeoutSec", None)
     mcp = data.get("mcp") or {}
     return {
         "version": CURRENT_VERSION,
@@ -180,7 +190,7 @@ def _replace_tool_arg(command: str, tool: str) -> str:
     ):
         command = command.replace("'claude'", f"'{tool}'")
         command = command.replace('"claude"', f'"{tool}"')
-        if "save-plan/hook.py" in command and not re.search(r"['\"](?:claude|codex)['\"]", command):
+        if "save-plan/hook.py" in command and not re.search(r"['\"](?:claude|codex|copilot)['\"]", command):
             command = f"{command} '{tool}'"
     return command
 
@@ -236,7 +246,9 @@ def _neutralize_command(command: str) -> str:
     ):
         command = command.replace("'codex'", "'claude'")
         command = command.replace('"codex"', '"claude"')
-        if "save-plan/hook.py" in command and not re.search(r"['\"](?:claude|codex)['\"]", command):
+        command = command.replace("'copilot'", "'claude'")
+        command = command.replace('"copilot"', '"claude"')
+        if "save-plan/hook.py" in command and not re.search(r"['\"](?:claude|codex|copilot)['\"]", command):
             command = f"{command} 'claude'"
     return command
 
@@ -301,3 +313,37 @@ def render_claude(shared: dict[str, Any]) -> dict[str, Any]:
 
 def render_codex_hooks(shared: dict[str, Any]) -> dict[str, Any]:
     return _render_hooks(shared, "codex")
+
+
+def render_copilot_hooks(shared: dict[str, Any]) -> dict[str, Any]:
+    """Render the neutral shared hooks into Copilot CLI's native
+    `{"version": 1, "hooks": {...}}` format (`.github/hooks/*.json`).
+
+    Copilot's command-hook shape differs from Claude/Codex's: `bash` instead
+    of `command`, `timeoutSec` instead of `timeout`, and no `statusMessage`/
+    `async` (Copilot has no fire-and-forget flag for arbitrary command
+    hooks). The file is hooks-only — no `permissions`/`plugins`/`mcp`.
+    """
+    data = _render_hooks(shared, "copilot")
+    copilot_hooks: dict[str, Any] = {}
+    for event, entries in (data.get("hooks") or {}).items():
+        rendered_entries = []
+        for entry in entries:
+            new_entry = deepcopy(entry)
+            new_hooks = []
+            for hook in new_entry.get("hooks") or []:
+                new_hook = deepcopy(hook)
+                command = new_hook.pop("command", None)
+                if command is not None:
+                    new_hook["bash"] = command
+                new_hook.pop("statusMessage", None)
+                new_hook.pop("async", None)
+                timeout = new_hook.pop("timeout", None)
+                if timeout is not None and "timeoutSec" not in new_hook:
+                    new_hook["timeoutSec"] = timeout
+                new_hooks.append(new_hook)
+            new_entry["hooks"] = new_hooks
+            rendered_entries.append(new_entry)
+        if rendered_entries:
+            copilot_hooks[event] = rendered_entries
+    return {"version": 1, "hooks": copilot_hooks}

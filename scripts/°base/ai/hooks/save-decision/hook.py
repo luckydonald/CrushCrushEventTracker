@@ -268,10 +268,61 @@ def _parse_codex(payload: dict) -> list[Question]:
     return questions
 
 
+def _parse_copilot(payload: dict) -> list[Question]:
+    """Parse a Copilot CLI ask_user payload into a list of Questions.
+
+    Copilot's ask_user schema is much simpler than Claude's AskUserQuestion:
+    a single question, a flat list of choice strings (no label/description/
+    preview), and an allow_freeform flag instead of multiSelect. There is
+    exactly one question per call.
+    """
+    tool_input = payload.get("tool_input") or {}
+    qtext = tool_input.get("question", "")
+    raw_choices = [c for c in (tool_input.get("choices") or []) if isinstance(c, str)]
+    allow_freeform = bool(tool_input.get("allow_freeform", True))
+
+    raw_response = payload.get("tool_response") or ""
+    if isinstance(raw_response, str):
+        try:
+            parsed = json.loads(raw_response)
+        except (json.JSONDecodeError, ValueError):
+            parsed = raw_response
+    else:
+        parsed = raw_response
+
+    if isinstance(parsed, dict):
+        answer = parsed.get("answer", "")
+    elif isinstance(parsed, str):
+        answer = parsed
+    else:
+        answer = ""
+
+    direct_other = allow_freeform and bool(answer) and answer not in raw_choices
+    choices: list[Choice] = [
+        Choice(
+            label=label,
+            selection=not direct_other and label == answer,
+        )
+        for label in raw_choices
+    ]
+    other_note = answer if direct_other else ""
+    choices.append(Choice(is_other=True, selection=direct_other, note=other_note))
+
+    return [Question(
+        question=qtext,
+        header="",
+        multi_select=False,
+        choices=choices,
+    )]
+
+
 def parse_payload(payload: dict) -> list[Question]:
     """Dispatch to the correct parser based on tool_name in the hook payload."""
-    if payload.get("tool_name") == "request_user_input":
+    tool_name = payload.get("tool_name")
+    if tool_name == "request_user_input":
         return _parse_codex(payload)
+    if tool_name == "ask_user":
+        return _parse_copilot(payload)
     return _parse_claude(payload)
 
 
@@ -286,10 +337,10 @@ def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
     out.append(">     ```\n")
 
 
-def _render_block(questions: list[Question], *, is_codex: bool = False) -> str:
+def _render_block(questions: list[Question], *, tool: str = "claude") -> str:
     total = len(questions)
     out: list[str] = []
-    glyph = "›" if is_codex else "❯"
+    glyph = {"claude": "❯", "codex": "›", "copilot": "◆"}.get(tool, "❯")
     out.append(f"{glyph} Question answered.\n")
     out.append("> <details><summary>\n")
     out.append(">\n")
@@ -454,8 +505,9 @@ def main() -> int:
         if not questions:
             print("(no questions parsed)", file=sys.stderr)
             return 1
-        is_codex = payload.get("tool_name") == "request_user_input"
-        sys.stdout.write(_render_block(questions, is_codex=is_codex))
+        tool_name = payload.get("tool_name")
+        tool = "codex" if tool_name == "request_user_input" else ("copilot" if tool_name == "ask_user" else "claude")
+        sys.stdout.write(_render_block(questions, tool=tool))
         return 0
 
     payload = read_payload()
@@ -465,8 +517,9 @@ def main() -> int:
     if not questions:
         return 0
 
-    is_codex = payload.get("tool_name") == "request_user_input"
-    block = _render_block(questions, is_codex=is_codex)
+    tool_name = payload.get("tool_name")
+    tool = "codex" if tool_name == "request_user_input" else ("copilot" if tool_name == "ask_user" else "claude")
+    block = _render_block(questions, tool=tool)
     slug = slugify(questions[0].question, fallback="decision")
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")

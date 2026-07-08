@@ -117,5 +117,64 @@ class DebugPayloadTests(unittest.TestCase):
         self.assertTrue(original.strip().startswith("# Plan:"))
 
 
+class CopilotPlanPathTests(unittest.TestCase):
+    """save-plan/hook.py must also recognize Copilot's session plan file:
+    ~/.copilot/session-state/<session_id>/plan.md — and its `create`/`edit`
+    tool names, which use `path`/`file_text` instead of Claude's
+    `file_path`/`content`."""
+
+    def _copilot_plan_path(self, tmp: str, session_id: str = "abc-123") -> Path:
+        plan_dir = Path(tmp) / ".copilot" / "session-state" / session_id
+        plan_dir.mkdir(parents=True)
+        return plan_dir / "plan.md"
+
+    def test_is_plan_file_path_accepts_copilot_session_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plan_path = self._copilot_plan_path(tmp)
+            self.assertTrue(_hook._is_plan_file_path(str(plan_path)))
+
+    def test_is_plan_file_path_rejects_non_plan_copilot_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            other = Path(tmp) / ".copilot" / "session-state" / "abc-123" / "notes.md"
+            other.parent.mkdir(parents=True)
+            self.assertFalse(_hook._is_plan_file_path(str(other)))
+
+    def test_plan_from_write_reads_copilot_create_tool_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plan_path = self._copilot_plan_path(tmp)
+            body = "# Plan: Copilot support\n\nSome content.\n"
+            result = _hook._plan_from_write({"path": str(plan_path), "file_text": body})
+            self.assertEqual(result, body.strip())
+
+    def test_plan_from_edit_reads_copilot_edit_tool_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plan_path = self._copilot_plan_path(tmp)
+            body = "# Plan: Copilot support\n\nUpdated content.\n"
+            plan_path.write_text(body, encoding="utf-8")
+            result = _hook._plan_from_edit({"path": str(plan_path), "old_str": "x", "new_str": "y"})
+            self.assertEqual(result, body.strip())
+
+    def test_plan_from_copilot_session_reads_plan_md_by_session_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            session_id = "session-xyz"
+            plan_path = self._copilot_plan_path(tmp, session_id)
+            body = "# Plan: fallback read\n"
+            plan_path.write_text(body, encoding="utf-8")
+            import unittest.mock as mock
+            with mock.patch.object(Path, "home", return_value=Path(tmp)):
+                result = _hook._plan_from_copilot_session({"session_id": session_id})
+            self.assertEqual(result, body.strip())
+
+    def test_plan_from_copilot_session_missing_file_returns_empty(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            import unittest.mock as mock
+            with mock.patch.object(Path, "home", return_value=Path(tmp)):
+                result = _hook._plan_from_copilot_session({"session_id": "nope"})
+            self.assertEqual(result, "")
+
+    def test_plan_from_copilot_session_no_session_id_returns_empty(self):
+        self.assertEqual(_hook._plan_from_copilot_session({}), "")
+
+
 if __name__ == "__main__":
     unittest.main()

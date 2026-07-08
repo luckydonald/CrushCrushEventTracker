@@ -30,7 +30,7 @@ from _lib import (  # noqa: E402
 
 reffiles_lib = importlib.import_module("°reffiles_lib")
 
-PREFIXES = {"claude": "❯", "codex": "›"}
+PREFIXES = {"claude": "❯", "codex": "›", "copilot": "◆"}
 DEFAULT_PREFIX = "⩼"
 CODEX_FORWARDED_PLAN_PREFIX = (
     "A previous agent produced the plan below to accomplish the user's task. "
