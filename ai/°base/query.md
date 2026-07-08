@@ -2945,3 +2945,60 @@ Yes, do fix that.
 > </details>
 >
 
+❯
+/plan The scrip shall always collect commands to undo it's operations.
+The scrip shall always collect information/commands to undo it's operations.
+
+Basically at the start it should already display the current state, i.e. the branches it's going touch with its shas.
+This can be properer markdown. Example:
+
+> Branch | Commit before | Commit now |
+> ------ | ------------- | ---------- |
+> `master` | `cb071940ee612b4ff6076771b448abc0843c4ac6` | `c6288170f77af1c7208e9104aeb0148f85e1f90e`
+
+Additionally it should collect the commands to rest that, e.g.
+
+> ```shell
+> git rebase --abort || true
+> git update-ref refs/heads/'ai/history/master' 'c8d15c81cb2afaec9ba0fe1de5a7009e4f67b857'
+> ```
+
+This shall appear under both the output and a file called `.rebase-recovery.tmp`.
+In the file it shall append with markdown headlines for the invocation, so we can append to it multiple times.
+
+> #### Run _YYYY-MM-DD HH:MM:SS_ `scripts/°base/git/split.py foo bar --flags --idk -abc`
+
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. For the recovery log, when should the entry (before-state table + undo commands) actually get written to `.rebase-recovery.tmp` and printed?
+>>    - Before mutating anything (Recommended)
+>>      ```text
+>>      1. snapshot refs
+>>      2. write .rebase-recovery.tmp entry + print it   <- crash-safe point
+>>      3. run the actual operation
+>>      4. print a short before/after summary to stdout
+>>      ```
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Write timing** (1/1) <kbd>Single Select</kbd><br>
+>> For the recovery log, when should the entry (before-state table + undo commands) actually get written to `.rebase-recovery.tmp` and printed?
+> - [ ] 1\. Before mutating anything (Recommended)
+>   - _Snapshot refs and write the full entry (before-state + undo commands) at the very start, before any ref is touched — so recovery info survives even if the process crashes or is killed mid-operation. The 'Commit now' column is filled in with a second, separate summary printed to stdout at the end (file itself isn't rewritten, since undo commands only ever need the 'before' shas)._
+>   - ```
+>     1. snapshot refs
+>     2. write .rebase-recovery.tmp entry + print it   <- crash-safe point
+>     3. run the actual operation
+>     4. print a short before/after summary to stdout
+>     ```
+> - [ ] 2\. After the operation completes
+>   - _Run the operation first, then write one entry showing both 'before' and 'now' columns together in the file and stdout. Simpler (one write, matches your example table exactly with both columns populated), but a crash mid-operation leaves no recovery record at all._
+> - [ ] 3\. _Notes: Add notes on this design._
+>
+> </details>
+>
+

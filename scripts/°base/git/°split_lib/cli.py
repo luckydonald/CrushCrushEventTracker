@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 from . import branches, classify, git_ops, push_checks
 from . import bootstrap as bootstrap_lib
 from . import history_master as history_master_lib
 from . import rebase_to_master as rebase_to_master_lib
+from . import recovery
 from . import sync_splits as sync_splits_lib
 from . import sync_unclean as sync_unclean_lib
 
@@ -16,6 +19,36 @@ def _resolve_repo_root(args: argparse.Namespace) -> Path:
     if getattr(args, "repo_root", None) is not None:
         return Path(args.repo_root)
     return git_ops.repo_root()
+
+
+def _run_with_recovery(
+    *,
+    repo_root: Path,
+    main_branch: str,
+    branch: str | None,
+    dry_run: bool,
+    invocation: str,
+    run_fn: Callable[[], int],
+) -> int:
+    """Snapshot every ref an invocation could touch and log undo commands
+    for it *before* running anything -- so recovery info survives even a
+    crash mid-operation. See scripts/°base/git/°split_lib/recovery.py.
+    """
+    if dry_run:
+        return run_fn()
+
+    watched = recovery.resolve_watched_refs(branch, main_branch, repo_root)
+    before = recovery.snapshot(watched, repo_root)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    entry = recovery.format_recovery_entry(invocation, before, timestamp)
+    print(entry)
+    recovery.write_recovery_log(repo_root, entry)
+
+    try:
+        return run_fn()
+    finally:
+        after = recovery.snapshot(watched, repo_root)
+        print(recovery.format_after_summary(before, after))
 
 
 def _parse_ref_lines(text: str) -> list[push_checks.RefUpdate]:
@@ -200,7 +233,9 @@ def main(argv: list[str] | None = None) -> int:
     bootstrap_branch.add_argument("branch", help="Base branch name (must already exist as a clean branch).")
     bootstrap_branch.add_argument("--dry-run", action="store_true")
 
-    args = parser.parse_args(argv if argv is not None else sys.argv[1:])
+    real_argv = argv if argv is not None else sys.argv[1:]
+    args = parser.parse_args(real_argv)
+    invocation = "scripts/°base/git/split.py " + " ".join(real_argv)
 
     if args.command == "check-push":
         stdin_text = sys.stdin.read()
@@ -210,22 +245,50 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "sync-splits":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _sync_splits(args, repo_root=root, main_branch=main_branch)
+        return _run_with_recovery(
+            repo_root=root,
+            main_branch=main_branch,
+            branch=args.branch,
+            dry_run=args.dry_run,
+            invocation=invocation,
+            run_fn=lambda: _sync_splits(args, repo_root=root, main_branch=main_branch),
+        )
 
     if args.command == "update-history-master":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _update_history_master(args, repo_root=root, main_branch=main_branch)
+        return _run_with_recovery(
+            repo_root=root,
+            main_branch=main_branch,
+            branch=None,
+            dry_run=args.dry_run,
+            invocation=invocation,
+            run_fn=lambda: _update_history_master(args, repo_root=root, main_branch=main_branch),
+        )
 
     if args.command == "rebase-branches-to-master":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _rebase_branches_to_master(args, repo_root=root, main_branch=main_branch)
+        return _run_with_recovery(
+            repo_root=root,
+            main_branch=main_branch,
+            branch=args.branch,
+            dry_run=args.dry_run,
+            invocation=invocation,
+            run_fn=lambda: _rebase_branches_to_master(args, repo_root=root, main_branch=main_branch),
+        )
 
     if args.command == "bootstrap-branch":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _bootstrap_branch(args, repo_root=root, main_branch=main_branch)
+        return _run_with_recovery(
+            repo_root=root,
+            main_branch=main_branch,
+            branch=args.branch,
+            dry_run=args.dry_run,
+            invocation=invocation,
+            run_fn=lambda: _bootstrap_branch(args, repo_root=root, main_branch=main_branch),
+        )
 
     parser.error(f"Unknown command: {args.command}")
     return 2
