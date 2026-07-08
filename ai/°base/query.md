@@ -3165,3 +3165,5 @@ And structure it better somehow, maybe by action.
 > </details>
 >
 
+❯ Before part A you should improve the logging substantially, so we have the best possible insights - while still taking readability into account.
+
