@@ -900,6 +900,138 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertEqual(dst.read_text(encoding="utf-8"), "useful tip\n")
             self.assertEqual(last_subject(repo), "ai: record memory tip")
 
+    def _seed_memory_pair(self, repo: Path, home: Path, name: str) -> Path:
+        """Seed a repo-tracked mirror file plus a matching external source
+        file under the fake `$HOME`. Returns the external source path."""
+        memory_file = repo / "ai" / "°base" / "memory" / name
+        memory_file.parent.mkdir(parents=True, exist_ok=True)
+        memory_file.write_text(f"{name} content\n", encoding="utf-8")
+        run_git(repo, "add", str(memory_file.relative_to(repo)))
+        run_git(repo, "commit", "-m", f"seed {name}")
+
+        encoded = _encode_project_path(repo.resolve())
+        src_file = home / ".claude" / "projects" / encoded / "memory" / name
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text(f"{name} content\n", encoding="utf-8")
+        return src_file
+
+    def test_memory_bash_rm_of_source_file_deletes_repo_mirror(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            src_file = self._seed_memory_pair(repo, home, "gone.md")
+            src_file.unlink()  # the Bash tool already ran `rm` by the time we fire PostToolUse
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f'rm "{src_file}"'},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertFalse((repo / "ai" / "°base" / "memory" / "gone.md").exists())
+            message = run_git(repo, "log", "-1", "--pretty=%B").stdout
+            self.assertIn("Deleted Memory: gone.md", message.splitlines())
+
+    def test_memory_bash_rm_outside_source_dir_is_noop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            self._seed_memory_pair(repo, home, "keep.md")
+            unrelated = home / "elsewhere" / "keep.md"
+            unrelated.parent.mkdir(parents=True)
+            unrelated.write_text("not a memory\n", encoding="utf-8")
+            unrelated.unlink()
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f'rm "{unrelated}"'},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertTrue((repo / "ai" / "°base" / "memory" / "keep.md").exists())
+            self.assertEqual(last_subject(repo), "seed keep.md")
+
+    def test_memory_bash_non_rm_command_mentioning_md_is_noop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            src_file = self._seed_memory_pair(repo, home, "keep.md")
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f'cat "{src_file}"'},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertTrue((repo / "ai" / "°base" / "memory" / "keep.md").exists())
+            self.assertTrue(src_file.exists())
+            self.assertEqual(last_subject(repo), "seed keep.md")
+
+    def test_memory_bash_rm_of_untracked_source_is_noop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            encoded = _encode_project_path(repo.resolve())
+            src_file = home / ".claude" / "projects" / encoded / "memory" / "untracked.md"
+            src_file.parent.mkdir(parents=True)
+            src_file.write_text("never committed\n", encoding="utf-8")
+            src_file.unlink()
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f'rm "{src_file}"'},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertEqual(last_subject(repo), "init")
+
+    def test_memory_bash_rm_chained_command_still_detected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            src_file = self._seed_memory_pair(repo, home, "chained.md")
+            src_file.unlink()
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f'rm "{src_file}" && echo done'},
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertFalse((repo / "ai" / "°base" / "memory" / "chained.md").exists())
+            message = run_git(repo, "log", "-1", "--pretty=%B").stdout
+            self.assertIn("Deleted Memory: chained.md", message.splitlines())
+
     # ------------------------------------------------------------------
     # save-plan: Stop false-positive and ExitPlanMode fixes
     # ------------------------------------------------------------------

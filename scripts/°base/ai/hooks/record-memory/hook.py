@@ -8,6 +8,15 @@ Target:  <subproject>/ai/memory/<name>.md
 Fires on:
   - PostToolUse(Write|Edit): sync the single file the tool just touched, if
     it lives inside the source memory dir.
+  - PostToolUse(Bash|shell|unified_exec): if the command `rm`'d an absolute
+    `.md` path directly under the source memory dir, and that file is now
+    confirmed gone, propagate the deletion to the repo mirror via
+    `°memory_lib.delete_memory` -- the same marker-commit mechanism
+    `scripts/°base/ai/memory/delete.py` uses. This is the only place a
+    deletion is ever *originated* from an observed event; a missing source
+    file discovered later (e.g. during `SessionStart`) is never treated as a
+    deletion request (see `_sync_all` below and
+    `ai/°base/plans/007_prevent-accidental-memory-deletion.md`).
   - SessionStart: bulk-sync every `*.md` under the source memory dir as a
     catch-up.
 
@@ -18,8 +27,10 @@ Bind mounts are skipped — they only make sense at directory granularity.
 """
 from __future__ import annotations
 
+import importlib
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +45,8 @@ from _lib import (  # noqa: E402
     read_payload,
     running_copilot,
 )
+
+memory_lib = importlib.import_module("°memory_lib")
 
 
 def _encoded_project_dir(subproject: Path) -> Path:
@@ -82,6 +95,58 @@ def _sync_file(src: Path, dst: Path) -> bool:
         # Cross-filesystem or other hardlink restriction → symlink fallback.
         os.symlink(src, dst)
     return True
+
+
+_SHELL_OPERATORS = {"&&", "||", ";"}
+
+
+def _split_on_shell_operators(argv: list[str]) -> list[list[str]]:
+    """Split a shlex-parsed argv on shell operators (&&, ||, ;) into
+    sub-commands. Mirrors `.claude/hooks/permission-check.py`'s helper of the
+    same shape -- shlex treats these as regular tokens, so they must be split
+    out manually."""
+    sub_commands: list[list[str]] = []
+    current: list[str] = []
+    for token in argv:
+        if token in _SHELL_OPERATORS:
+            if current:
+                sub_commands.append(current)
+            current = []
+        else:
+            current.append(token)
+    if current:
+        sub_commands.append(current)
+    return sub_commands
+
+
+def _rm_targets(command: str) -> list[Path]:
+    """Absolute `.md` paths passed as plain arguments to a plain `rm`
+    invocation anywhere in `command` (chained via &&/||/;).
+
+    Expands `$HOME`/`~` since the shell would have. Relative paths are
+    skipped -- this hook has no reliable view of the Bash tool's cwd, so a
+    relative `rm` argument can't be resolved against the right directory.
+    """
+    try:
+        argv = shlex.split(command)
+    except ValueError:
+        return []
+
+    targets: list[Path] = []
+    for sub_argv in _split_on_shell_operators(argv):
+        if not sub_argv or sub_argv[0] != "rm":
+            continue
+        only_paths = False
+        for token in sub_argv[1:]:
+            if not only_paths and token == "--":
+                only_paths = True
+                continue
+            if not only_paths and token.startswith("-"):
+                continue
+            expanded = Path(os.path.expandvars(token)).expanduser()
+            if expanded.is_absolute() and expanded.suffix == ".md":
+                targets.append(expanded)
+    return targets
 
 
 def _git_text(*args: str) -> str:
@@ -322,6 +387,19 @@ def main() -> int:
 
     if event == "PostToolUse":
         tool_input = payload.get("tool_input") or {}
+        command = tool_input.get("command") or ""
+        if command:
+            resolved_src_dir = src_dir.resolve()
+            for target in _rm_targets(command):
+                if target.parent != resolved_src_dir:
+                    continue
+                if target.exists():
+                    continue  # rm didn't actually remove it -- nothing to do
+                memory_lib.delete_memory(
+                    target.name, src_dir=src_dir, dst_dir=dst_dir, dst_dir_rel=dst_dir_rel
+                )
+            return 0
+
         raw = tool_input.get("file_path") or ""
         if not raw:
             return 0

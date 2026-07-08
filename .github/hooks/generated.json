@@ -42,7 +42,7 @@
         ]
       },
       {
-        "matcher": "Write|Edit",
+        "matcher": "Write|Edit|Bash|shell|unified_exec",
         "hooks": [
           {
             "type": "command",

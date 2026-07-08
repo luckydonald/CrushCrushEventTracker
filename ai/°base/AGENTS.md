@@ -102,7 +102,7 @@ Hooks:
 | `save-prompt/hook.py` | `UserPromptSubmit` | `ai/°base/query.md` |
 | `save-decision/hook.py` | `AskUserQuestion` post | `ai/°base/query.md` |
 | `save-plan/hook.py` | `Write`, `ExitPlanMode`, `Stop` | `ai/°base/plans/NNN_*.md` |
-| `record-memory/hook.py` | `Write`, `Edit`, `SessionStart` | syncs memory hardlinks |
+| `record-memory/hook.py` | `Write`, `Edit`, `Bash`, `SessionStart` | syncs memory hardlinks |
 
 ### Pre-commit hooks
 
