@@ -3054,3 +3054,17 @@ Additionally, while at it, remove the answers from the summary part, only keep t
 
 ❯ do not cram more stuff into `scripts/°base/ai/hooks/_lib.py` - instead separate it in multiple files in `scripts/°base/ai/hooks/°*libs`, following the format of e.g. `°split_lib` or `°dllink_lib`.
 
+› The @scripts/°base/git/get-base.py is not printing anything, neither was the `curl` command. Make sure it gives status of what it's currently doing.
+
+› end plan mode
+
+› there should be a exit plan command or similar
+
+› /feedback What the heck. It exit plan mode, lemme confirm the plan.
+
+› /usage
+
+› lemme approve that plan
+
+› Implement @ai/°base/plans/035_add-progress-output-to-get-base-py.md
+

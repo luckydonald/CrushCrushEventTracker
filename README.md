@@ -293,7 +293,7 @@ This base can keep a "clean" branch (no AI/base mentions, safe to publish) in sy
 The simplest way to run it, from any branch of any repo, whether or not `base` has ever been merged in:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -
+curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -
 ```
 
 With no extra arguments it figures out what to do from your current branch: on your main branch it runs `update-history-master --yes`; on a clean feature branch it runs `bootstrap-branch <branch>`; on an `ai/UNCLEAN/*` or `ai/history/*` branch it pushes your latest commits forward with `sync-splits <branch> --direction=to-clean-history`.
@@ -301,7 +301,7 @@ With no extra arguments it figures out what to do from your current branch: on y
 To run a specific subcommand instead, append it after the script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
+curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
 ```
 
 `get-base.py` adds a `base` remote (name always literally `base`, so it's never confused with `origin`) if missing, fetches it, sets up a worktree at `.git/base-tools`, and delegates to the real tool there — it never touches your currently checked-out branch or working tree. If your GitHub username differs from `luckydonald`, set `BASE_GIT_USERNAME` first.

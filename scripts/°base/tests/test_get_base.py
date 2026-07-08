@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import subprocess
 import sys
 import tempfile
@@ -59,29 +61,43 @@ class GetBaseTests(unittest.TestCase):
         git(["commit", "-m", "seed real °split_lib.branches"], self.base_repo)
 
     def test_ensure_base_remote_adds_when_missing(self):
-        self.module.ensure_base_remote(self.repo, "someuser")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.module.ensure_base_remote(self.repo, "someuser")
+
         url = git(["remote", "get-url", "base"], self.repo)
         self.assertEqual(url, self.module.remote_url("someuser"))
+        self.assertIn(f"get-base.py: adding base remote: {url}", stderr.getvalue())
 
     def test_ensure_base_remote_leaves_existing_url_untouched(self):
         self._add_real_base_remote()
-        self.module.ensure_base_remote(self.repo, "someuser")
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.module.ensure_base_remote(self.repo, "someuser")
+
         url = git(["remote", "get-url", "base"], self.repo)
         self.assertEqual(url, str(self.base_repo))
+        self.assertIn(f"get-base.py: base remote already exists: {self.base_repo}", stderr.getvalue())
 
     def test_ensure_worktree_creates_then_refreshes(self):
         self._add_real_base_remote()
         self.module.fetch_base(self.repo)
 
-        path = self.module.ensure_worktree(self.repo)
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            path = self.module.ensure_worktree(self.repo)
         self.assertTrue(path.exists())
+        self.assertIn(f"get-base.py: creating worktree: {path}", stderr.getvalue())
         first_tip = git(["rev-parse", "HEAD"], path)
 
         make_commit(self.base_repo, "more.txt", "base advances", content="more\n")
         self.module.fetch_base(self.repo)
-        path_again = self.module.ensure_worktree(self.repo)
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            path_again = self.module.ensure_worktree(self.repo)
 
         self.assertEqual(path, path_again)
+        self.assertIn(f"get-base.py: refreshing worktree: {path}", stderr.getvalue())
         second_tip = git(["rev-parse", "HEAD"], path_again)
         self.assertNotEqual(first_tip, second_tip)
 
@@ -89,12 +105,14 @@ class GetBaseTests(unittest.TestCase):
         self._add_real_base_remote()
 
         captured = {}
+        stderr = io.StringIO()
 
         def fake_execvp(executable, args):
             captured["executable"] = executable
             captured["args"] = args
 
-        with mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
+        with contextlib.redirect_stderr(stderr), \
+             mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
              mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
             self.module.main(["bootstrap-branch", "feature"])
 
@@ -107,6 +125,13 @@ class GetBaseTests(unittest.TestCase):
         self.assertEqual(args[-2:], ["bootstrap-branch", "feature"])
 
         self.assertIsNotNone(git(["remote", "get-url", "base"], self.repo))
+        progress = stderr.getvalue()
+        self.assertIn(f"get-base.py: repo root: {self.repo}", progress)
+        self.assertIn(f"get-base.py: {self.module.REMOTE_NAME} remote already exists: {self.base_repo}", progress)
+        self.assertIn("get-base.py: fetching base/base", progress)
+        self.assertIn(f"get-base.py: creating worktree: {self.repo / '.git' / 'base-tools'}", progress)
+        self.assertIn("get-base.py: delegating:", progress)
+        self.assertIn("bootstrap-branch feature", progress)
 
     def test_never_touches_current_checkout(self):
         self._add_real_base_remote()
@@ -222,16 +247,21 @@ class MainAutoModeTests(unittest.TestCase):
         git(["checkout", "-b", "feature"], self.repo)
 
         captured = {}
+        stderr = io.StringIO()
 
         def fake_execvp(executable, args):
             captured["args"] = args
 
-        with mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
+        with contextlib.redirect_stderr(stderr), \
+             mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
              mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
             code = self.module.main([])
 
         self.assertEqual(code, 0)
         self.assertEqual(captured["args"][-2:], ["bootstrap-branch", "feature"])
+        progress = stderr.getvalue()
+        self.assertIn("get-base.py: auto mode: current branch feature", progress)
+        self.assertIn("get-base.py: auto mode: selected bootstrap-branch feature", progress)
 
     def test_nonempty_argv_bypasses_auto_detection(self):
         git(["checkout", "-b", "feature"], self.repo)

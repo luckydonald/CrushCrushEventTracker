@@ -9,7 +9,7 @@ touching the currently checked-out branch or working tree.
 Deliberately stdlib-only (no imports from `°split_lib`), since none of that
 exists yet when this file is fetched standalone -- it's meant to be run as:
 
-    curl -fsSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
+    curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
 
 or locally, once a copy is reachable on disk:
 
@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +40,10 @@ from pathlib import Path
 REMOTE_NAME = "base"
 REMOTE_BRANCH = "base"
 DEFAULT_USERNAME = "luckydonald"
+
+
+def status(message: str) -> None:
+    print(f"get-base.py: {message}", file=sys.stderr, flush=True)
 
 
 def _run(args: list[str], cwd: Path | None = None, *, check: bool = True) -> subprocess.CompletedProcess:
@@ -59,11 +64,15 @@ def remote_url(username: str) -> str:
 def ensure_base_remote(repo_root: Path, username: str) -> None:
     existing = _run(["remote", "get-url", REMOTE_NAME], cwd=repo_root, check=False)
     if existing.returncode == 0:
+        status(f"{REMOTE_NAME} remote already exists: {existing.stdout.strip()}")
         return  # already configured -- respect whatever URL is there, never overwrite
-    _run(["remote", "add", REMOTE_NAME, remote_url(username)], cwd=repo_root)
+    url = remote_url(username)
+    status(f"adding {REMOTE_NAME} remote: {url}")
+    _run(["remote", "add", REMOTE_NAME, url], cwd=repo_root)
 
 
 def fetch_base(repo_root: Path) -> None:
+    status(f"fetching {REMOTE_NAME}/{REMOTE_BRANCH}")
     _run(["fetch", REMOTE_NAME, REMOTE_BRANCH], cwd=repo_root)
 
 
@@ -83,17 +92,21 @@ def ensure_worktree(repo_root: Path) -> Path:
     ref = f"{REMOTE_NAME}/{REMOTE_BRANCH}"
 
     if _is_valid_worktree(path):
+        status(f"refreshing worktree: {path}")
         _run(["fetch", REMOTE_NAME, REMOTE_BRANCH], cwd=path)
         _run(["checkout", "--detach", ref], cwd=path)
         return path
 
+    status(f"creating worktree: {path}")
     _run(["worktree", "add", "--detach", str(path), ref], cwd=repo_root)
     return path
 
 
 def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
     split_py = worktree / "scripts" / "°base" / "git" / "split.py"
-    os.execvp(sys.executable, [sys.executable, str(split_py), "--repo-root", str(repo_root), *argv])
+    command = [sys.executable, str(split_py), "--repo-root", str(repo_root), *argv]
+    status(f"delegating: {shlex.join(command)}")
+    os.execvp(sys.executable, command)
 
 
 def current_branch(repo_root: Path) -> str:
@@ -111,6 +124,7 @@ def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
     branch can't be resolved) -- callers should refuse rather than guess.
     """
     branch = current_branch(repo_root)
+    status(f"auto mode: current branch {branch or '<detached>'}")
     if not branch:
         return None
 
@@ -120,19 +134,27 @@ def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
     main_branch = branches.detect_main_branch(repo_root)
 
     if branch == main_branch:
-        return ["update-history-master", "--yes"]
+        argv = ["update-history-master", "--yes"]
+        status(f"auto mode: selected {shlex.join(argv)}")
+        return argv
 
     classification = branches.classify_branch(branch, main_branch=main_branch)
 
     if classification.is_history_master:
-        return ["update-history-master", "--yes"]
+        argv = ["update-history-master", "--yes"]
+        status(f"auto mode: selected {shlex.join(argv)}")
+        return argv
 
     if classification.format is branches.BranchFormat.CLEAN:
-        return ["bootstrap-branch", classification.base_name]
+        argv = ["bootstrap-branch", classification.base_name]
+        status(f"auto mode: selected {shlex.join(argv)}")
+        return argv
 
     # UNCLEAN or non-master HISTORY: both mean "push my latest commits
     # forward into clean+history for this branch".
-    return ["sync-splits", classification.base_name, "--direction=to-clean-history"]
+    argv = ["sync-splits", classification.base_name, "--direction=to-clean-history"]
+    status(f"auto mode: selected {shlex.join(argv)}")
+    return argv
 
 
 USAGE = """\
@@ -150,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     username = os.environ.get("BASE_GIT_USERNAME", DEFAULT_USERNAME)
 
     repo_root = find_repo_root()
+    status(f"repo root: {repo_root}")
     ensure_base_remote(repo_root, username)
     fetch_base(repo_root)
     worktree = ensure_worktree(repo_root)
