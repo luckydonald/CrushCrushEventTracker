@@ -102,11 +102,25 @@ def ensure_worktree(repo_root: Path) -> Path:
     return path
 
 
-def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
+def _split_command(repo_root: Path, worktree: Path, argv: list[str]) -> list[str]:
     split_py = worktree / "scripts" / "°base" / "git" / "split.py"
-    command = [sys.executable, str(split_py), "--repo-root", str(repo_root), *argv]
+    return [sys.executable, str(split_py), "--repo-root", str(repo_root), *argv]
+
+
+def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
+    command = _split_command(repo_root, worktree, argv)
     status(f"delegating: {shlex.join(command)}")
     os.execvp(sys.executable, command)
+
+
+def run_split(repo_root: Path, worktree: Path, argv: list[str]) -> int:
+    """Like `delegate()`, but blocks and returns the exit code instead of
+    replacing the current process -- for auto mode's own prerequisite steps
+    (e.g. running `update-history-master` before `bootstrap-branch`), where
+    something still needs to happen afterwards in this process."""
+    command = _split_command(repo_root, worktree, argv)
+    status(f"running: {shlex.join(command)}")
+    return subprocess.run(command).returncode
 
 
 def current_branch(repo_root: Path) -> str:
@@ -130,6 +144,7 @@ def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
 
     sys.path.insert(0, str(worktree / "scripts" / "°base" / "git"))
     branches = importlib.import_module("°split_lib.branches")
+    git_ops = importlib.import_module("°split_lib.git_ops")
 
     main_branch = branches.detect_main_branch(repo_root)
 
@@ -146,6 +161,14 @@ def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
         return argv
 
     if classification.format is branches.BranchFormat.CLEAN:
+        history_main_ref = branches.history_name(main_branch)
+        if git_ops.rev_parse(history_main_ref, repo_root) is None:
+            status(f"auto mode: {history_main_ref!r} missing -- running update-history-master first")
+            rc = run_split(repo_root, worktree, ["update-history-master", "--yes"])
+            if rc != 0:
+                status("auto mode: update-history-master failed; aborting")
+                return None
+
         argv = ["bootstrap-branch", classification.base_name]
         status(f"auto mode: selected {shlex.join(argv)}")
         return argv
