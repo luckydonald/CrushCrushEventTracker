@@ -3327,3 +3327,29 @@ While at it, also check the TODO updates earlier (when you marked todos as done)
 
 ❯ if it's basically planning only for the upcoming code commit, instead of `ai: Run: fixed foobar` name it `ai: Plan: fix foobar`, and any additional plan updates `ai: Plan update: fix foobar`. Having those raw `ai:` auto-commits is usually not wanted.
 
+❯ If there's edits to the plan file within seconds, and those don't overlap, those plan commits may be squashed into one.
+The plan shall have basically the same line as the later commit but in _current tense_ instead of _past tense_.
+
+❯ If you detect that there's a gap of auto-ai commits before some commits, ask the user if they want that cleaned up, do NOT automatically attempt it, just because the skill is loaded.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. There's a stray `ai: updated prompt` commit (6dad7c4) sitting between 0058c60 and your latest commit, left over from an unexpected `[base] manual changes.` auto-commit. Want it folded in?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Stray commit** (1/1) <kbd>Single Select</kbd><br>
+>> There's a stray `ai: updated prompt` commit (6dad7c4) sitting between 0058c60 and your latest commit, left over from an unexpected `[base] manual changes.` auto-commit. Want it folded in?
+> - [ ] 1\. Yes, fold it in
+>   - _Squash 6dad7c4's query.md diff into the latest commit (0f7a306), same as the other auto-commit folds done this session._
+> - [ ] 2\. No, leave it
+>   - _Leave history as-is; don't touch it._
+> - [x] 3\. _Type something:_
+>   - > a) yes, applies here too, I guess, but, b) this was meant to be an update for the SKILL.
+>
+> </details>
+>
+
