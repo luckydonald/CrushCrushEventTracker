@@ -3365,3 +3365,7 @@ The plan shall have basically the same line as the later commit but in _current 
 > - [Answer (`0` chars, `0 B`)](output/agents/026.acb3eb64e8e459679/result.md)
 > - [Raw log (`200084` chars, `196 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/b443bb16-52ce-4a19-8c5c-54541da80236/tasks/acb3eb64e8e459679.output)
 
+❯ Here are some changes:
+- Do not add/use `_lib.py`, instead use the `°*_lib` format already used otherwhere, do not use underscore function names.
+- Regarding tests, the `rm` will be outside of this/current repo, instead `$HOME/.claude/projects/*/memory/*.md`, so that should be handled.
+
