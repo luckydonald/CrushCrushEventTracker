@@ -296,39 +296,7 @@ def _render_block(questions: list[Question], *, is_codex: bool = False) -> str:
 
     # --- Summary ---
     for i, q in enumerate(questions, 1):
-        indent = len(str(i)) + 3
-        other = next((c for c in q.choices if c.is_other), None)
-
         out.append(f">> {i}. {q.question}\n")
-
-        if q.multi_select:
-            pred_selected = [c for c in q.selected if not c.is_other]
-            items_to_show = [c.label for c in pred_selected]
-            if other and other.selected:
-                items_to_show.append(
-                    f"_Other_: {other.note}" if other.note else "_Other_"
-                )
-            if items_to_show:
-                for item in items_to_show:
-                    out.append(f">>{'':>{indent}}- {item}\n")
-            else:
-                out.append(f">>{'':>{indent}}-\n")
-        else:
-            if other and other.selected:
-                display = f"_Other_: {other.note}" if other.note else "_Other_"
-            elif q.selected and not q.selected[0].is_other:
-                display = q.selected[0].label
-            else:
-                display = ""
-            out.append(f">>{'':>{indent}}- {display}\n")
-
-            # Preview block (single-select only, when selected choice has a preview)
-            if q.selected and not q.selected[0].is_other and q.selected[0].preview:
-                pi = indent + 2
-                out.append(f">>{'':>{pi}}```text\n")
-                for pline in q.selected[0].preview.splitlines():
-                    out.append(f">>{'':>{pi}}{pline}\n")
-                out.append(f">>{'':>{pi}}```\n")
 
     out.append(">\n")
     out.append("> (click to expand)\n")
@@ -377,14 +345,8 @@ def _render_block(questions: list[Question], *, is_codex: bool = False) -> str:
                 out.append(f">   - > {other.note}\n")
 
         else:
-            # Suppress [x] when the selected choice has a preview —
-            # the preview display serves as the visual selection indicator.
-            selected_has_preview = bool(
-                q.selected and not q.selected[0].is_other and q.selected[0].preview
-            )
-
             for n, choice in enumerate(pred_choices, 1):
-                check = "[x]" if choice.selected and not selected_has_preview else "[ ]"
+                check = "[x]" if choice.selected else "[ ]"
                 out.append(f"> - {check} {n}\\. {choice.label}\n")
                 if choice.description:
                     out.append(f">   - _{choice.description}_\n")

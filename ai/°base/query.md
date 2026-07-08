@@ -3002,3 +3002,12 @@ In the file it shall append with markdown headlines for the invocation, so we ca
 > </details>
 >
 
+❯ /plan The query output seems wrong.
+Compare @ai/°base/output/debug/20260708-090957_547762-save-decision.json as input,
+and `ai/°base/query.md:2968-3000` (if still available, that's commit `2892d75a35bb0ed269265436442ceb06109cd70d`).
+
+None of the expandable questions are marked `- [x] `. Though the `<summary>` has it correct.
+
+Additionally, while at it, remove the answers from the summary part, only keep the questions there. It's too verbose for a summary.
+
+
