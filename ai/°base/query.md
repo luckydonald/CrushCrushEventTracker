@@ -3097,3 +3097,7 @@ Additionally, while at it, remove the answers from the summary part, only keep t
 > - [Raw log (`292685` chars, `286 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/1820b956-99ba-4c49-9f3f-6a353c65ed0a/tasks/a6b875d1efa581998.output)
 > - `33` tools, `58094` tokens, `1.55662 s`
 
+❯ The ways to solve this should be printed clearly by the script, giving you those two options basically (revert first).
+Currently it's kinda spamming you with lotsa stuff, and is super confusing. I guess it needs to be more verbose and tell the user what it's doing - in the log file, too.
+And structure it better somehow, maybe by action.
+
