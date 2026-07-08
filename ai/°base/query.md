@@ -2911,3 +2911,37 @@ Yes, do fix that.
 
 ❯ as an optional separate file.
 
+❯ /plan Additionally I'm not sure if when updating master to the newest version, the `base/base` is pulled in. I believe `update-history-master --yes` should do that after previous steps. So it would be like this:
+0. check out **clean** `master`.
+1. "rebase" of existing commits.
+2. "merge" of other **history** branched now available to **clean** master.
+3. pull in and merge newest `base/base`.
+
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. My last commit (0f52def, the update-history-master checkout-sync fix) landed on `base` because the checkout switched there externally between commits. How should I reconcile this with `feature/unclean-ai-split` (currently at c628817)?
+>>    - Let me handle it myself
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Branch mismatch** (1/1) <kbd>Single Select</kbd><br>
+>> My last commit (0f52def, the update-history-master checkout-sync fix) landed on `base` because the checkout switched there externally between commits. How should I reconcile this with `feature/unclean-ai-split` (currently at c628817)?
+> - [ ] 1\. Cherry-pick onto feature/unclean-ai-split (Recommended)
+>   - _Check out feature/unclean-ai-split and cherry-pick 0f52def onto it, so all of this session's work stays together on one branch. Leaves the commit on `base` as-is too (harmless duplication) unless you'd rather I remove it there._
+>   - ```
+>     git checkout feature/unclean-ai-split
+>     git cherry-pick 0f52def
+>     ```
+> - [ ] 2\. Leave it on base, do nothing
+>   - _The branch switch to `base` was intentional on your end — leave 0f52def where it is and don't touch feature/unclean-ai-split._
+> - [x] 3\. Let me handle it myself
+>   - _Don't touch branches or commits further — you'll sort out the branch state yourself._
+> - [ ] 4\. _Notes: Add notes on this design._
+>
+> </details>
+>
+

@@ -158,6 +158,41 @@ def _prompt_yes_no(prompt: str) -> bool:
     return answer in ("y", "yes")
 
 
+def _refuse_if_checked_out_dirty(ref_short_name: str, cwd: Path) -> None:
+    """Plumbing ref moves (`git update-ref`) never touch the working tree or
+    index. If `ref_short_name` happens to be the branch currently checked out
+    in `cwd` with uncommitted changes, moving it out from under that checkout
+    would leave those changes stranded against a tree that no longer matches
+    the ref -- refuse up front, before anything is moved, exactly like `git
+    pull`/`git rebase` would refuse on a dirty checkout.
+    """
+    current = _git(["branch", "--show-current"], cwd, check=True).stdout.strip()
+    if current != ref_short_name:
+        return
+    status = _git(["status", "--porcelain"], cwd, check=True).stdout
+    if status.strip():
+        raise HistoryMasterError(
+            f"{ref_short_name!r} is currently checked out with uncommitted changes; "
+            "commit or stash them before running this, so the checkout can be kept in sync."
+        )
+
+
+def _sync_checkout_if_current(ref_short_name: str, new_sha: str, cwd: Path) -> None:
+    """Bring `ref_short_name`'s checkout in sync after its ref has just been
+    moved to `new_sha` via plumbing. Only call this after
+    `_refuse_if_checked_out_dirty` already confirmed there's nothing to lose.
+
+    Uses `reset --hard` rather than a fast-forward-only update since
+    `history_ref`'s own tip is not always a literal fast-forward of its old
+    position (replay rebuilds commits with new shas) -- only `main_branch`'s
+    pull happens to be one.
+    """
+    current = _git(["branch", "--show-current"], cwd, check=True).stdout.strip()
+    if current != ref_short_name:
+        return
+    _git(["reset", "--hard", new_sha], cwd, check=True)
+
+
 def _pull_master(cwd: Path, main_branch: str) -> None:
     fetch = _git(["fetch", "origin", main_branch], cwd)
     if fetch.returncode != 0:
@@ -167,7 +202,9 @@ def _pull_master(cwd: Path, main_branch: str) -> None:
         return
     local_sha = git_ops.rev_parse(main_branch, cwd)
     if local_sha is None or git_ops.is_ancestor(local_sha, remote_sha, cwd):
+        _refuse_if_checked_out_dirty(main_branch, cwd)
         git_ops.move_ref(f"refs/heads/{main_branch}", remote_sha, local_sha, cwd)
+        _sync_checkout_if_current(main_branch, remote_sha, cwd)
 
 
 def _pull_base(cwd: Path) -> None:
@@ -559,7 +596,10 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
             return {"status": "conflict", "pending": {"kind": "merge", "step": {"kind": "base_fold", "sha": base_sha}}}
 
     original_sha = state.get("original_sha")
+    history_ref_short = history_ref.removeprefix("refs/heads/")
+    _refuse_if_checked_out_dirty(history_ref_short, cwd)
     git_ops.move_ref(history_ref, new_tip, original_sha, cwd)
+    _sync_checkout_if_current(history_ref_short, new_tip, cwd)
     _clear_state(repo_root)
     return {"status": "ok", "history_master": new_tip}
 
@@ -662,7 +702,9 @@ def update_history_master(
     if first_run:
         git_ops.create_branch(history_ref, tip, cwd)
     else:
+        _refuse_if_checked_out_dirty(history_ref_name, cwd)
         git_ops.move_ref(history_ref, tip, old_history_sha, cwd)
+        _sync_checkout_if_current(history_ref_name, tip, cwd)
 
     return {
         "status": "ok",

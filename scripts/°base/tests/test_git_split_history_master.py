@@ -256,5 +256,150 @@ class HistoryMasterTests(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
 
 
+class CheckoutSyncTests(unittest.TestCase):
+    """Regression tests for the discovered bug: plumbing ref moves
+    (`_pull_master`, the final `history_ref` update) never touched the
+    working tree/index, so a currently-checked-out ref went stale."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.repo_root = Path(self._tmp.name)
+        init_repo(self.repo_root)
+        make_commit(self.repo_root, "root.txt", "root commit")
+
+        origin_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(origin_tmp.cleanup)
+        self.origin_root = Path(origin_tmp.name)
+        git(["clone", str(self.repo_root), str(self.origin_root)], self.repo_root)
+        git(["config", "user.email", "test@example.com"], self.origin_root)
+        git(["config", "user.name", "Test"], self.origin_root)
+        make_commit(self.origin_root, "root.txt", "master advances upstream", content="advanced\n")
+
+        git(["remote", "add", "origin", str(self.origin_root)], self.repo_root)
+
+    def _add_clean_branch_trailer(self, sha: str, branch: str) -> None:
+        message = git_ops.commit_message(sha, self.repo_root)
+        new_message = trailers.write_trailers(
+            message, {"X-Base-Split-Clean-Branch": branch}, self.repo_root
+        )
+        git(["commit", "--amend", "-m", new_message], self.repo_root)
+
+    def test_pull_master_keeps_current_checkout_in_sync(self) -> None:
+        git(["checkout", "master"], self.repo_root)
+
+        result = history_master.update_history_master(
+            repo_root=self.repo_root, main_branch="master", pull_master=True
+        )
+        self.assertEqual(result["status"], "ok")
+
+        self.assertEqual(git(["status", "--porcelain"], self.repo_root), "")
+        origin_tip = git(["rev-parse", "master"], self.origin_root)
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), origin_tip)
+        self.assertEqual((self.repo_root / "root.txt").read_text(), "advanced\n")
+
+    def test_pull_master_refuses_with_dirty_checkout(self) -> None:
+        git(["checkout", "master"], self.repo_root)
+        master_sha_before = git(["rev-parse", "master"], self.repo_root)
+        (self.repo_root / "root.txt").write_text("dirty local edit\n")
+
+        with self.assertRaises(history_master.HistoryMasterError):
+            history_master.update_history_master(
+                repo_root=self.repo_root, main_branch="master", pull_master=True
+            )
+
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), master_sha_before)
+        self.assertEqual((self.repo_root / "root.txt").read_text(), "dirty local edit\n")
+
+    def test_history_ref_checkout_stays_in_sync_after_replay(self) -> None:
+        history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+
+        git(["checkout", "ai/history/master"], self.repo_root)
+        make_commit(self.repo_root, "existing_history.txt", "pre-existing history content")
+        git(["checkout", "master"], self.repo_root)
+
+        make_commit(self.repo_root, "master2.txt", "master advances locally")
+
+        git(["checkout", "ai/history/master"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "ok")
+
+        self.assertEqual(git(["status", "--porcelain"], self.repo_root), "")
+        new_tip = git(["rev-parse", "ai/history/master"], self.repo_root)
+        self.assertEqual(git(["rev-parse", "HEAD"], self.repo_root), new_tip)
+        # The replay rebuilt commits (new shas) rather than fast-forwarding --
+        # confirm the working tree actually reflects the rebuilt content.
+        self.assertTrue((self.repo_root / "existing_history.txt").exists())
+        self.assertTrue((self.repo_root / "master2.txt").exists())
+
+    def test_full_yes_run_pulls_master_replays_and_folds_base_in_order(self) -> None:
+        # Pre-existing history-master content that must be replayed forward.
+        history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        git(["checkout", "ai/history/master"], self.repo_root)
+        make_commit(self.repo_root, "existing_history.txt", "pre-existing history content")
+        git(["checkout", "master"], self.repo_root)
+
+        # A previously-merged branch with its own unreplayed history waiting.
+        make_commit(self.repo_root, "feature.txt", "feature landed")
+        merge_sha = git(["rev-parse", "HEAD"], self.repo_root)
+        self._add_clean_branch_trailer(merge_sha, "feature")
+        merge_sha = git(["rev-parse", "HEAD"], self.repo_root)
+        git(["branch", "ai/history/feature"], self.repo_root)
+        git(["checkout", "ai/history/feature"], self.repo_root)
+        make_commit(self.repo_root, "feature_history.txt", "feature's own history content")
+        git(["checkout", "master"], self.repo_root)
+
+        # setUp's `origin` was cloned before the commits above, so local has
+        # since diverged ahead of it -- replace it with a clone taken *now*,
+        # then advance that fresh origin one further commit so local is a
+        # clean ancestor of it (a genuine pull/fast-forward scenario).
+        git(["remote", "remove", "origin"], self.repo_root)
+        fresh_origin_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(fresh_origin_tmp.cleanup)
+        self.origin_root = Path(fresh_origin_tmp.name)
+        git(["clone", str(self.repo_root), str(self.origin_root)], self.repo_root)
+        git(["config", "user.email", "test@example.com"], self.origin_root)
+        git(["config", "user.name", "Test"], self.origin_root)
+        make_commit(self.origin_root, "root.txt", "master advances upstream", content="advanced\n")
+        git(["remote", "add", "origin", str(self.origin_root)], self.repo_root)
+
+        # A real `base` remote with new content to fold in.
+        base_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_tmp.cleanup)
+        base_repo_root = Path(base_tmp.name)
+        git(["clone", str(self.repo_root), str(base_repo_root)], self.repo_root)
+        git(["config", "user.email", "test@example.com"], base_repo_root)
+        git(["config", "user.name", "Test"], base_repo_root)
+        make_commit(base_repo_root, "from_base.txt", "base content", content="from base\n")
+        git(["branch", "-m", "base"], base_repo_root)  # refs/remotes/base/base must resolve after fetch
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+
+        result = history_master.update_history_master(
+            repo_root=self.repo_root, main_branch="master", pull_master=True, pull_base=True
+        )
+        self.assertEqual(result["status"], "ok")
+
+        # Step 0/pull: master ended up at origin's tip.
+        origin_tip = git(["rev-parse", "master"], self.origin_root)
+        self.assertEqual(git(["rev-parse", "master"], self.repo_root), origin_tip)
+
+        tip = git(["rev-parse", "ai/history/master"], self.repo_root)
+        tree_files = git(["ls-tree", "-r", "--name-only", tip], self.repo_root)
+        # Step 1: pre-existing history-master content survived the replay.
+        self.assertIn("existing_history.txt", tree_files)
+        # Step 2: the newly-available branch's history + marker are present.
+        self.assertIn("feature_history.txt", tree_files)
+        self.assertTrue(history_master.has_merge_marker(tip, merge_sha, self.repo_root))
+        self.assertIn("from_base.txt", tree_files)
+        # Step 3: the base-fold is literally the last commit -- proof it ran
+        # strictly after steps 1 and 2, not before or interleaved.
+        tip_message = git_ops.commit_message(tip, self.repo_root)
+        self.assertEqual(
+            trailers.read_trailer_value(tip_message, "X-Base-History-Merge-Kind", self.repo_root),
+            "base-merge",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
