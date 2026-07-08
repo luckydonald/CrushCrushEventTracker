@@ -69,32 +69,57 @@ regression to crash-safety). Add:
 - Nothing else needs to change here — the full block is still built by
   `format_recovery_entry`, just *displayed* differently by the caller (below).
 
-### 3. `cli.py:_run_with_recovery` — quiet by default, verbose on request
+### 3. `cli.py` — set up a real `logging.Logger` (first use of `logging` in this repo's scripts)
 
-- Always still write the full `format_recovery_entry(...)` to
-  `.rebase-recovery.tmp` via `write_recovery_log` (unchanged — this is the
-  crash-safety net and must survive a hard kill).
-- On stdout, print only a one-line header: e.g.
-  `"update-history-master: snapshotted N refs -> .rebase-recovery.tmp"`.
-- After `run_fn()` returns, still append `format_after_summary(...)` to the
-  log file. On stdout, only print it if the run's exit code was non-zero
-  (i.e. something needs attention) — success runs stay quiet.
-- Pass a small tee-logger down into `run_fn` (see #4) so step narration and
-  the final conflict report land in *both* stdout and the same
-  `.rebase-recovery.tmp` file, appended after the entry/after-summary blocks.
+This is the one deliberate deviation from the rest of `scripts/°base` (which
+is `print()`-only everywhere) — narration + dual console/file output is
+exactly what `logging` is for, so it's worth the one new import rather than
+hand-rolling a tee function. Everything below stays confined to `cli.py`;
+`history_master.py` remains a pure library module and never imports
+`logging` itself (see #4 — it just takes a generic callable).
+
+- In `_run_with_recovery` (or a small helper it calls), build a
+  `logging.Logger` per invocation:
+  ```python
+  logger = logging.getLogger(f"split.{invocation_id}")
+  logger.setLevel(logging.INFO)
+  logger.handlers.clear()
+  logger.addHandler(logging.StreamHandler(sys.stdout))          # console
+  file_handler = logging.FileHandler(repo_root / recovery.RECOVERY_FILENAME)
+  file_handler.setFormatter(logging.Formatter("%(message)s"))   # match existing markdown-ish log format, no level/time prefix noise
+  logger.addHandler(file_handler)
+  ```
+  (Use a `Formatter("%(message)s")` on the console handler too, so output
+  reads like today's plain text rather than gaining `INFO:root:` prefixes.)
+- Always still write the full `format_recovery_entry(...)` (ref table +
+  rollback commands) straight to the file handler via
+  `logger.debug(entry)` with the file handler's level lowered to `DEBUG`
+  and the console handler kept at `INFO` — this is the cleanest way to get
+  "full detail in the file, short line on screen" without writing to the
+  file twice. Concretely: `logger.info("snapshotted N refs -> .rebase-recovery.tmp")`
+  for the console-visible line, `logger.debug(entry)` for the full block
+  (file-handler-only, since its level is `DEBUG` and the console handler's
+  level is `INFO`).
+- After `run_fn()` returns: `logger.debug(format_after_summary(...))`
+  (file-only), and only `logger.warning(...)` the same content to be
+  console-visible if the run's exit code was non-zero.
+- Close/remove the handlers when the invocation finishes (`finally:
+  logger.handlers.clear()`) so repeated CLI invocations in the same process
+  (e.g. in tests) don't accumulate duplicate handlers.
 
 ### 4. `cli.py:_update_history_master` — sectioned, narrated output
 
-Build a `log(msg)` helper that both `print()`s and appends to
-`.rebase-recovery.tmp` (via a new small `recovery.append_log(repo_root, text)`
-wrapping the existing file-append logic), pass it into
-`history_master_lib.update_history_master(..., log=log)`.
+Pass `log=logger.info` (a plain `Callable[[str], None]`) into
+`history_master_lib.update_history_master(..., log=log)` — `history_master.py`
+keeps its existing signature style and has no idea it's talking to a
+`logging.Logger` underneath.
 
 Restructure the result handling:
 
-- `status == "ok"`: one concise `log(...)` line, e.g.
+- `status == "ok"`: one concise `logger.info(...)` line, e.g.
   `"history-master updated: <old-sha> -> <new-sha>"`.
-- `status == "conflict"`: print a clearly labeled block via `log(...)`:
+- `status == "conflict"`: print a clearly labeled block via `logger.warning(...)`
+  (so it's visually distinct on the console and still lands in the file):
   ```
   == CONFLICT ==
   <pending message/detail text>
@@ -125,7 +150,14 @@ when it's actually relevant (conflict, or non-zero exit).
 In `scripts/°base/tests/test_git_split_history_master.py`, add one test that
 triggers a real cherry-pick conflict and asserts:
 - `result["pending"]["message"]` contains the "--continue" recovery text.
-- Passing a `log` callback collects at least one "CONFLICT" narration line.
+- Passing a `log` callback (plain function, no `logging` involved at this
+  layer) collects at least one "CONFLICT" narration line.
+
+In a CLI-level test (new or existing `test_get_base.py`-style test), use
+`caplog`/a temporary `logging.Handler` to assert: the console-level output
+for a conflict includes both recovery options ("--continue" and "--abort"),
+and `.rebase-recovery.tmp` contains the full ref table + `git update-ref`
+rollback block via the `DEBUG`-level file handler.
 
 ## Documentation artifact
 

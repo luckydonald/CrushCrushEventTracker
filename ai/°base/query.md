@@ -3101,3 +3101,34 @@ Additionally, while at it, remove the answers from the summary part, only keep t
 Currently it's kinda spamming you with lotsa stuff, and is super confusing. I guess it needs to be more verbose and tell the user what it's doing - in the log file, too.
 And structure it better somehow, maybe by action.
 
+❯ When you say logger, why not proper logging?
+
+❯ Task Notification:
+> - Task `a7504b235b811d7da` <kbd>completed</kbd>
+> - Tool `toolu_019JJEuCj8tUP4aHLdMuH4XF`
+> - > Agent "Check for existing logging module usage" finished
+> - [Query (`562` chars, `565 B`)](output/agents/019.a7504b235b811d7da/prompt.md)
+> - [Answer (`4647` chars, `4.63 KB`)](output/agents/019.a7504b235b811d7da/result.md)
+> - [Raw log (`114466` chars, `113 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/1820b956-99ba-4c49-9f3f-6a353c65ed0a/tasks/a7504b235b811d7da.output)
+> - `6` tools, `33023` tokens, `0.70015 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Use the stdlib `logging` module for the new narration/recovery output, or keep it consistent with the rest of the codebase (plain `print()`, no logging module anywhere)?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Logging approach** (1/1) <kbd>Single Select</kbd><br>
+>> Use the stdlib `logging` module for the new narration/recovery output, or keep it consistent with the rest of the codebase (plain `print()`, no logging module anywhere)?
+> - [x] 1\. Adopt logging module
+>   - _Set up a logger in cli.py with a StreamHandler (stdout) and FileHandler (.rebase-recovery.tmp) so narration/levels are handled by the stdlib instead of a hand-rolled tee function. Introduces the first use of `logging` in this repo's scripts._
+> - [ ] 2\. Keep plain print() (Recommended)
+>   - _Match the existing convention exactly (zero logging usage anywhere in scripts/°base) with a small tee helper that both print()s and appends to the recovery file. No new dependency/pattern introduced for a single command._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
