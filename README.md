@@ -4,10 +4,15 @@ Small reusable git base for other repositories.
 
 This history is intentionally rooted at `empty/init` from `https://github.com/EmptyAAS/empty.git`. That gives multiple repos the same empty ancestor commit, which makes it possible to rebase or merge this base into another repo in a predictable way.
 
+## Quick links
+- [Include](#all-code-for-c-as-a-single-copy-pastable-one)
+- [Sidecar](#branch-splitting-cleanuncleanhistory)
+
 ## Table of contents
 
 <!-- TOC -->
 * [base](#base)
+  * [Quick links](#quick-links)
   * [Table of contents](#table-of-contents)
 * [Add This To Your Repo](#add-this-to-your-repo)
   * [Overview](#overview)
