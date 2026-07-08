@@ -36,6 +36,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 _HOOK_PATH = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-decision" / "hook.py"
+_DEBUG_DIR = ROOT / "ai" / "°base" / "output" / "debug"
 
 
 def _load_hook():
@@ -133,6 +134,53 @@ class ParseCopilotRealPayloadTests(unittest.TestCase):
     def test_infer_tool_falls_back_to_payload_shape_without_cli_arg(self):
         payload = _make_real_payload("Pick one", ["A", "B"], True, "User selected: A")
         self.assertEqual(_hook._infer_tool(payload, "unknown"), "copilot")
+
+
+class ParseCopilotCapturedPayloadTests(unittest.TestCase):
+    """Regression tests against real, unmodified `PostToolUse` payloads
+    captured (and `git add -f`'d, since `ai/°base/output/debug/` is normally
+    gitignored) from an actual Copilot CLI session — the exact bug repro that
+    prompted this fix: none of these 3 questions made it into `query.md`
+    before `parse_payload`/`_infer_tool` learned to prefer the CLI `ai_tool`
+    argv and to read `tool_result.text_result_for_llm`."""
+
+    def test_choice_selected_payload(self):
+        payload = json.loads(
+            (_DEBUG_DIR / "20260708-185721_643221-save-decision.json").read_text(encoding="utf-8")
+        )
+        [q] = _hook.parse_payload(payload, ai_tool="copilot")
+        self.assertTrue(q.question.startswith("This is a demo of the ask_user tool's question types."))
+        selected = [c.label for c in q.choices if c.selected and not c.is_other]
+        self.assertEqual(selected, ["Multiple-choice, no freeform fallback (Recommended)"])
+        self.assertFalse(q.timed_out)
+
+    def test_pure_freeform_payload(self):
+        payload = json.loads(
+            (_DEBUG_DIR / "20260708-185900_706055-save-decision.json").read_text(encoding="utf-8")
+        )
+        [q] = _hook.parse_payload(payload, ai_tool="copilot")
+        other = next(c for c in q.choices if c.is_other)
+        self.assertTrue(other.selected)
+        self.assertEqual(other.note, "now do multi-choice.")
+
+    def test_choice_selected_with_freeform_disallowed_payload(self):
+        payload = json.loads(
+            (_DEBUG_DIR / "20260708-185956_357441-save-decision.json").read_text(encoding="utf-8")
+        )
+        [q] = _hook.parse_payload(payload, ai_tool="copilot")
+        selected = [c.label for c in q.choices if c.selected and not c.is_other]
+        self.assertEqual(selected, ["Show me exit_plan_mode's approval menu instead"])
+
+    def test_captured_payloads_render_with_copilot_glyph(self):
+        for name in (
+            "20260708-185721_643221-save-decision.json",
+            "20260708-185900_706055-save-decision.json",
+            "20260708-185956_357441-save-decision.json",
+        ):
+            payload = json.loads((_DEBUG_DIR / name).read_text(encoding="utf-8"))
+            questions = _hook.parse_payload(payload, ai_tool="copilot")
+            block = _hook._render_block(questions, tool=_hook._infer_tool(payload, "copilot"))
+            self.assertTrue(block.startswith("◆ Question answered.\n"), name)
 
 
 class ParseCopilotTests(unittest.TestCase):

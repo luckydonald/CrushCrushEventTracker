@@ -3290,3 +3290,25 @@ While at it, also check the TODO updates earlier (when you marked todos as done)
 
 ◆ Alright, none of those question caused a question added to the `query.md` log.
 
+◆ The verifications - are they automated tests? In that case the jsons need to be added to git.
+
+◆ Question answered.
+> <details><summary>
+>
+>> 1. I tried copying the 3 real debug JSON payloads into a new `scripts/°base/tests/fixtures/save-decision/` directory (with renamed filenames) to use as test fixtures, but both that copy and my attempt to undo it were rejected without details. What would you prefer instead — force-adding the original debug files in place under `ai/°base/output/debug/` (keeping their original timestamped names), or something else?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **** (1/1) <kbd>Single Select</kbd><br>
+>> I tried copying the 3 real debug JSON payloads into a new `scripts/°base/tests/fixtures/save-decision/` directory (with renamed filenames) to use as test fixtures, but both that copy and my attempt to undo it were rejected without details. What would you prefer instead — force-adding the original debug files in place under `ai/°base/output/debug/` (keeping their original timestamped names), or something else?
+> - [ ] 1\. Force-add the original files in place under ai/°base/output/debug/ (Recommended)
+> - [ ] 2\. Copy them into a new tests/fixtures/save-decision/ dir with renamed files
+> - [ ] 3\. Let me clarify what I want instead
+> - [x] 4\. _Type something:_
+>   - > `git add` it, not `move` it.
+>
+> </details>
+>
+
