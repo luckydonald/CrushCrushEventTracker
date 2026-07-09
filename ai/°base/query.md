@@ -3405,3 +3405,38 @@ The plan shall have basically the same line as the later commit but in _current 
 
 › Improve @scripts/°base/ai/references/download-link.py to have `--no-ide` and `--no-ide-open` as alias to `--no-open-ide`, and `--no-git` and `--no-add-git` be the same as `--no-git-add`. `--open`, `--ide`, `--ide-open` as alias to `--open-ide`, too.
 
+❯ create a Skill for coolify deployments (`docker-compose.coolify.yml`), based on @ai/references/https/github.com/coollabsio/coolify-docs/blob/dd06387b1d489750940094f0d1b162c179d06be0/content/docs/
+
+❯ /skill-creator:skill-creator
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Skill already built (SKILL.md + 2 reference files, symlinked). What next?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Next step** (1/1) <kbd>Single Select</kbd><br>
+>> Skill already built (SKILL.md + 2 reference files, symlinked). What next?
+> - [x] 1\. Run test/eval loop (Recommended)
+>   - _Spawn test prompts with/without skill, review outputs+benchmark in viewer, iterate._
+> - [ ] 2\. Optimize trigger description only
+>   - _Generate eval queries, run description-optimizer loop against real usage phrasing._
+> - [ ] 3\. Good as-is, stop here
+>   - _Skip evals, treat skill done._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+❯ Task Notification:
+> - Task `a5b739b6ae2a0ff83` <kbd>completed</kbd>
+> - Tool `toolu_01LooUd9N8FDnVenKeoN3WWr`
+> - > Agent "migration-healthcheck with-skill run" finished
+> - [Query (`831` chars, `833 B`)](output/agents/027.a5b739b6ae2a0ff83/prompt.md)
+> - [Answer (`1858` chars, `1.82 KB`)](output/agents/027.a5b739b6ae2a0ff83/result.md)
+> - [Raw log (`54026` chars, `52.9 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/917e0f49-ebe6-41d0-a097-306cf13c6346/tasks/a5b739b6ae2a0ff83.output)
+> - `3` tools, `27178` tokens, `0.436417 s`
+
