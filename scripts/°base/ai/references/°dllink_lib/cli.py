@@ -29,9 +29,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Download documentation into ai/references.")
     parser.add_argument("url", nargs="?")
     parser.add_argument("--output-root", default="ai/references")
-    parser.add_argument("--open-ide", dest="open_ide", default=None, metavar="COMMAND")
-    parser.add_argument("--no-git-add", action="store_true")
-    parser.add_argument("--no-open-ide", action="store_true")
+    parser.add_argument("--open-ide", "--open", "--ide", "--ide-open", dest="open_ide", default=None, metavar="COMMAND")
+    parser.add_argument("--no-git-add", "--no-git", "--no-add-git", action="store_true")
+    parser.add_argument("--no-open-ide", "--no-ide", "--no-ide-open", action="store_true")
     return parser.parse_args(argv)
 
 

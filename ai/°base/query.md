@@ -3370,6 +3370,7 @@ The plan shall have basically the same line as the later commit but in _current 
 - Regarding tests, the `rm` will be outside of this/current repo, instead `$HOME/.claude/projects/*/memory/*.md`, so that should be handled.
 
 ❯ adjust the commits following after `a9ec8a9d2a4a92254e86ad5ecf9c39b88312c503` to also use the new `git config --local user.email`.
+
 ❯ /plan Some minor changes:
 1. Why is `a930d821373bae4ff8c59d7c6e63048b46567588` having the wrong number in filename of the commit message?
 2. Commits like `0fd297d03c48169567a4a99edfbd77c3dadcebd2` (`ai: agent \d+\.[a-e0-9]+ results`) should also immediately contain the changes to `query.md` (`887a4ffa6ac4a69ba7e9b652627b7a3410a4529b`, `ai: updated prompt`) in the same commit, instead of separately.
@@ -3401,4 +3402,6 @@ The plan shall have basically the same line as the later commit but in _current 
 ❯ Note that in **2.**, the commit message still shall be the more interesting results commit message.
 
 ❯ close the  `ai:` commit gap
+
+› Improve @scripts/°base/ai/references/download-link.py to have `--no-ide` and `--no-ide-open` as alias to `--no-open-ide`, and `--no-git` and `--no-add-git` be the same as `--no-git-add`. `--open`, `--ide`, `--ide-open` as alias to `--open-ide`, too.
 

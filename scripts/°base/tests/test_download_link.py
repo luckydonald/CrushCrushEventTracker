@@ -209,6 +209,26 @@ class DownloadLinkPathTests(unittest.TestCase):
 
 
 class DownloadLinkInputTests(unittest.TestCase):
+    def test_open_ide_aliases_parse_to_open_ide(self):
+        for option in ("--open-ide", "--open", "--ide", "--ide-open"):
+            with self.subTest(option=option):
+                args = cli.parse_args([f"{option}=code", "https://example.com/docs/page.md"])
+                self.assertEqual(args.open_ide, "code")
+
+    def test_disable_aliases_parse_to_existing_flags(self):
+        args = cli.parse_args(
+            [
+                "--no-git",
+                "--no-add-git",
+                "--no-ide",
+                "--no-ide-open",
+                "https://example.com/docs/page.md",
+            ]
+        )
+
+        self.assertTrue(args.no_git_add)
+        self.assertTrue(args.no_open_ide)
+
     def test_empty_non_tty_stdin_explains_usage(self):
         stdin = io.StringIO("")
         stdin.isatty = lambda: False  # type: ignore[method-assign]
