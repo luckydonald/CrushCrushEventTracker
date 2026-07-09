@@ -159,6 +159,7 @@
       {"type": "bash", "command": "yarn test:e2e:pw:*"},
       {"type": "bash", "command": "yarn run test:unit"},
       {"type": "bash", "command": "yarn run test:e2e:pw:*"},
+      {"type": "bash", "command": "npm view:*"},
       {"type": "bash", "command": "cargo check:*"},
       {"type": "bash", "command": "corepack yarn@4.9.2 add:*"},
       {"type": "bash", "command": "yarn add:*"},

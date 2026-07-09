@@ -158,6 +158,7 @@
       "Bash(yarn test:e2e:pw:*)",
       "Bash(yarn run test:unit)",
       "Bash(yarn run test:e2e:pw:*)",
+      "Bash(npm view:*)",
       "Bash(cargo check:*)",
       "Bash(corepack yarn@4.9.2 add:*)",
       "Bash(yarn add:*)",
