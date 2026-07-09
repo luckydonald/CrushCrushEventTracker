@@ -220,7 +220,7 @@ pre-commit install
 _Lol, only do if you are me._
 ```shell
 git config --local user.name "Lucky Lucy"
-git config --local user.email "fedora-work-2026._.code@luckydonald.de"
+git config --local user.email "2.2026._.code@luckydonald.de"
 ```
 ## After Adopting The Base
 

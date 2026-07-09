@@ -3369,3 +3369,4 @@ The plan shall have basically the same line as the later commit but in _current 
 - Do not add/use `_lib.py`, instead use the `°*_lib` format already used otherwhere, do not use underscore function names.
 - Regarding tests, the `rm` will be outside of this/current repo, instead `$HOME/.claude/projects/*/memory/*.md`, so that should be handled.
 
+❯ adjust the commits following after `a9ec8a9d2a4a92254e86ad5ecf9c39b88312c503` to also use the new `git config --local user.email`.
