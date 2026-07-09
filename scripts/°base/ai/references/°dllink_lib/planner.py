@@ -25,6 +25,9 @@ def markdown_candidate_urls(url: str) -> list[str]:
         candidates.append(urllib.parse.urlunsplit(parts._replace(path=f"{path}.md")))
     else:
         candidates.append(urllib.parse.urlunsplit(parts._replace(path=f"{path.rstrip('/')}.md")))
+        candidates.append(urllib.parse.urlunsplit(parts._replace(path=f"{path.rstrip('/')}/content.md")))
+        candidates.append(urllib.parse.urlunsplit(parts._replace(path=f"{path.rstrip('/')}/index.md")))
+        candidates.append(urllib.parse.urlunsplit(parts._replace(path=f"{path.rstrip('/')}/README.md")))
     return unique(candidates)
 
 
