@@ -55,3 +55,11 @@ python3 scripts/°base/ai/settings/sync.py --check
 ```
 
 Manually: touch `ai/°base/.debug`, run a couple of real `TaskCreate`/`TaskUpdate` calls in a scratch session, confirm `ai/°base/plans/<current-session-plan>.md` grows a correct `## Todos` section and each mutation lands as its own `ai: Todo added`/`ai: Todo updated` commit; separately, trigger a real subagent/Explore task-notification and confirm `git log` shows one combined commit (not two) for its artifact files + query.md entry.
+
+## Todos
+
+- [x] 
+- [x] 
+- [x] 
+- [x] 
+- [x] Final live verification task

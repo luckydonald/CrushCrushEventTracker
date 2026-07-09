@@ -590,8 +590,6 @@ def _handle_task_notification(
     prefix: str,
     prompt: str,
     log_path: Path,
-    commit_template_relpath: str,
-    default_commit_msg: str,
 ) -> bool:
     """If prompt contains a task notification, write agent files and a summary entry.
 
@@ -614,15 +612,6 @@ def _handle_task_notification(
         result_file = result_dir / "result.md"
         result_file.write_text(info["result"], encoding="utf-8")
 
-        cwd = Path.cwd()
-        result_rel_abs = str(result_file.relative_to(cwd))
-        subprocess.run(["git", "add", "--", result_rel_abs], capture_output=True)
-        subprocess.run(
-            ["git", "commit", "--no-verify", "--only", result_rel_abs,
-             "-m", base_ai_commit_subject(f"ai: explore {dir_name} result")],
-            capture_output=True,
-        )
-
         rel_result = f"output/explore/{dir_name}/result.md"
         result_chars = len(info["result"])
         log_chars = _char_count(info["output_file"])
@@ -643,8 +632,9 @@ def _handle_task_notification(
         append_and_commit(
             log_path,
             content,
-            commit_template_relpath=commit_template_relpath,
-            default_commit_msg=default_commit_msg,
+            commit_template_relpath="",  # never let a prompt-commit template clobber the more-interesting explore-result message
+            default_commit_msg=f"ai: explore {dir_name} result",
+            extra_paths=(result_file,),
         )
         return True
 
@@ -669,16 +659,6 @@ def _handle_task_notification(
     prompt_file.write_text(agent_prompt, encoding="utf-8")
     result_file.write_text(result_text, encoding="utf-8")
 
-    cwd = Path.cwd()
-    prompt_rel = str(prompt_file.relative_to(cwd))
-    result_rel = str(result_file.relative_to(cwd))
-    subprocess.run(["git", "add", "--", prompt_rel, result_rel], capture_output=True)
-    subprocess.run(
-        ["git", "commit", "--no-verify", "--only", prompt_rel, result_rel,
-         "-m", base_ai_commit_subject(f"ai: agent {dir_name} results")],
-        capture_output=True,
-    )
-
     rel_prompt = f"output/agents/{dir_name}/prompt.md"
     rel_result = f"output/agents/{dir_name}/result.md"
     query_chars = len(agent_prompt)
@@ -700,8 +680,9 @@ def _handle_task_notification(
     append_and_commit(
         log_path,
         content,
-        commit_template_relpath=commit_template_relpath,
-        default_commit_msg=default_commit_msg,
+        commit_template_relpath="",  # never let a prompt-commit template clobber the more-interesting agent-results message
+        default_commit_msg=f"ai: agent {dir_name} results",
+        extra_paths=(prompt_file, result_file),
     )
     return True
 
@@ -757,11 +738,7 @@ def main() -> int:
             r"<task-notification>.*?</task-notification>", "", prompt, flags=re.DOTALL
         ).strip()
 
-    if _handle_task_notification(
-        prefix, prompt, log_path,
-        commit_template_relpath="ai/commit-templates/prompt.md",
-        default_commit_msg="ai: updated prompt",
-    ):
+    if _handle_task_notification(prefix, prompt, log_path):
         if remaining_after_task:
             append_and_commit(
                 log_path,

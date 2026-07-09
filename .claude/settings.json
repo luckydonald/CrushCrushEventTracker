@@ -69,7 +69,7 @@
         ]
       },
       {
-        "matcher": "TodoWrite|update_todo",
+        "matcher": "TodoWrite|update_todo|TaskCreate|TaskUpdate",
         "hooks": [
           {
             "type": "command",

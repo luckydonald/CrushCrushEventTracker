@@ -152,7 +152,7 @@ class HandleTodoCaptureTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.mock_commit.assert_not_called()
 
-    def test_injects_todos_and_commits(self):
+    def test_injects_todos_and_commits_as_added(self):
         plan_path = self.tmp_path / "042_test-plan.md"
         plan_path.write_text("# Plan: Test\n\nBody text.\n", encoding="utf-8")
         self._write_state("session-1", str(plan_path))
@@ -165,6 +165,18 @@ class HandleTodoCaptureTests(unittest.TestCase):
         self.mock_commit.assert_called_once()
         args, _ = self.mock_commit.call_args
         self.assertEqual(args[0], [str(plan_path)])
+        self.assertEqual(args[1], "ai: Todo added")
+
+    def test_updating_existing_section_commits_as_updated(self):
+        plan_path = self.tmp_path / "042_test-plan.md"
+        plan_path.write_text("# Plan: Test\n\n## Todos\n\n- [ ] Do A\n", encoding="utf-8")
+        self._write_state("session-1", str(plan_path))
+        tool_input = {"todos": [{"content": "Do A", "status": "done"}]}
+        result = _hook._handle_todo_capture("session-1", tool_input)
+        self.assertEqual(result, 0)
+        self.mock_commit.assert_called_once()
+        args, _ = self.mock_commit.call_args
+        self.assertEqual(args[1], "ai: Todo updated")
 
     def test_unchanged_content_skips_commit(self):
         plan_path = self.tmp_path / "042_test-plan.md"
@@ -172,6 +184,99 @@ class HandleTodoCaptureTests(unittest.TestCase):
         self._write_state("session-1", str(plan_path))
         tool_input = {"todos": [{"content": "Do A", "status": "pending"}]}
         result = _hook._handle_todo_capture("session-1", tool_input)
+        self.assertEqual(result, 0)
+        self.mock_commit.assert_not_called()
+
+
+class HandleTaskToolCaptureTests(unittest.TestCase):
+    """Covers _handle_task_tool_capture (TaskCreate/TaskUpdate): unlike
+    TodoWrite/update_todo, each event mutates a single task, so the full
+    list must be accumulated across calls in the state file."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmpdir.cleanup)
+        self.tmp_path = Path(self.tmpdir.name)
+
+        state_patch = mock.patch.object(_hook, "_STATE_FILE", self.tmp_path / "state.json")
+        state_patch.start()
+        self.addCleanup(state_patch.stop)
+
+        commit_patch = mock.patch.object(_hook, "_commit")
+        self.mock_commit = commit_patch.start()
+        self.addCleanup(commit_patch.stop)
+
+        self.plan_path = self.tmp_path / "042_test-plan.md"
+        self.plan_path.write_text("# Plan: Test\n\nBody text.\n", encoding="utf-8")
+        _hook._save_state(
+            {"session-1": {"prefix": "042", "relpath": str(self.plan_path), "source": "plan.md"}}
+        )
+
+    def test_task_create_adds_pending_entry_and_commits_added(self):
+        result = _hook._handle_task_tool_capture(
+            "session-1",
+            "TaskCreate",
+            {"subject": "Do A", "description": "desc"},
+            {"task": {"id": "1", "subject": "Do A"}},
+        )
+        self.assertEqual(result, 0)
+        updated = self.plan_path.read_text(encoding="utf-8")
+        self.assertIn("- [ ] Do A", updated)
+        args, _ = self.mock_commit.call_args
+        self.assertEqual(args[1], "ai: Todo added")
+
+    def test_task_create_without_response_id_is_noop(self):
+        result = _hook._handle_task_tool_capture(
+            "session-1", "TaskCreate", {"subject": "Do A"}, {}
+        )
+        self.assertEqual(result, 0)
+        self.mock_commit.assert_not_called()
+
+    def test_second_task_create_accumulates_both_entries(self):
+        _hook._handle_task_tool_capture(
+            "session-1", "TaskCreate", {"subject": "Do A"}, {"task": {"id": "1", "subject": "Do A"}}
+        )
+        self.mock_commit.reset_mock()
+        result = _hook._handle_task_tool_capture(
+            "session-1", "TaskCreate", {"subject": "Do B"}, {"task": {"id": "2", "subject": "Do B"}}
+        )
+        self.assertEqual(result, 0)
+        updated = self.plan_path.read_text(encoding="utf-8")
+        self.assertIn("- [ ] Do A", updated)
+        self.assertIn("- [ ] Do B", updated)
+        args, _ = self.mock_commit.call_args
+        self.assertEqual(args[1], "ai: Todo updated")
+
+    def test_task_update_changes_status_of_existing_entry(self):
+        _hook._handle_task_tool_capture(
+            "session-1", "TaskCreate", {"subject": "Do A"}, {"task": {"id": "1", "subject": "Do A"}}
+        )
+        self.mock_commit.reset_mock()
+        result = _hook._handle_task_tool_capture(
+            "session-1",
+            "TaskUpdate",
+            {"taskId": "1", "status": "in_progress"},
+            {"success": True, "taskId": "1", "updatedFields": ["status"]},
+        )
+        self.assertEqual(result, 0)
+        updated = self.plan_path.read_text(encoding="utf-8")
+        self.assertIn("- [ ] Do A *(in progress)*", updated)
+        args, _ = self.mock_commit.call_args
+        self.assertEqual(args[1], "ai: Todo updated")
+
+    def test_task_update_status_completed_checks_it_off(self):
+        _hook._handle_task_tool_capture(
+            "session-1", "TaskCreate", {"subject": "Do A"}, {"task": {"id": "1", "subject": "Do A"}}
+        )
+        result = _hook._handle_task_tool_capture(
+            "session-1", "TaskUpdate", {"taskId": "1", "status": "completed"}, {"taskId": "1"}
+        )
+        self.assertEqual(result, 0)
+        updated = self.plan_path.read_text(encoding="utf-8")
+        self.assertIn("- [x] Do A", updated)
+
+    def test_task_update_without_task_id_is_noop(self):
+        result = _hook._handle_task_tool_capture("session-1", "TaskUpdate", {"status": "done"}, {})
         self.assertEqual(result, 0)
         self.mock_commit.assert_not_called()
 

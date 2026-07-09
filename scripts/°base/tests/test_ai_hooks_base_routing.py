@@ -508,7 +508,11 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "> - `6` tools, `67643` tokens, `1.16395 s`\n"
                 "\n",
             )
-            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+            self.assertEqual(last_subject(repo), "[base] ai: agent 001.a6f364ce63ffebb84 results")
+            self.assertEqual(
+                run_git(repo, "log", "--oneline").stdout.strip().count("\n"), 1,
+                "artifact files and query.md must land in a single commit, not two",
+            )
 
     def test_claude_task_notification_usage_line_with_hyphen_tags(self):
         """<usage> children with hyphenated tag names (production format) still produce the usage line."""
@@ -636,7 +640,11 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "> - `33` tools · `46.9k` tokens · `1m 41s`\n"
                 "\n",
             )
-            self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
+            self.assertEqual(last_subject(repo), "[base] ai: explore 001.b5dyyqcfr result")
+            self.assertEqual(
+                run_git(repo, "log", "--oneline").stdout.strip().count("\n"), 1,
+                "the result file and query.md must land in a single commit, not two",
+            )
 
     def test_codex_plan_in_base_repo_routes_and_prefixes(self):
         with tempfile.TemporaryDirectory() as tmp:

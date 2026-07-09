@@ -340,11 +340,16 @@ def _git_rm(path: str) -> None:
 # Todo capture handler
 # ---------------------------------------------------------------------------
 
-def _handle_todo_capture(session_id: str, tool_input: dict) -> int:
-    """On TodoWrite/update_todo, inject the current todo list into the
-    session's already-saved plan snapshot (if any). Silently no-ops when
-    there's no session, no saved plan snapshot yet, or no todos to render —
-    this is a best-effort enrichment, not a plan-creation path."""
+def _apply_todos_and_commit(session_id: str, todos: list[dict]) -> int:
+    """Shared tail end of todo capture: inject `todos` into the session's
+    already-saved plan snapshot (if any) as a ``## Todos`` section, and
+    commit. Silently no-ops when there's no session, no saved plan snapshot
+    yet, or no todos to render -- this is a best-effort enrichment, not a
+    plan-creation path.
+
+    Commit message is `ai: Todo added` the first time the section is
+    created, `ai: Todo updated` on every later change.
+    """
     if not session_id:
         return 0
     state = _load_state()
@@ -358,21 +363,65 @@ def _handle_todo_capture(session_id: str, tool_input: dict) -> int:
     if not plan_path.is_file():
         return 0
 
-    todos = _normalize_todos(tool_input)
     todos_md = _render_todos_markdown(todos)
     if not todos_md:
         return 0
 
     current = plan_path.read_text(encoding="utf-8")
+    heading_existed = bool(re.search(rf"(?ms)^{re.escape(_TODOS_HEADING)}\s*$", current))
     updated = _apply_todos_section(current, todos_md)
     if updated == current:
         return 0
 
     plan_path.write_text(updated, encoding="utf-8")
-    prefix = session.get("prefix", "")
-    slug = Path(relpath).stem.split("_", 1)[-1] if "_" in Path(relpath).stem else Path(relpath).stem
-    _commit([relpath], f"ai: update todos in plan {prefix}_{slug}" if prefix else f"ai: update todos in {relpath}")
+    _commit([relpath], "ai: Todo updated" if heading_existed else "ai: Todo added")
     return 0
+
+
+def _handle_todo_capture(session_id: str, tool_input: dict) -> int:
+    """On TodoWrite/update_todo, inject the current (complete) todo list
+    into the session's saved plan snapshot."""
+    return _apply_todos_and_commit(session_id, _normalize_todos(tool_input))
+
+
+def _handle_task_tool_capture(
+    session_id: str, tool_name: str, tool_input: dict, tool_response: dict
+) -> int:
+    """On TaskCreate/TaskUpdate, accumulate per-session task state.
+
+    Unlike TodoWrite/update_todo (which resend the *entire* current list
+    every call), TaskCreate/TaskUpdate each mutate a single task -- so the
+    full list has to be tracked across calls in the session state file
+    (`tasks: {taskId: {"text": str, "status": str}}`), keyed the same way
+    `prefix`/`relpath` already are.
+    """
+    if not session_id:
+        return 0
+    state = _load_state()
+    session = state.setdefault(session_id, {})
+    tasks: dict = session.setdefault("tasks", {})
+
+    if tool_name == "TaskCreate":
+        task_id = str((tool_response.get("task") or {}).get("id") or "")
+        if not task_id:
+            return 0
+        text = tool_input.get("subject") or (tool_response.get("task") or {}).get("subject") or ""
+        tasks[task_id] = {"text": text, "status": "pending"}
+    else:  # TaskUpdate
+        task_id = str(tool_input.get("taskId") or tool_response.get("taskId") or "")
+        if not task_id:
+            return 0
+        if tool_input.get("status") == "deleted":
+            tasks.pop(task_id, None)
+        else:
+            entry = tasks.setdefault(task_id, {"text": "", "status": "pending"})
+            if tool_input.get("subject"):
+                entry["text"] = tool_input["subject"]
+            if tool_input.get("status"):
+                entry["status"] = tool_input["status"]
+
+    _save_state(state)
+    return _apply_todos_and_commit(session_id, list(tasks.values()))
 
 
 # ---------------------------------------------------------------------------
@@ -391,6 +440,9 @@ def main() -> int:
 
     if tool_name in ("TodoWrite", "update_todo"):
         return _handle_todo_capture(session_id, tool_input)
+    if tool_name in ("TaskCreate", "TaskUpdate"):
+        tool_response = payload.get("tool_response") or {}
+        return _handle_task_tool_capture(session_id, tool_name, tool_input, tool_response)
 
     plan = ""
     if ai_tool == "codex":
@@ -417,7 +469,13 @@ def main() -> int:
     state = _load_state()
     session = state.get(session_id) if session_id else None
     # session shape: {"prefix": "004", "relpath": "ai/°base/plans/004_slug.md",
-    #                 "source": "sprightly-mixing-iverson.md", "done": bool}
+    #                 "source": "sprightly-mixing-iverson.md", "done": bool,
+    #                 "tasks": {taskId: {"text": str, "status": str}}}
+    # `tasks` may exist without `prefix`/`relpath` yet (TaskCreate/TaskUpdate
+    # firing before any plan has been saved this session) -- only a `prefix`
+    # means there's an actual plan snapshot to treat as "the session".
+    if session and not session.get("prefix"):
+        session = None
 
     # When Write fires after ExitPlanMode committed the previous plan (same session),
     # treat it as a brand-new plan and allocate a fresh prefix.
@@ -465,9 +523,14 @@ def main() -> int:
         _commit([relpath], f"ai: save plan {prefix}_{new_slug}")
 
         if session_id:
-            # Capture the harness plan filename as metadata.
+            # Capture the harness plan filename as metadata. `.update()`
+            # (not a plain assignment) preserves a `tasks` map that
+            # TaskCreate/TaskUpdate may have already started accumulating
+            # for this session_id before any plan was saved.
             source = Path(tool_input.get("file_path") or tool_input.get("path") or "").name
-            state[session_id] = {"prefix": prefix, "relpath": relpath, "source": source}
+            state.setdefault(session_id, {}).update(
+                {"prefix": prefix, "relpath": relpath, "source": source}
+            )
             _save_state(state)
 
     # After ExitPlanMode fires, mark this plan session done so that a subsequent
