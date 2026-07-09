@@ -3370,3 +3370,31 @@ The plan shall have basically the same line as the later commit but in _current 
 - Regarding tests, the `rm` will be outside of this/current repo, instead `$HOME/.claude/projects/*/memory/*.md`, so that should be handled.
 
 ❯ adjust the commits following after `a9ec8a9d2a4a92254e86ad5ecf9c39b88312c503` to also use the new `git config --local user.email`.
+❯ /plan Some minor changes:
+1. Why is `a930d821373bae4ff8c59d7c6e63048b46567588` having the wrong number in filename of the commit message?
+2. Commits like `0fd297d03c48169567a4a99edfbd77c3dadcebd2` (`ai: agent \d+\.[a-e0-9]+ results`) should also immediately contain the changes to `query.md` (`887a4ffa6ac4a69ba7e9b652627b7a3410a4529b`, `ai: updated prompt`) in the same commit, instead of separately.
+
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. For point 3: the progress list you saw came from the newer Task tool (TaskCreate/TaskUpdate/TaskList), which isn't hooked into anything today — only the older TodoWrite/update_todo tools are (save-plan/hook.py already injects those into a `## Todos` section inside the plan .md itself, e.g. `041_foo.md`). How should the new capture work?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Todo capture** (1/1) <kbd>Single Select</kbd><br>
+>> For point 3: the progress list you saw came from the newer Task tool (TaskCreate/TaskUpdate/TaskList), which isn't hooked into anything today — only the older TodoWrite/update_todo tools are (save-plan/hook.py already injects those into a `## Todos` section inside the plan .md itself, e.g. `041_foo.md`). How should the new capture work?
+> - [ ] 1\. Separate .todo.md file (as you suggested)
+>   - _New companion file `<NNN>_<slug>.todo.md` next to the plan, rewritten on every TaskCreate/TaskUpdate for that session — keeps the plan file itself unchanged._
+> - [ ] 2\. Reuse the existing inline `## Todos` section
+>   - _Extend the current TodoWrite/update_todo hook matcher and normalizer to also handle TaskCreate/TaskUpdate, writing into the same in-plan section — no new file, one mechanism for both tools._
+> - [ ] 3\. Both
+>   - _Write the separate `.todo.md` file for Task-tool events, keep the existing inline section behavior for TodoWrite/update_todo untouched._
+> - [x] 4\. _Type something:_
+>   - > Update (create) the `## Todos` section in `<NNN>_<slug>.md`, with a distinct commit message (`ai: Todo added`, `ai: Todo updated`).
+>
+> </details>
+>
+
