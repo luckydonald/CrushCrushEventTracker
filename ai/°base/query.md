@@ -3519,6 +3519,7 @@ tree
 > › Implement the [Plan](./plans/043_log-direct-codex-shell-executions.md).
 
 ❯ /plan Check why commit `121ab69c8e849bb837fd5a89b66f5e460412bb36`(via ai agent hook) changed the `MEMORY.md` but not deleted the referenced files?
+
 ❯ Question answered.
 > <details><summary>
 >
@@ -3541,4 +3542,219 @@ tree
 >
 > </details>
 >
+
+❯ /plan Alright, I want a full unittest run for @scripts/°base/git/split.py like the following:
+
+For all of those commit per repo (= test variant) you should create a list of the commits made,
+```
+{
+    "commit": "<hash>",
+    "merge": None | {
+        "branch": "empty/init", # remote&branch merged in
+        "commit_theirs": "<hash>", # commit of that branch we merged in
+        "commit_ours": "<hash>", # commit of our branch before merge (a bit redundant, lol)
+        "is_allowed_merge": bool,  # it was merged as part of preparation/setup, and not by running the script.
+    },
+    "code": bool,  # contains stuff outside of AI folders/files
+    "ai": bool,  # contains changes inside AI files/folders
+    "msg": "commit message until\nthe trailers",
+    "trailer": "X-foo: asdf\nX-bar: fghj",
+}
+```
+so you can later track/check references for the "history" branch and so on.
+
+1. prepare temporary repo (master/main branch is to be named `mane` there) with the following variations:
+   1. a few random commits
+   2. starting with the initial commit from `empty/init` (add origin as in `README.md`), then random commits
+   3. commit a few commits, and then also write a `README.md` and `.gitignore` (can be short, just to test conflict behavior)
+   4. starting with a branch based on the most recent commit of this `base/base` (checkout by cloning from this direrctory, not online), and then a few random commits
+   5. random commits + `empty/init` merge + `base/base` merge + random commits (see `README.md`and again, `base` is via dir, not github)
+   6. Similar to **1.5.** above, but then merge `base/base` a second time into `mane` (`--no-ff`), and commit a few more commits, including some into `ai` (see **2.8.** below)
+2. check out branches with the following variations:
+   1. stay on `mane`
+   2. `mane` + couple commits
+   3. new branch `feature/foobar` + couple random commits
+   4. new branch `test_idk_lol` + couple random commits
+   5. new branch `ai/UNCLEAN/feature/batz` + couple code commits
+   6. new branch `ai/UNCLEAN/feature/batz` + couple ai-folder commits
+   7. new branch `ai/UNCLEAN/feature/batz` + couple both-in-same-commit commits.
+   8. new branch `ai/UNCLEAN/feature/batz` + couple ai-folder, couple code + couple both-in-same-commit commits + ai + code + both.
+   9. new branch `ai/history/mane` + 2 "ai"-only commits + **2.8.**
+3. Now apply the script via "fake curl" from this repo (again, online version on github might not be in sync)
+4. It shall be merging cleanly (`README.md` and `.gitignore` shall be handled by the script automatically after all)
+5. create `ai/UNCLEAN/feature/test-eins` branch, and commits as described in **2.8.**.
+6. use the script to generate `feature/test-eins` from it.
+7. Check that `feature/test-eins` exits and contains:
+   1. no `base/base` merge:
+      1. no `base/base` at all (**1.1.** through **1.3.**)
+      2. only the original `base/base`, not a second merge (**1.4.**, **1.5.**)
+      3. only the original two merges with `base/base`, not a third merge (**1.6.**)
+   2. No commits touching `ai/**` or similar.
+   3. Only the code & "both" commits from `ai/UNCLEAN/feature/test-eins`
+   4. For the "both" commits they shall only contain the "code" half, nothing from "ai".
+8. Check that `ai/history/feature/test-eins` exists and contains:
+   1. All commits from `ai/UNCLEAN/feature/test-eins` in the same order and with the same commit metadata (except the trailers)
+      - check the commit hashes in the trailers to be correct.
+      - no newly introduced commits in-between
+   2. The commits do not contain "code"
+      1. "ai" -> "ai" (unchanged)
+      2. "both" -> "ai" (no code)
+      3. "code" -> "none" (empty commit)
+9. Commit 2 commits to `mane`
+10. Have the script rebase the branches
+11. check `ai/UNCLEAN/feature/test-eins` and `ai/history/feature/test-eins`
+    - They should be based on the newest `mane` now.
+    - Except **2.9.**,
+      - there the `ai/history/mane` should be base on the new `mane`,
+      - and `ai/UNCLEAN/feature/test-eins` and `ai/history/feature/test-eins` shall be based on that `ai/history/mane`.
+
+❯ Task Notification:
+> - Task `aa1c51f1a7fdc8b7b` <kbd>completed</kbd>
+> - Tool `toolu_01YSfWh6J1xuh7f9muFizvpU`
+> - > Agent "Explore existing test conventions in repo" finished
+> - [Query (`1824` chars, `1.79 KB`)](output/agents/028.aa1c51f1a7fdc8b7b/prompt.md)
+> - [Answer (`17367` chars, `17.1 KB`)](output/agents/028.aa1c51f1a7fdc8b7b/result.md)
+> - [Raw log (`551978` chars, `540 KB`)](/private/tmp/claude-501/-Users-user-Documents-programming-Python-base/fd0dc788-965b-4351-8698-7a6506a28528/tasks/aa1c51f1a7fdc8b7b.output)
+> - `30` tools, `104687` tokens, `2.60112 s`
+
+❯ Task Notification:
+> - Task `aa7b4db50dbed948d` <kbd>completed</kbd>
+> - Tool `toolu_01MwuiWFZLzDFP9ijiGeNKw5`
+> - > Agent "Explore split.py library implementation" finished
+> - [Query (`3192` chars, `3.14 KB`)](output/agents/029.aa7b4db50dbed948d/prompt.md)
+> - [Answer (`33647` chars, `33.1 KB`)](output/agents/029.aa7b4db50dbed948d/result.md)
+> - [Raw log (`679051` chars, `664 KB`)](/private/tmp/claude-501/-Users-user-Documents-programming-Python-base/fd0dc788-965b-4351-8698-7a6506a28528/tasks/aa7b4db50dbed948d.output)
+> - `37` tools, `129785` tokens, `3.43525 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Section 1 lists 6 repo-preparation variants, section 2 lists 9 branch-checkout variants, then sections 5-11 describe one deep trailer/rebase-verification flow on a `feature/test-eins` branch. How should these compose?
+>> 2. Step 4 says README.md/.gitignore conflicts 'shall be handled by the script automatically.' I read all of °split_lib and found this is only true for RE-creating an already-resolved base/base merge after a rebase (recreate_base_merge reuses the original merge's resolved blob per path). A brand-new first-time base/base fold that conflicts with a repo's own pre-existing README.md/.gitignore (as variant 1.3 sets up) is NOT auto-resolved — it surfaces as a manual conflict requiring --continue/--abort. Which did you mean?
+>> 3. How literally should the 'fake curl' invocation (step 3) simulate `curl -fSL <github-url> | python3 -`?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Test matrix scope** (1/3) <kbd>Single Select</kbd><br>
+>> Section 1 lists 6 repo-preparation variants, section 2 lists 9 branch-checkout variants, then sections 5-11 describe one deep trailer/rebase-verification flow on a `feature/test-eins` branch. How should these compose?
+> - [x] 1\. Full 6×9 smoke matrix + deep flow once per repo variant
+>   - _Run steps 2-4 (checkout + apply script + assert clean merge) for all 54 repo×branch combinations as a lightweight smoke test. Separately, run the full steps 5-11 deep flow (trailers, ai/history verification, mane-advance + rebase) once for each of the 6 repo variants. Most thorough, but a large test suite and slow to run._
+>   - ```
+>     54 smoke combos (repo 1.1-1.6 x branch 2.1-2.9)
+>       -> assert: script runs, no crash, clean merge
+>
+>     6 deep flows (one per repo variant)
+>       -> feature/test-eins + ai/UNCLEAN/... (2.8 pattern)
+>       -> assert: trailers, ai/history/feature/test-eins content,
+>          mane-advance + rebase-branches-to-master behavior
+>     ```
+> - [ ] 2\. Full 6x9 smoke matrix only; deep flow runs once total
+>   - _Run all 54 combinations for the lightweight clean-merge smoke check (steps 2-4). Run the detailed steps 5-11 trailer/rebase verification exactly once, on a single canonical repo (the most complete one: 1.5, with empty/init + base/base merge + random commits)._
+>   - ```
+>     54 smoke combos (repo 1.1-1.6 x branch 2.1-2.9)
+>       -> assert: script runs, no crash, clean merge
+>
+>     1 deep flow (repo variant 1.5 only)
+>       -> feature/test-eins + ai/UNCLEAN/... (2.8 pattern)
+>       -> assert: trailers, ai/history/feature/test-eins content,
+>          mane-advance + rebase-branches-to-master behavior
+>     ```
+> - [ ] 3\. Targeted smoke pairs, not full cross product
+>   - _Skip the full 54-combo cross product (slow, largely redundant since branch-checkout logic doesn't usually interact with repo-history shape). Instead pick a handful of representative (repo variant, branch variant) pairs that actually stress distinct code paths, run steps 2-4 on those, and run the deep steps 5-11 flow once per repo variant._
+>   - ```text
+>     ~12-15 targeted (repo, branch) pairs
+>       -> assert: script runs, no crash, clean merge
+>
+>     6 deep flows (one per repo variant)
+>       -> feature/test-eins + ai/UNCLEAN/... (2.8 pattern)
+>       -> assert: trailers, ai/history/feature/test-eins content,
+>          mane-advance + rebase-branches-to-master behavior
+>     ```
+> - [ ] 4\. _Notes: Add notes on this design._
+>
+>> **Auto-conflict semantics** (2/3) <kbd>Single Select</kbd><br>
+>> Step 4 says README.md/.gitignore conflicts 'shall be handled by the script automatically.' I read all of °split_lib and found this is only true for RE-creating an already-resolved base/base merge after a rebase (recreate_base_merge reuses the original merge's resolved blob per path). A brand-new first-time base/base fold that conflicts with a repo's own pre-existing README.md/.gitignore (as variant 1.3 sets up) is NOT auto-resolved — it surfaces as a manual conflict requiring --continue/--abort. Which did you mean?
+> - [ ] 1\. Only re-creation is expected to auto-resolve (recommended)
+>   - _The first-ever base/base merge (done during repo preparation, marked is_allowed_merge=true) is expected to conflict on README.md/.gitignore and our test fixture code resolves it manually as part of setup (not asserted as 'automatic'). Only a later recreation of that merge (triggered by rebase-branches-to-master / update-history-master after mane advances) is asserted to auto-resolve via the existing blob-reuse mechanism. This matches existing, already-tested split.py behavior — no code changes needed._
+> - [x] 2\. First-time conflicts should also auto-resolve
+>   - _You want the very first base/base fold (when mane already has its own conflicting README.md/.gitignore) to also resolve without manual intervention. This is a real feature gap — split.py has no such logic today, so this would require implementing new conflict-resolution behavior in split.py, not just writing tests for existing behavior._
+> - [ ] 3\. _Type something._
+>
+>> **Fake curl method** (3/3) <kbd>Single Select</kbd><br>
+>> How literally should the 'fake curl' invocation (step 3) simulate `curl -fSL <github-url> | python3 -`?
+> - [x] 1\. Pipe local get-base.py into python3 via stdin (recommended)
+>   - _Run `cat scripts/°base/git/get-base.py | python3 -  <args>` from this repo's checked-out working copy, with the temp repo's `base` remote pointed at a local path (this repo's directory) instead of GitHub. Exercises the exact same stdin-script code path as the documented curl one-liner, with zero network access and no dependency on GitHub being in sync._
+> - [ ] 2\. Spin up a local HTTP server and literally curl it
+>   - _Serve get-base.py's bytes via a background http.server thread and shell out to a real `curl http://127.0.0.1:PORT/... | python3 -`. Maximum fidelity to the literal documented command, at the cost of extra test infrastructure (thread lifecycle, port allocation) for no behavioral difference over stdin piping._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+❯ Good analysis, but how can the tool do that automatically and correctly?
+
+❯ In fact, wouldn't it be better to copy the repo variant to the claude dir, then?
+
+❯ Yes, do it.
+
+❯ Task Notification:
+> - Task `a383589befc66723d` <kbd>completed</kbd>
+> - Tool `toolu_014jMcNbd5m18zjtTG9kiLdb`
+> - > Agent "Design split.py e2e test plan" finished
+> - [Query (`15346` chars, `15 KB`)](output/agents/030.a383589befc66723d/prompt.md)
+> - [Answer (`46693` chars, `45.7 KB`)](output/agents/030.a383589befc66723d/result.md)
+> - [Raw log (`634759` chars, `621 KB`)](/private/tmp/claude-501/-Users-user-Documents-programming-Python-base/fd0dc788-965b-4351-8698-7a6506a28528/tasks/a383589befc66723d.output)
+> - `27` tools, `118260` tokens, `5.65305 s`
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Repo variant 1.6 says to merge `base/base` into `mane` a second time (`--no-ff`). But git's real behavior: `git merge --no-ff <ref>` on a ref that's already fully merged prints 'Already up to date' and creates NO commit at all, regardless of --no-ff. So a literal second merge of the same base/base tip is a no-op — variant 1.6 as written wouldn't actually produce two merge commits. How should the fixture create a genuine second merge?
+>> 2. Step 11 says rebased branches should be based on the new `mane` — "Except 2.9", where `ai/history/mane` (pre-seeded with 2 ai-only commits before the deep flow's own commits) should itself be based on the new `mane`, and `feature/test-eins`'s branches based on that. But the deep flow (steps 5-11) builds its own fresh `ai/UNCLEAN/feature/test-eins` off `mane` directly — it doesn't naturally combine with branch-checkout variant 2.9 (which is a separate smoke-matrix-only axis). How should this be covered?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Second base merge** (1/2) <kbd>Single Select</kbd><br>
+>> Repo variant 1.6 says to merge `base/base` into `mane` a second time (`--no-ff`). But git's real behavior: `git merge --no-ff <ref>` on a ref that's already fully merged prints 'Already up to date' and creates NO commit at all, regardless of --no-ff. So a literal second merge of the same base/base tip is a no-op — variant 1.6 as written wouldn't actually produce two merge commits. How should the fixture create a genuine second merge?
+> - [x] 1\. Use two different pinned commits (recommended)
+>   - _Pin two different commits from this repo's real `base` branch — an earlier ancestor for the first merge, a later one for the second — so the second merge has real new content to bring in and produces a genuine second merge commit. Slight deviation from 'merge base/base twice' (it's technically two different tips of the same branch), but behaviorally correct and matches how real repos actually get a second base update over time._
+> - [ ] 2\. Force a structurally-real but content-empty second merge
+>   - _Build the second merge commit directly via `git commit-tree` with parents [current_tip, base_sha] and the same tree as current_tip — a real 2-parent commit that changes nothing. Closer to a literal 'merge the exact same base/base tip again' reading, but it's fixture-constructed plumbing rather than an actual `git merge` invocation, and doesn't exercise real merge-conflict machinery a second time._
+> - [ ] 3\. _Type something._
+>
+>> **2.9 deep-flow coverage** (2/2) <kbd>Single Select</kbd><br>
+>> Step 11 says rebased branches should be based on the new `mane` — "Except 2.9", where `ai/history/mane` (pre-seeded with 2 ai-only commits before the deep flow's own commits) should itself be based on the new `mane`, and `feature/test-eins`'s branches based on that. But the deep flow (steps 5-11) builds its own fresh `ai/UNCLEAN/feature/test-eins` off `mane` directly — it doesn't naturally combine with branch-checkout variant 2.9 (which is a separate smoke-matrix-only axis). How should this be covered?
+> - [ ] 1\. Add a 7th deep-flow case pre-seeding ai/history/mane (recommended)
+>   - _Run the standard steps 5-11 deep flow six times (once per repo variant, as already planned), plus one extra 7th run where, before step 5, ai/history/mane is manually pre-created with 2 ai-only commits (mirroring branch-checkout 2.9) on top of just one repo variant (e.g. variant 1, the simplest). This exercises the case where ai/history/mane already exists before the tool's first run, as opposed to the tool creating it fresh — a genuinely different code path worth its own dedicated assertion._
+> - [x] 2\. Treat it as the same general rule, no extra case needed
+>   - _Interpret the 'except 2.9' clause as just restating the general, always-true dependency chain (unclean rebases onto history's rebased tip; history-master is updated via update-history-master, not rebase-branches-to-master) that the standard 6 deep-flow runs already exercise via the explicit two-call sequence (update-history-master --yes, then rebase-branches-to-master). No additional case._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+❯ Commit it via LPLP style. Do not amend anything, no resets. Make sure your commit contains only the files and changes you did for this, as another agent (writing tests) might have changed files in the meantime, too.
+
+❯ Can you see my comments on the plan?
+
+❯ Here's my comments:
+
+1. > Repo variant 1.6 needs a second, genuinely different base/base merge
+   1. Yes, but this shall just be now -2 and now.
+
+❯ continued:
+###### 2
+> repo-variant 5/6's base/base merges are done as plain git merge --no-ff during test-fixture preparation (is_allowed_merge: true), not by running split.py — so they never carry an X-Base-History-Merge-Kind trailer (only merges _fold_base/recreate_base_merge themselves perform get that trailer)
+
+* Correct.
+###### 3
+> Step 7's "no new base/base merge on feature/test-eins" check therefore can't be a trailer lookup (there'd be zero matches even correctly) — it must count actual 2-parent merge commits reachable from feature/test-eins whose second parent traces into the pinned base branch history, and assert that count against what mane already had before feature/test-eins forked.
+
+* This we need to talk about, as I'm not following.
+
+Alright, that's all of them for now.
 
