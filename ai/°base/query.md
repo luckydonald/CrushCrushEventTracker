@@ -3440,3 +3440,7 @@ The plan shall have basically the same line as the later commit but in _current 
 > - [Raw log (`54026` chars, `52.9 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/917e0f49-ebe6-41d0-a097-306cf13c6346/tasks/a5b739b6ae2a0ff83.output)
 > - `3` tools, `27178` tokens, `0.436417 s`
 
+› Alright, if we have a `.by-issue` file, use that as prefix for commits: `f'{by_issue}: '` + `'[base] '`
+
+› Obviously both `[base] ` and `prefix: ` are optional.
+

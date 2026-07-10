@@ -85,12 +85,26 @@ def _is_inside_base_repo(subproject_root: Path) -> bool:
 
 
 def base_ai_commit_subject(msg: str) -> str:
-    """Prefix base-repo AI auto-commit subjects with ``[base] ``."""
-    if msg.startswith("[base] "):
-        return msg
-    if _is_inside_base_repo(_subproject_root()):
-        return f"[base] {msg}"
-    return msg
+    """Prefix AI auto-commit subjects with the issue key and base marker."""
+    subproject = _subproject_root()
+    git_root_text = _git_text("rev-parse", "--show-toplevel")
+    git_root = Path(git_root_text) if git_root_text else subproject
+    is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
+    ai_prefix = "ai/°base" if is_base else "ai"
+    issue = _read_by_issue(subproject, ai_prefix)
+
+    subject = msg
+    for _ in range(2):
+        if issue and subject.startswith(f"{issue}: "):
+            subject = subject[len(issue) + 2:]
+        if is_base and subject.startswith("[base] "):
+            subject = subject[len("[base] "):]
+
+    if is_base:
+        subject = f"[base] {subject}"
+    if issue:
+        subject = f"{issue}: {subject}"
+    return subject
 
 
 def running_copilot() -> bool:
