@@ -27,14 +27,12 @@ committed fixes to °split_lib won't show up here until they land on `base`.
 
 from __future__ import annotations
 
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _git_test_helpers import git  # noqa: E402
 import _git_split_e2e_fixtures as fixtures  # noqa: E402
 
 
@@ -49,13 +47,6 @@ class SmokeMatrixTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls._tmp.cleanup()
 
-    def _ensure_base_remote(self, repo_root: Path) -> None:
-        existing = subprocess.run(
-            ["git", "remote", "get-url", "base"], cwd=repo_root, capture_output=True
-        )
-        if existing.returncode != 0:
-            git(["remote", "add", "base", str(self.this_repo_root)], repo_root)
-
     def test_all_repo_and_branch_variant_combinations_run_cleanly(self) -> None:
         for repo_name, repo_builder in fixtures.REPO_VARIANTS:
             for branch_name, branch_applier in fixtures.BRANCH_VARIANTS:
@@ -65,7 +56,7 @@ class SmokeMatrixTests(unittest.TestCase):
                         manifest = repo_builder(repo_root, self.empty_remote)
                         branch_applier(repo_root, manifest)
 
-                        self._ensure_base_remote(repo_root)
+                        fixtures.ensure_base_remote(repo_root, self.this_repo_root)
 
                         result = fixtures.run_fake_curl(repo_root, this_repo_root=self.this_repo_root)
 

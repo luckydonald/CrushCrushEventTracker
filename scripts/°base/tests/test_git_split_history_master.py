@@ -191,6 +191,37 @@ class HistoryMasterTests(unittest.TestCase):
         content = git_ops.show_path_at(result["history_master"], "template.txt", self.repo_root).decode()
         self.assertEqual(content, "base template file")
 
+    def test_recreating_an_unrelated_histories_base_merge_still_allows_it(self) -> None:
+        # Regression: recreate_base_merge() must detect "still no shared
+        # ancestor" the same way _fold_base() does for the first fold --
+        # otherwise recreating an original unrelated-histories base-merge
+        # (e.g. after master advances and history-master gets replayed
+        # forward) fails with "refusing to merge unrelated histories" even
+        # though the ORIGINAL fold succeeded fine via that same flag.
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(base_repo_root, "template.txt", "base template file")
+        base_sha = git(["rev-parse", "HEAD"], base_repo_root)
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+        self.assertIsNone(git_ops.merge_base("master", base_sha, self.repo_root))
+
+        first_result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(first_result["status"], "ok")
+
+        # Advance master with an unrelated new commit -- history-master's
+        # base-merge now needs to be *recreated* on top of the replayed tip,
+        # still with no shared ancestor to base_sha.
+        make_commit(self.repo_root, "master2.txt", "master advances")
+
+        second_result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(second_result["status"], "ok")
+        content = git_ops.show_path_at(second_result["history_master"], "template.txt", self.repo_root).decode()
+        self.assertEqual(content, "base template file")
+
     def test_first_base_fold_auto_resolves_readme_and_gitignore(self) -> None:
         # master already has its own README.md/.gitignore before base is
         # ever folded in -- a first-time (non-recreation) fold has no prior

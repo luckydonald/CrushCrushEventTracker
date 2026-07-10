@@ -245,6 +245,6 @@ One `DeepFlowTests` case with `setUp` building a fresh repo per test (`tempfile.
 - [x] Part 1: README/.gitignore auto-resolve fix
 - [x] Part 1.5: sync_splits.py merge detection + interactive handling
 - [x] Part 2: shared e2e fixture module
-- [ ] Part 3: e2e smoke matrix test file *(in progress)*
-- [ ] Part 3: e2e deep flow test file
-- [ ] Run full verification suite
+- [x] Part 3: e2e smoke matrix test file
+- [x] Part 3: e2e deep flow test file
+- [x] Run full verification suite

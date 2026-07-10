@@ -114,7 +114,12 @@ def resolve_this_repo_root() -> Path:
     return Path(result.stdout.strip())
 
 
-def _ensure_base_remote(repo_root: Path, this_repo_root: Path) -> None:
+def ensure_base_remote(repo_root: Path, this_repo_root: Path | None = None) -> None:
+    """Make sure `repo_root` has a `base` remote pointed at this actual
+    repo's own path (never GitHub) -- a no-op if one already exists (e.g.
+    repo variants 4/5/6 already added one while building the fixture).
+    """
+    this_repo_root = this_repo_root or resolve_this_repo_root()
     existing = subprocess.run(
         ["git", "remote", "get-url", "base"], cwd=repo_root, capture_output=True
     )
@@ -130,7 +135,7 @@ def add_and_fetch_real_base_branch(repo_root: Path, *, this_repo_root: Path | No
     `base` branch keeps evolving during/after this work.
     """
     this_repo_root = this_repo_root or resolve_this_repo_root()
-    _ensure_base_remote(repo_root, this_repo_root)
+    ensure_base_remote(repo_root, this_repo_root)
     git(["fetch", "base", "base"], repo_root)
     return git(["rev-parse", "refs/remotes/base/base"], repo_root)
 

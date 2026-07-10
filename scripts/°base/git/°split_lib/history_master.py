@@ -338,7 +338,17 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
         )
 
     _checkout_scratch(onto, cwd)
-    result = _log_completed(git_ops.merge_no_commit(base_old_sha, cwd), label=f"merge (recreate) {base_old_sha}")
+    # Same detection _fold_base() already does for the original fold: the
+    # rebased `onto` may no longer share an ancestor with base_old_sha (e.g.
+    # `onto` now traces back through a fresh mane with no base/base content
+    # at all except via this one recreated merge) -- recreating it needs
+    # --allow-unrelated-histories again in that case, same as the first time.
+    unrelated = git_ops.merge_base(onto, base_old_sha, cwd) is None
+    merge_args = ["merge", "--no-commit", "--no-ff"]
+    if unrelated:
+        merge_args.append("--allow-unrelated-histories")
+    merge_args.append(base_old_sha)
+    result = _log_completed(_git(merge_args, cwd), label=f"merge (recreate) {base_old_sha}")
     if result.returncode != 0:
         conflicted = _conflicted_paths(cwd)
         if not conflicted:
