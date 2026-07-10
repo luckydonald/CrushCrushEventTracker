@@ -169,7 +169,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertFalse((repo / "ai" / "query.md").exists())
             self.assertEqual(last_subject(repo), "[base] ai: updated prompt")
 
-    def test_codex_prompt_in_base_repo_prefixes_by_issue_before_base_marker(self):
+    def test_codex_prompt_in_base_repo_prefixes_base_marker_before_by_issue(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"
             init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
@@ -186,7 +186,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 "› Capture this prompt\n\n",
             )
             self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
-            self.assertEqual(last_subject(repo), "BASE-123: [base] ai: updated prompt")
+            self.assertEqual(last_subject(repo), "[base] BASE-123: ai: updated prompt")
 
     def test_codex_prompt_in_base_repo_accepts_optional_existing_prefix_pieces(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -201,7 +201,22 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
 
             run_hook(repo, PROMPT_HOOK, {"prompt": "Capture this prompt"}, "codex")
 
-            self.assertEqual(last_subject(repo), "BASE-123: [base] ai: templated prompt")
+            self.assertEqual(last_subject(repo), "[base] BASE-123: ai: templated prompt")
+
+    def test_codex_prompt_in_base_repo_normalizes_reversed_existing_prefix_pieces(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            issue_file = repo / "ai" / "°base" / ".by-issue"
+            issue_file.parent.mkdir(parents=True)
+            issue_file.write_text("BASE-123\n", encoding="utf-8")
+            template = repo / "ai" / "commit-templates" / "prompt.md"
+            template.parent.mkdir(parents=True)
+            template.write_text("BASE-123: [base] ai: templated prompt", encoding="utf-8")
+
+            run_hook(repo, PROMPT_HOOK, {"prompt": "Capture this prompt"}, "codex")
+
+            self.assertEqual(last_subject(repo), "[base] BASE-123: ai: templated prompt")
 
     def test_codex_prompt_logs_plan_link_for_exact_forwarded_plan(self):
         with tempfile.TemporaryDirectory() as tmp:

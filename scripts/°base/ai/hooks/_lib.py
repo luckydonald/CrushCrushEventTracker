@@ -85,7 +85,7 @@ def _is_inside_base_repo(subproject_root: Path) -> bool:
 
 
 def base_ai_commit_subject(msg: str) -> str:
-    """Prefix AI auto-commit subjects with the issue key and base marker."""
+    """Prefix AI auto-commit subjects with the base marker and issue key."""
     subproject = _subproject_root()
     git_root_text = _git_text("rev-parse", "--show-toplevel")
     git_root = Path(git_root_text) if git_root_text else subproject
@@ -103,7 +103,10 @@ def base_ai_commit_subject(msg: str) -> str:
     if is_base:
         subject = f"[base] {subject}"
     if issue:
-        subject = f"{issue}: {subject}"
+        if is_base:
+            subject = f"[base] {issue}: {subject[len('[base] '):]}"
+        else:
+            subject = f"{issue}: {subject}"
     return subject
 
 

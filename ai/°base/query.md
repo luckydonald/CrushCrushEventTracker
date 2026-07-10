@@ -3444,3 +3444,7 @@ The plan shall have basically the same line as the later commit but in _current 
 
 › Obviously both `[base] ` and `prefix: ` are optional.
 
+› I misspoke, `[base] ` must come first (if needed).
+
+› Do not edit the original, commit as fix.
+
