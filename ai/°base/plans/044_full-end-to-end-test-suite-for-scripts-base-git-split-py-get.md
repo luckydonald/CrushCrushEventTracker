@@ -220,17 +220,22 @@ One `DeepFlowTests` case with `setUp` building a fresh repo per test (`tempfile.
 
 ## Critical files
 
-- `scripts/°base/git/°split_lib/history_master.py` — Part 1 fix
+- `scripts/°base/git/°split_lib/history_master.py` — Part 1 fix; also loses its private `_first_parent_chain_reverse` in favor of the shared `git_ops` version (Part 1.5)
 - `scripts/°base/tests/test_git_split_history_master.py` — Part 1 tests
+- `scripts/°base/git/°split_lib/git_ops.py` — Part 1.5: new `parents_of`, `rev_list_first_parent_reverse`
+- `scripts/°base/git/°split_lib/sync_splits.py` — Part 1.5: `UncleanMergeDetected`, first-parent replay walk
+- `scripts/°base/git/°split_lib/cli.py` — Part 1.5: interactive a/b/c/d handling, new `--unclean-merge` flag
+- `scripts/°base/tests/test_git_split_sync_splits.py` — Part 1.5 tests (existing file, extended)
 - `scripts/°base/tests/_git_test_helpers.py` — reused as-is (`git`, `make_commit`, `init_repo`)
 - `scripts/°base/tests/_git_split_e2e_fixtures.py` — new, Part 2
 - `scripts/°base/tests/test_git_split_e2e_smoke_matrix.py` — new, Part 3
 - `scripts/°base/tests/test_git_split_e2e_deep_flow.py` — new, Part 3
-- `scripts/°base/git/get-base.py`, `scripts/°base/git/°split_lib/{cli,sync_splits,rebase_to_master,branches,trailers,classify,git_ops}.py` — read/relied on, not modified
+- `scripts/°base/git/get-base.py`, `scripts/°base/git/°split_lib/{rebase_to_master,branches,trailers,classify}.py` — read/relied on, not modified
 
 ## Verification
 
 1. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_history_master -v` — confirm the two new Part-1 tests pass and no existing test regresses.
-2. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_deep_flow -v` — run first (narrower, faster feedback loop on the core trailer/rebase logic) before the full smoke matrix.
-3. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_smoke_matrix -v` — the 54-combo matrix; expect this to be the slowest file (54 real temp-repo builds + real subprocess-piped `get-base.py` runs each).
-4. Full suite: `uv run --project scripts/°base python -m unittest discover -s scripts/°base/tests -v`, confirming nothing else broke (in particular `test_get_base.py`'s mocked-`execvp` tests, unaffected by the new real-exec-based e2e tests).
+2. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_sync_splits -v` — confirm Part 1.5's new `UncleanMergeDetected`/a-b-d tests pass and existing sync-splits tests still pass (first-parent walk change must not affect any currently-passing linear-history scenario).
+3. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_deep_flow -v` — run before the full smoke matrix (narrower, faster feedback loop on the core trailer/rebase logic).
+4. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_smoke_matrix -v` — the 54-combo matrix; expect this to be the slowest file (54 real temp-repo builds + real subprocess-piped `get-base.py` runs each).
+5. Full suite: `uv run --project scripts/°base python -m unittest discover -s scripts/°base/tests -v`, confirming nothing else broke (in particular `test_get_base.py`'s mocked-`execvp` tests, unaffected by the new real-exec-based e2e tests).

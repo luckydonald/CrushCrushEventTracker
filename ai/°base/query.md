@@ -3758,3 +3758,68 @@ so you can later track/check references for the "history" branch and so on.
 
 Alright, that's all of them for now.
 
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Does that explanation for the step-7 "no new base/base merge" check make sense now, or is there still something off?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Step 7 check** (1/1) <kbd>Single Select</kbd><br>
+>> Does that explanation for the step-7 "no new base/base merge" check make sense now, or is there still something off?
+> - [ ] 1\. Makes sense, proceed
+>   - _The two checks (known base-merge shas still ancestors of feature/test-eins, plus unchanged merge-commit count) are clear and sufficient. Ready to finalize the plan._
+> - [ ] 2\. Still unclear / want to discuss more
+>   - _Something about this still doesn't click — explain further or reconsider the approach before finalizing._
+> - [x] 3\. _Type something:_
+>   - > But what if the user did merge the base into some UNCLEAN branch? It is allowed there after all. History should kinda follow suit. Later rebases should also restore those, merging in the same commit and solving the conflicts the same way.
+>
+> </details>
+>
+
+❯ <!-- attach -->
+> The problem: repo variants 5/6 merge base/base into mane before feature/test-eins even exists. Those merges are ordinary git merge --no-ff calls we run ourselves during fixture setup — they never get the X-Base-History-Merge-Kind trailer (only _fold_base/recreate_base_merge add that, and those only ever touch ai/history/{main}, never mane). So by the time sync-splits creates feature/test-eins off mane, those merge commits are just ordinary ancestry with no marker distinguishing them as "base merges" — a trailer lookup would find nothing, correctly, but that tells us nothing useful either.
+
+Yes, but the script must still work even if there's already `base/base` in the history before we started the splittidui - in that case rather warn that we can't remove the previous ones, but at least keep everything of this branch clean..
+
+(also I was too slow to answer the choice question)
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Which scenario does "warn that we can't remove the previous ones, but keep this branch clean" refer to?
+>> 2. You mentioned being too slow to answer the earlier scope question about merging base/base directly INTO an ai/UNCLEAN/* branch (a separate, bigger gap: sync_splits.py's replay walk isn't first-parent-only, so it would try to individually replay every commit of base/base's own history rather than treating the merge as one atomic step). How should that be scoped?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Which scenario** (1/2) <kbd>Single Select</kbd><br>
+>> Which scenario does "warn that we can't remove the previous ones, but keep this branch clean" refer to?
+> - [ ] 1\. history_master.py's own replay hitting an untagged old merge
+>   - _When update-history-master later needs to replay/rebase ai/history/{main}'s first-parent chain and encounters an old base/base merge that was done as plain prep (no X-Base-History-Merge-Kind trailer, so is_base_merge() doesn't recognize it), it currently tries to git cherry-pick that merge commit directly -- which git rejects outright (a merge commit needs -m <n>, plain cherry-pick errors immediately). This is a real crash-risk bug in the replay loop itself, not a design question -- fix: detect "this replay step is a merge git can't cherry-pick" and skip it with a warning (leaving it as inherited ancestry) instead of crashing, while everything the tool adds afterward stays correctly split._
+> - [x] 2\. feature/test-eins inheriting mane's pre-existing base merges
+>   - _When a clean branch (feature/test-eins) forks off mane and mane already has base/base merged in (ordinary ancestry, by design -- that's what adopting base via merge means for a main branch), the clean branch naturally inherits that ancestry too. This is expected/by-design, not a gap -- push_checks.py's clean-content policy only ever applied to a branch's own new commits, never to inherited history. No warning needed here since nothing is broken; my step-7 manifest-based check (already in the plan) already accounts for this correctly._
+> - [ ] 3\. _Type something._
+>
+>> **Unclean-merge scope** (2/2) <kbd>Single Select</kbd><br>
+>> You mentioned being too slow to answer the earlier scope question about merging base/base directly INTO an ai/UNCLEAN/* branch (a separate, bigger gap: sync_splits.py's replay walk isn't first-parent-only, so it would try to individually replay every commit of base/base's own history rather than treating the merge as one atomic step). How should that be scoped?
+> - [ ] 1\. Design + implement merge-aware sync-splits now (bigger)
+>   - _Treat this as in-scope: design how sync_splits.py detects a merge commit in the unclean branch's replay range, replays it as one atomic step onto both clean+history (not unrolling ancestry), and how rebase_to_master.py recreates it on rebase (reusing prior conflict resolution, mirroring history_master.recreate_base_merge). Becomes a third, substantial implementation part -- expect this plan to grow significantly._
+> - [ ] 2\. Defer it -- scope this test suite to the currently-supported case only
+>   - _Treat 'merge base/base directly into an UNCLEAN branch' as a known, separate gap for a later follow-up plan. For this task, don't construct that scenario in the test fixtures -- base/base only ever gets merged into mane itself (variants 1.4/1.5/1.6, which sync-splits never touches), keeping the current plan's scope intact._
+> - [ ] 3\. Add it as a documented negative/guard test only
+>   - _Don't implement merge-aware replay now, but add one small regression test asserting sync-splits' current behavior (whatever it turns out to be -- likely unrolling base's whole history flat, or erroring) when an UNCLEAN branch contains a merge, so the gap is visible and tracked without taking on the full implementation now._
+> - [x] 4\. _Type something:_
+>   - > Defer + Detact & Abort: Don't really implement it - but detect it. Instead of then doing fancy things, error. Give the user the choice to "fake" the merge - i.e. a  commit with all the metadata of the merge in the message, and all file changes contained, but not a "real" merge.
+b) attempt to merge it, hopefully there's no conflicts (lol likely there are - at least handle README and .gitignore etc. automatically) - failure returns to this question, without b)
+c) the user shall merge it (print merge command to that very commit), and wait for enter, then check for the merge to appear, else return to menu
+d) Abort (print revert instructions)
+>
+> </details>
+>
+
+❯ push
+
