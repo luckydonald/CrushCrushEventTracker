@@ -1383,6 +1383,77 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             message = run_git(repo, "log", "-1", "--pretty=%B").stdout
             self.assertIn("Deleted Memory: chained.md", message.splitlines())
 
+    def test_memory_session_start_content_mismatch_repo_wins(self):
+        """When both copies exist but diverge, the repo (git-tracked) copy is
+        authoritative: the untracked Claude source gets overwritten from the
+        repo, not the other way around, and nothing new is committed."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            src_file = self._seed_memory_pair(repo, home, "drift.md")
+            src_file.write_text("untracked local drift\n", encoding="utf-8")
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {"hook_event_name": "SessionStart"},
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertEqual(src_file.read_text(encoding="utf-8"), "drift.md content\n")
+            self.assertEqual(last_subject(repo), "seed drift.md")
+
+    def test_memory_session_start_warns_on_orphaned_repo_file(self):
+        """A repo memory file with no MEMORY.md entry should warn, not vanish
+        or get silently re-indexed."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            memory_dir = repo / "ai" / "°base" / "memory"
+            memory_dir.mkdir(parents=True)
+            (memory_dir / "MEMORY.md").write_text("(empty index)\n", encoding="utf-8")
+            (memory_dir / "orphan.md").write_text("nobody points at me\n", encoding="utf-8")
+            run_git(repo, "add", "ai")
+            run_git(repo, "commit", "-m", "seed orphaned memory")
+
+            result = run_hook(
+                repo,
+                MEMORY_HOOK,
+                {"hook_event_name": "SessionStart"},
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertIn("orphan.md", result.stderr)
+            self.assertIn("orphaned", result.stderr)
+
+    def test_memory_session_start_warns_on_dangling_index_link(self):
+        """A MEMORY.md line pointing at a file that doesn't exist should warn,
+        not be silently dropped or resurrect anything."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            memory_dir = repo / "ai" / "°base" / "memory"
+            memory_dir.mkdir(parents=True)
+            (memory_dir / "MEMORY.md").write_text(
+                "- [ghost](missing.md) — this file was never created.\n",
+                encoding="utf-8",
+            )
+            run_git(repo, "add", "ai")
+            run_git(repo, "commit", "-m", "seed dangling index entry")
+
+            result = run_hook(
+                repo,
+                MEMORY_HOOK,
+                {"hook_event_name": "SessionStart"},
+                extra_env={"HOME": str(home)},
+            )
+
+            self.assertIn("missing.md", result.stderr)
+            self.assertIn("dangling", result.stderr)
+
     # ------------------------------------------------------------------
     # save-plan: Stop false-positive and ExitPlanMode fixes
     # ------------------------------------------------------------------

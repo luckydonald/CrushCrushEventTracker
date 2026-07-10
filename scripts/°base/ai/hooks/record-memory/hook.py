@@ -178,7 +178,12 @@ def _unlink_file(path: Path) -> bool:
 def _sync_all(src_dir: Path, dst_dir: Path, dst_dir_rel: str) -> list[str]:
     """Sync memory files without treating a missing source as a delete.
 
-    Repo memory is the durable copy. A missing Claude source file is recreated
+    Repo memory is the durable copy, and it wins on content conflicts too: a
+    genuinely new Claude source file (no repo counterpart yet) still
+    propagates src -> dst, but once both sides exist, the Claude source has no
+    audit trail (unlike the repo's git history), so a diverging source is
+    treated as untracked drift and overwritten from the repo (dst -> src)
+    instead of being committed. A missing Claude source file is recreated
     from the repo file. A stale Claude source file is removed only when git
     history has an explicit `Deleted Memory: <name>.md` marker for that file.
     """
@@ -187,14 +192,16 @@ def _sync_all(src_dir: Path, dst_dir: Path, dst_dir_rel: str) -> list[str]:
     if src_dir.is_dir():
         for src in sorted(src_dir.glob("*.md")):
             src_names.add(src.name)
-            if (
-                not (dst_dir / src.name).exists()
-                and _is_marked_deleted(dst_dir_rel, src.name)
-            ):
-                _unlink_file(src)
+            dst = dst_dir / src.name
+            if not dst.exists():
+                if _is_marked_deleted(dst_dir_rel, src.name):
+                    _unlink_file(src)
+                    continue
+                if _sync_file(src, dst):
+                    changed.append(src.name)
                 continue
-            if _sync_file(src, dst_dir / src.name):
-                changed.append(src.name)
+            if not _same_inode(dst, src):
+                _sync_file(dst, src)
 
     if dst_dir.is_dir():
         for dst in sorted(dst_dir.glob("*.md")):
@@ -202,6 +209,37 @@ def _sync_all(src_dir: Path, dst_dir: Path, dst_dir_rel: str) -> list[str]:
                 continue
             _sync_file(dst, src_dir / dst.name)
     return changed
+
+
+_MEMORY_LINK_RE = re.compile(r"\(([^()\s]+\.md)\)")
+
+
+def _check_memory_index_consistency(dst_dir: Path) -> None:
+    """Warn (never auto-fix) when MEMORY.md's index and the files actually on
+    disk in ``dst_dir`` disagree: an orphaned file with no index entry, or an
+    index entry pointing at a file that no longer exists. Purely diagnostic —
+    inferring a deletion or resurrection from this mismatch is exactly the
+    accidental-loss failure mode `require_memory_delete_marker.py` exists to
+    prevent, so this only ever prints."""
+    memory_md = dst_dir / "MEMORY.md"
+    if not memory_md.is_file():
+        return
+    referenced = set(_MEMORY_LINK_RE.findall(memory_md.read_text(encoding="utf-8")))
+    on_disk = {p.name for p in dst_dir.glob("*.md") if p.name != "MEMORY.md"}
+
+    for name in sorted(on_disk - referenced):
+        print(
+            f"record-memory: {dst_dir / name} is orphaned -- not referenced by "
+            f"MEMORY.md. Add it back to the index or delete it properly via "
+            f"scripts/°base/ai/memory/delete.py.",
+            file=sys.stderr,
+        )
+    for name in sorted(referenced - on_disk):
+        print(
+            f"record-memory: MEMORY.md references {name}, which doesn't exist "
+            f"in {dst_dir} (dangling link).",
+            file=sys.stderr,
+        )
 
 
 def _commit(dst_dir_rel: str, names: list[str]) -> None:
@@ -398,6 +436,7 @@ def main() -> int:
                 memory_lib.delete_memory(
                     target.name, src_dir=src_dir, dst_dir=dst_dir, dst_dir_rel=dst_dir_rel
                 )
+            _check_memory_index_consistency(dst_dir)
             return 0
 
         raw = tool_input.get("file_path") or ""
@@ -410,6 +449,7 @@ def main() -> int:
             return 0
         if _sync_file(src_file, dst_dir / rel):
             _commit(dst_dir_rel, [str(rel)])
+        _check_memory_index_consistency(dst_dir)
         return 0
 
     # SessionStart (and any other event) — full catch-up sync.
@@ -418,6 +458,7 @@ def main() -> int:
     _uninstall_legacy_all(subproject, src_dir)
     changed = _sync_all(src_dir, dst_dir, dst_dir_rel)
     _commit(dst_dir_rel, changed)
+    _check_memory_index_consistency(dst_dir)
     return 0
 
 
