@@ -3518,3 +3518,27 @@ tree
 
 > › Implement the [Plan](./plans/043_log-direct-codex-shell-executions.md).
 
+❯ /plan Check why commit `121ab69c8e849bb837fd5a89b66f5e460412bb36`(via ai agent hook) changed the `MEMORY.md` but not deleted the referenced files?
+❯ Question answered.
+> <details><summary>
+>
+>> 1. Now that we know why (see explanation below), what should the plan do about the two orphaned memory files (feedback_commit_prefix_ssp_tag.md, feedback_lib_naming_convention.md)?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Orphan fix** (1/1) <kbd>Single Select</kbd><br>
+>> Now that we know why (see explanation below), what should the plan do about the two orphaned memory files (feedback_commit_prefix_ssp_tag.md, feedback_lib_naming_convention.md)?
+> - [ ] 1\. Restore MEMORY.md index lines (Recommended)
+>   - _Both files still look valid and relevant (neither reads as stale/superseded). Just re-add their two lines to MEMORY.md so they're indexed again — no content changes to the memory files themselves._
+> - [ ] 2\. Properly delete them
+>   - _Run the sanctioned flow (scripts/°base/ai/memory/delete.py) to actually remove both the repo file and Claude source file, with a correct `Deleted Memory: <name>` marker commit — use this if you actually intended to forget them._
+> - [ ] 3\. Leave as-is, just wanted the explanation
+>   - _No file changes — you just wanted to understand why the commit behaved this way, not fix anything right now._
+> - [x] 4\. _Type something:_
+>   - > Why did claude remove the lines? Did it try to delete the original files, too? Check the last entries of `ai/°base/output/debug/` (big folder!), and see if you can figure out from the hook payloads.
+>
+> </details>
+>
+
