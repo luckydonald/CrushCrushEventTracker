@@ -191,6 +191,74 @@ class HistoryMasterTests(unittest.TestCase):
         content = git_ops.show_path_at(result["history_master"], "template.txt", self.repo_root).decode()
         self.assertEqual(content, "base template file")
 
+    def test_first_base_fold_auto_resolves_readme_and_gitignore(self) -> None:
+        # master already has its own README.md/.gitignore before base is
+        # ever folded in -- a first-time (non-recreation) fold has no prior
+        # resolution to reuse, so this must fall back to auto-resolving in
+        # favor of base's own content for exactly these two paths.
+        make_commit(self.repo_root, "README.md", "consumer readme", content="consumer readme\n")
+        make_commit(self.repo_root, ".gitignore", "consumer gitignore", content="*.consumer\n")
+
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(base_repo_root, "README.md", "base readme", content="base readme\n")
+        make_commit(base_repo_root, ".gitignore", "base gitignore", content="*.base\n")
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["base_merge"], result["history_master"])
+        readme = git_ops.show_path_at(result["history_master"], "README.md", self.repo_root).decode()
+        gitignore = git_ops.show_path_at(result["history_master"], ".gitignore", self.repo_root).decode()
+        self.assertEqual(readme, "base readme\n")
+        self.assertEqual(gitignore, "*.base\n")
+
+    def test_first_base_fold_still_conflicts_on_other_paths_while_auto_resolving_readme(self) -> None:
+        # README.md/.gitignore auto-resolve in favor of base, but a genuine
+        # conflict on some other path must still surface for manual
+        # resolution -- the auto-resolve is scoped to exactly those two
+        # paths, not a blanket "prefer theirs".
+        make_commit(self.repo_root, "README.md", "consumer readme", content="consumer readme\n")
+        make_commit(self.repo_root, ".gitignore", "consumer gitignore", content="*.consumer\n")
+        make_commit(self.repo_root, "shared.txt", "consumer shared file", content="consumer version\n")
+
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(base_repo_root, "README.md", "base readme", content="base readme\n")
+        make_commit(base_repo_root, ".gitignore", "base gitignore", content="*.base\n")
+        make_commit(base_repo_root, "shared.txt", "base shared file", content="base version\n")
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "conflict")
+
+        # README.md/.gitignore were already auto-resolved and staged; only
+        # shared.txt should remain as an unresolved conflict.
+        conflicted = git(["diff", "--name-only", "--diff-filter=U"], self.repo_root).splitlines()
+        self.assertEqual(conflicted, ["shared.txt"])
+
+        # Resolve the remaining conflict by hand and continue.
+        (self.repo_root / "shared.txt").write_text("resolved version\n")
+        git(["add", "shared.txt"], self.repo_root)
+        result = history_master.update_history_master(
+            repo_root=self.repo_root, main_branch="master", continue_=True
+        )
+        self.assertEqual(result["status"], "ok")
+
+        readme = git_ops.show_path_at(result["history_master"], "README.md", self.repo_root).decode()
+        gitignore = git_ops.show_path_at(result["history_master"], ".gitignore", self.repo_root).decode()
+        self.assertEqual(readme, "base readme\n")
+        self.assertEqual(gitignore, "*.base\n")
+
     def test_master_is_never_mutated_by_a_base_merge(self) -> None:
         # Regression test for the invariant that adopting/updating base can
         # never touch `master` (and therefore never any clean branch) --

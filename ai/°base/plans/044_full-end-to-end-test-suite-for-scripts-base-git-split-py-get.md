@@ -239,3 +239,12 @@ One `DeepFlowTests` case with `setUp` building a fresh repo per test (`tempfile.
 3. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_deep_flow -v` — run before the full smoke matrix (narrower, faster feedback loop on the core trailer/rebase logic).
 4. `uv run --project scripts/°base python -m unittest scripts.°base.tests.test_git_split_e2e_smoke_matrix -v` — the 54-combo matrix; expect this to be the slowest file (54 real temp-repo builds + real subprocess-piped `get-base.py` runs each).
 5. Full suite: `uv run --project scripts/°base python -m unittest discover -s scripts/°base/tests -v`, confirming nothing else broke (in particular `test_get_base.py`'s mocked-`execvp` tests, unaffected by the new real-exec-based e2e tests).
+
+## Todos
+
+- [x] Part 1: README/.gitignore auto-resolve fix
+- [x] Part 1.5: sync_splits.py merge detection + interactive handling
+- [x] Part 2: shared e2e fixture module
+- [ ] Part 3: e2e smoke matrix test file *(in progress)*
+- [ ] Part 3: e2e deep flow test file
+- [ ] Run full verification suite

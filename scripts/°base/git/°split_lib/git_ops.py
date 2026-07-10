@@ -111,6 +111,41 @@ def rev_list_reverse(range_expr: str, cwd: Path) -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
+def rev_list_first_parent_reverse(range_expr: str, cwd: Path) -> list[str]:
+    """`git rev-list --first-parent --reverse <range_expr>`, oldest first.
+
+    Deliberately first-parent-only: a plain (all-parents) rev-list walking a
+    range that includes a merge commit would also walk into the merge's
+    *second* parent's own ancestry -- for a merge of e.g. `base/base`, that
+    means every one of base's own historical commits, misclassified as
+    ordinary standalone commits belonging to this range. Callers that need to
+    replay/rebuild a branch's own commit-by-commit history (as opposed to
+    resolving a merge wholesale) should walk this way instead of
+    `rev_list_reverse`.
+    """
+    result = subprocess.run(
+        ["git", "rev-list", "--first-parent", "--reverse", range_expr],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def parents_of(sha: str, cwd: Path) -> list[str]:
+    """Parent shas of `sha`, in order (empty list for a root commit)."""
+    result = subprocess.run(
+        ["git", "rev-list", "--parents", "-n", "1", sha],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    tokens = result.stdout.split()
+    return tokens[1:]
+
+
 def is_ancestor(ancestor_sha: str, descendant_sha: str, cwd: Path) -> bool:
     result = subprocess.run(
         ["git", "merge-base", "--is-ancestor", ancestor_sha, descendant_sha],

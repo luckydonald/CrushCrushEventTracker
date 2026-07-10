@@ -19,6 +19,7 @@ trailers = importlib.import_module("°split_lib.trailers")
 sync_splits = importlib.import_module("°split_lib.sync_splits")
 sync_unclean = importlib.import_module("°split_lib.sync_unclean")
 bootstrap = importlib.import_module("°split_lib.bootstrap")
+cli = importlib.import_module("°split_lib.cli")
 
 
 class SyncSplitsTestBase(unittest.TestCase):
@@ -374,6 +375,184 @@ class DiscoverUncleanBranchesTests(SyncSplitsTestBase):
 
         found = sorted(sync_splits.discover_unclean_branches(self.repo))
         self.assertEqual(found, ["feature/one", "feature/two"])
+
+
+class UncleanMergeDetectionTests(SyncSplitsTestBase):
+    """A merge commit landing directly on ai/UNCLEAN/* (e.g. someone merges
+    base/base straight into it, which is allowed there) must never be
+    silently unrolled into its second parent's whole ancestry -- it must be
+    detected and handed to the caller to decide how to resolve.
+    """
+
+    def _make_merge_commit_on_unclean(self, base_branch: str, *, side_files: dict[str, str]) -> tuple[str, str]:
+        self.make_unclean(base_branch)
+        make_commit(self.repo, "src/app.py", "add app code")
+
+        git(["checkout", "master"], self.repo)
+        git(["checkout", "-b", "side-branch"], self.repo)
+        for filename, content in side_files.items():
+            make_commit(self.repo, filename, f"side: add {filename}", content=content)
+        second_parent_sha = git(["rev-parse", "HEAD"], self.repo)
+
+        git(["checkout", branches.unclean_name(base_branch)], self.repo)
+        git(["merge", "--no-ff", "--no-edit", "side-branch"], self.repo)
+        merge_sha = git(["rev-parse", "HEAD"], self.repo)
+        return merge_sha, second_parent_sha
+
+    def test_merge_commit_raises_instead_of_unrolling_ancestry(self):
+        merge_sha, second_parent_sha = self._make_merge_commit_on_unclean(
+            "feature/x", side_files={"docs/extra.txt": "hi\n"}
+        )
+
+        with self.assertRaises(sync_splits.UncleanMergeDetected) as ctx:
+            sync_splits.sync_branch("feature/x", repo_root=self.repo, main_branch="master")
+
+        self.assertEqual(ctx.exception.sha, merge_sha)
+        self.assertEqual(ctx.exception.target, "clean")
+        self.assertIn(second_parent_sha, ctx.exception.parents)
+
+        # The one ordinary code commit before the merge should have landed
+        # (partial progress preserved), but nothing from the merge itself --
+        # in particular, none of second_parent_sha's own ancestry should
+        # have been unrolled/treated as standalone commits.
+        clean_tip = git_ops.rev_parse("feature/x", self.repo)
+        clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
+        app_code_sha = git_ops.parents_of(merge_sha, self.repo)[0]
+        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [app_code_sha])
+
+    def test_fake_merges_flattens_merge_into_a_single_parent_commit(self):
+        merge_sha, second_parent_sha = self._make_merge_commit_on_unclean(
+            "feature/x", side_files={"docs/extra.txt": "hi\n"}
+        )
+
+        result = sync_splits.sync_branch(
+            "feature/x", repo_root=self.repo, main_branch="master", fake_merges=True
+        )
+        self.assertGreater(result.clean_commits_created, 0)
+
+        clean_tip = git_ops.rev_parse("feature/x", self.repo)
+        parents = git_ops.parents_of(clean_tip, self.repo)
+        self.assertEqual(len(parents), 1, "fake-merge commit must be single-parent, not a real merge")
+
+        clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
+        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [merge_sha])
+        self.assertIn(sync_splits.ORIGINAL_MERGE_PARENTS_TRAILER, clean_trailers)
+
+        clean_paths = git(["ls-tree", "-r", "--name-only", clean_tip], self.repo).splitlines()
+        self.assertIn("docs/extra.txt", clean_paths)
+
+
+class BuildFilteredMergeCommitTests(SyncSplitsTestBase):
+    def test_real_merge_auto_resolves_readme_conflict(self):
+        shared_sha = git(["rev-parse", "master"], self.repo)
+
+        # clean_onto: consumer's own change to README.md, diverging from
+        # shared_sha.
+        git(["checkout", "-b", "feature/x"], self.repo)
+        make_commit(self.repo, "README.md", "consumer readme change", content="consumer readme\n")
+        clean_onto = git(["rev-parse", "HEAD"], self.repo)
+
+        # side-branch: an independent change to the SAME path, also
+        # diverging from shared_sha -- guarantees a real README.md conflict.
+        git(["checkout", shared_sha], self.repo)
+        git(["checkout", "-b", "side-branch"], self.repo)
+        make_commit(self.repo, "README.md", "side readme change", content="side readme\n")
+        make_commit(self.repo, "src/feature.py", "side: add feature code")
+        second_parent_tip = git(["rev-parse", "HEAD"], self.repo)
+
+        new_sha = sync_splits.build_filtered_merge_commit(
+            clean_onto,
+            second_parent_tip,
+            second_parent_tip,
+            "mixed",
+            keep=lambda p: not classify.is_ai_base_path(p),
+            cwd=self.repo,
+        )
+
+        self.assertIsNotNone(new_sha)
+        parents = git_ops.parents_of(new_sha, self.repo)
+        self.assertEqual(set(parents), {clean_onto, second_parent_tip})
+
+        readme = git_ops.show_path_at(new_sha, "README.md", self.repo).decode()
+        self.assertEqual(readme, "side readme\n")
+
+        # The checkout must be restored to whatever was checked out before.
+        self.assertEqual(git(["branch", "--show-current"], self.repo), "side-branch")
+
+    def test_real_merge_returns_none_on_genuine_conflict(self):
+        shared_sha = git(["rev-parse", "master"], self.repo)
+
+        git(["checkout", "-b", "feature/x"], self.repo)
+        make_commit(self.repo, "shared.txt", "consumer shared", content="consumer version\n")
+        clean_onto = git(["rev-parse", "HEAD"], self.repo)
+
+        git(["checkout", shared_sha], self.repo)
+        git(["checkout", "-b", "side-branch"], self.repo)
+        make_commit(self.repo, "shared.txt", "side shared", content="side version\n")
+        second_parent_sha = git(["rev-parse", "HEAD"], self.repo)
+
+        new_sha = sync_splits.build_filtered_merge_commit(
+            clean_onto,
+            second_parent_sha,
+            second_parent_sha,
+            "mixed",
+            keep=lambda p: not classify.is_ai_base_path(p),
+            cwd=self.repo,
+        )
+
+        self.assertIsNone(new_sha)
+        # No merge should be left in progress, and the checkout restored.
+        status = git(["status", "--porcelain"], self.repo)
+        self.assertEqual(status, "")
+        self.assertEqual(git(["branch", "--show-current"], self.repo), "side-branch")
+
+
+class UncleanMergeCliFlagTests(SyncSplitsTestBase):
+    """End-to-end coverage of the non-interactive `--unclean-merge` flag
+    (the interactive a/b/c menu itself needs a simulated tty/input() and is
+    covered at the sync_splits.py unit level above instead)."""
+
+    def _make_merge_commit_on_unclean(self, base_branch: str, *, side_files: dict[str, str]) -> str:
+        self.make_unclean(base_branch)
+        make_commit(self.repo, "src/app.py", "add app code")
+
+        git(["checkout", "master"], self.repo)
+        git(["checkout", "-b", "side-branch"], self.repo)
+        for filename, content in side_files.items():
+            make_commit(self.repo, filename, f"side: add {filename}", content=content)
+
+        git(["checkout", branches.unclean_name(base_branch)], self.repo)
+        git(["merge", "--no-ff", "--no-edit", "side-branch"], self.repo)
+        return git(["rev-parse", "HEAD"], self.repo)
+
+    def test_unclean_merge_fake_flag_completes_the_sync(self):
+        self._make_merge_commit_on_unclean("feature/x", side_files={"docs/extra.txt": "hi\n"})
+
+        code = cli.main([
+            "--repo-root", str(self.repo),
+            "sync-splits", "feature/x", "--direction=to-clean-history", "--unclean-merge=fake",
+        ])
+        self.assertEqual(code, 0)
+
+        clean_tip = git_ops.rev_parse("feature/x", self.repo)
+        self.assertEqual(len(git_ops.parents_of(clean_tip, self.repo)), 1)
+        clean_paths = git(["ls-tree", "-r", "--name-only", clean_tip], self.repo).splitlines()
+        self.assertIn("docs/extra.txt", clean_paths)
+
+    def test_unclean_merge_abort_flag_leaves_partial_progress_and_fails(self):
+        self._make_merge_commit_on_unclean("feature/x", side_files={"docs/extra.txt": "hi\n"})
+
+        code = cli.main([
+            "--repo-root", str(self.repo),
+            "sync-splits", "feature/x", "--direction=to-clean-history", "--unclean-merge=abort",
+        ])
+        self.assertEqual(code, 1)
+
+        # The code commit before the merge should still have landed.
+        clean_tip = git_ops.rev_parse("feature/x", self.repo)
+        clean_paths = git(["ls-tree", "-r", "--name-only", clean_tip], self.repo).splitlines()
+        self.assertIn("src/app.py", clean_paths)
+        self.assertNotIn("docs/extra.txt", clean_paths)
 
 
 if __name__ == "__main__":

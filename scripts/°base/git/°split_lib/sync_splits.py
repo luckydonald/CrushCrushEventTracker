@@ -12,6 +12,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 from . import branches, classify, git_ops, identity, trailers, tree_ops
 from . import sync_unclean
@@ -19,6 +20,33 @@ from . import sync_unclean
 SOURCE_TRAILER = "X-Base-Split-Source"
 KIND_TRAILER = "X-Base-Split-Kind"
 COUNTERPART_TREE_TRAILER = "X-Base-Split-Counterpart-Tree"
+ORIGINAL_MERGE_PARENTS_TRAILER = "X-Base-Split-Original-Merge-Parents"
+
+# Mirrors history_master.FIRST_FOLD_AUTO_RESOLVE_PATHS: these two files
+# predictably differ between any two independently-maintained trees, so a
+# real (non-flattened) merge attempt (see build_filtered_merge_commit)
+# auto-resolves them in favor of the incoming side rather than surfacing a
+# conflict.
+KNOWN_NOISY_MERGE_PATHS = ("README.md", ".gitignore")
+
+
+class UncleanMergeDetected(RuntimeError):
+    """A commit in the unclean branch's replay range is a merge commit (2+
+    parents) -- sync-splits doesn't guess how to split a merge automatically;
+    the CLI layer decides (fake/attempt-real-merge/manual/abort) instead.
+
+    `target` is "clean" or "history" -- which pass (and therefore which
+    output ref) hit the merge, since the two passes walk independently and a
+    resolution for one doesn't necessarily resolve the other.
+    """
+
+    def __init__(self, sha: str, parents: list[str], target: str) -> None:
+        super().__init__(
+            f"{sha} is a merge commit ({len(parents)} parents); cannot auto-split onto {target}."
+        )
+        self.sha = sha
+        self.parents = parents
+        self.target = target
 
 
 def find_last_synced_source(target_ref: str, cwd: Path) -> str | None:
@@ -69,14 +97,21 @@ def commits_to_replay(
     lower_bound_ref: str,
     cwd: Path,
 ) -> list[str]:
-    """Commits on `unclean_ref` still needing replay, oldest first."""
+    """Commits on `unclean_ref` still needing replay, oldest first.
+
+    Walked first-parent-only (see git_ops.rev_list_first_parent_reverse):
+    `unclean_ref` is allowed to contain a merge commit (e.g. someone merges
+    `base/base` straight into it), and a plain range walk would otherwise
+    also pull in that merge's entire second-parent ancestry as if each of
+    those commits belonged to this branch's own history.
+    """
     if last_synced_source is not None:
-        return git_ops.rev_list_reverse(f"{last_synced_source}..{unclean_ref}", cwd)
+        return git_ops.rev_list_first_parent_reverse(f"{last_synced_source}..{unclean_ref}", cwd)
 
     base = git_ops.merge_base(unclean_ref, lower_bound_ref, cwd)
     if base is None:
-        return git_ops.rev_list_reverse(unclean_ref, cwd)
-    return git_ops.rev_list_reverse(f"{base}..{unclean_ref}", cwd)
+        return git_ops.rev_list_first_parent_reverse(unclean_ref, cwd)
+    return git_ops.rev_list_first_parent_reverse(f"{base}..{unclean_ref}", cwd)
 
 
 def ensure_branch_started(ref: str, base_ref: str, cwd: Path, *, dry_run: bool = False) -> str:
@@ -170,7 +205,17 @@ def sync_branch(
     repo_root: Path,
     main_branch: str,
     dry_run: bool = False,
+    fake_merges: bool = False,
 ) -> SyncSplitsResult:
+    """`fake_merges`: when a source commit in `ai/UNCLEAN/*`'s replay range is
+    itself a merge commit (2+ parents), the default is to raise
+    `UncleanMergeDetected` rather than guess how to split it -- the CLI layer
+    then decides. Passing `fake_merges=True` instead processes it exactly
+    like any ordinary commit: `tree_ops.build_filtered_tree` already diffs
+    any commit (merge or not) against only its first parent, so the merge
+    lands as one flattened single-parent split commit containing its net
+    changes, tagged with `ORIGINAL_MERGE_PARENTS_TRAILER` for provenance.
+    """
     cwd = repo_root
     unclean_ref = branches.unclean_name(base_branch)
     clean_ref = base_branch
@@ -198,6 +243,12 @@ def sync_branch(
     clean_commits_skipped_ai_only = 0
 
     for source_sha in clean_source_shas:
+        parents = git_ops.parents_of(source_sha, cwd)
+        if len(parents) > 1 and not fake_merges:
+            if not dry_run and clean_commits_created > 0:
+                git_ops.move_ref(clean_ref, clean_tip, None, cwd)
+            raise UncleanMergeDetected(source_sha, parents, "clean")
+
         cls = classify.classify_commit(
             source_sha,
             git_ops.subject_for_commit(source_sha, cwd),
@@ -217,7 +268,8 @@ def sync_branch(
         )
         source_to_clean_tree[source_sha] = clean_tree
 
-        new_clean_tip = make_split_commit(clean_tip, clean_tree, source_sha, kind, {}, cwd)
+        extra_trailers = {ORIGINAL_MERGE_PARENTS_TRAILER: " ".join(parents)} if len(parents) > 1 else {}
+        new_clean_tip = make_split_commit(clean_tip, clean_tree, source_sha, kind, extra_trailers, cwd)
         clean_tip = new_clean_tip
         clean_commits_created += 1
 
@@ -233,6 +285,12 @@ def sync_branch(
     history_commits_created = 0
 
     for source_sha in history_source_shas:
+        parents = git_ops.parents_of(source_sha, cwd)
+        if len(parents) > 1 and not fake_merges:
+            if not dry_run and history_commits_created > 0:
+                git_ops.move_ref(history_ref, history_tip, None, cwd)
+            raise UncleanMergeDetected(source_sha, parents, "history")
+
         cls = classify.classify_commit(
             source_sha,
             git_ops.subject_for_commit(source_sha, cwd),
@@ -251,6 +309,8 @@ def sync_branch(
         counterpart_tree = source_to_clean_tree.get(source_sha)
         if counterpart_tree is not None:
             extra_trailers[COUNTERPART_TREE_TRAILER] = counterpart_tree
+        if len(parents) > 1:
+            extra_trailers[ORIGINAL_MERGE_PARENTS_TRAILER] = " ".join(parents)
 
         new_history_tip = make_split_commit(history_tip, history_tree, source_sha, kind, extra_trailers, cwd)
         history_tip = new_history_tip
@@ -267,6 +327,112 @@ def sync_branch(
         history_ref=history_ref,
         history_commits_created=history_commits_created,
     )
+
+
+def _conflicted_paths(cwd: Path) -> list[str]:
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=U"], cwd=cwd, capture_output=True, text=True, check=True
+    )
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def _current_checkout(cwd: Path) -> str | None:
+    result = subprocess.run(
+        ["git", "symbolic-ref", "--short", "-q", "HEAD"], cwd=cwd, capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def _cleanup_merge_scratch(cwd: Path, scratch_branch: str, original_checkout: str | None) -> None:
+    if original_checkout is not None:
+        subprocess.run(["git", "checkout", original_checkout], cwd=cwd, capture_output=True)
+    else:
+        subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=cwd, capture_output=True)
+    subprocess.run(["git", "update-ref", "-d", f"refs/heads/{scratch_branch}"], cwd=cwd, capture_output=True)
+
+
+def build_filtered_merge_commit(
+    onto: str,
+    second_parent_sha: str,
+    source_sha: str,
+    kind: str,
+    keep: Callable[[str], bool],
+    cwd: Path,
+) -> str | None:
+    """Attempt a REAL 2-parent merge of `second_parent_sha` onto `onto`,
+    filtered so only paths satisfying `keep` survive in the result -- even a
+    cleanly-merging path gets stripped if `keep` rejects it (a clean-branch
+    attempt must never end up with AI content just because the incoming side
+    didn't conflict on it). `KNOWN_NOISY_MERGE_PATHS` conflicts auto-resolve
+    in favor of `second_parent_sha`'s content (mirrors
+    history_master.py's first-fold auto-resolve). Any OTHER genuine conflict
+    aborts the attempt (returns None) so the caller can offer other options
+    instead. Whatever was checked out before this call is restored afterward,
+    success or failure -- this never leaves the caller's repo detached.
+    """
+    original_checkout = _current_checkout(cwd)
+    scratch_branch = "_base_split_merge_scratch"
+    subprocess.run(["git", "checkout", "--detach", onto], cwd=cwd, capture_output=True, check=True)
+    subprocess.run(["git", "update-ref", "-d", f"refs/heads/{scratch_branch}"], cwd=cwd, capture_output=True)
+    git_ops.create_branch(scratch_branch, onto, cwd)
+    git_ops.checkout_branch(scratch_branch, cwd)
+
+    merge_result = git_ops.merge_no_commit(second_parent_sha, cwd)
+    if merge_result.returncode != 0:
+        conflicted = _conflicted_paths(cwd)
+        if not conflicted:
+            git_ops.merge_abort(cwd)
+            _cleanup_merge_scratch(cwd, scratch_branch, original_checkout)
+            return None
+        remaining: list[str] = []
+        for path in conflicted:
+            if path in KNOWN_NOISY_MERGE_PATHS:
+                content = git_ops.show_path_at(second_parent_sha, path, cwd)
+                target = cwd / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
+                subprocess.run(["git", "add", "--", path], cwd=cwd, check=True)
+            else:
+                remaining.append(path)
+        if remaining:
+            git_ops.merge_abort(cwd)
+            _cleanup_merge_scratch(cwd, scratch_branch, original_checkout)
+            return None
+
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=cwd, capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    for path in tracked:
+        if not keep(path):
+            subprocess.run(["git", "rm", "-q", "--cached", "--", path], cwd=cwd, capture_output=True, check=True)
+            target = cwd / path
+            if target.exists():
+                target.unlink()
+
+    tree = subprocess.run(["git", "write-tree"], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
+    author_name, author_email, author_date = _author_info(source_sha, cwd)
+    trailer_values = {
+        SOURCE_TRAILER: source_sha,
+        KIND_TRAILER: kind,
+        ORIGINAL_MERGE_PARENTS_TRAILER: " ".join(git_ops.parents_of(source_sha, cwd)),
+    }
+    message = trailers.write_trailers(git_ops.commit_message(source_sha, cwd), trailer_values, cwd)
+    new_sha = git_ops.commit_tree(
+        tree,
+        [onto, second_parent_sha],
+        message,
+        cwd,
+        author_name=author_name,
+        author_email=author_email,
+        author_date=author_date,
+        committer_name=identity.BOT_NAME,
+        committer_email=identity.BOT_EMAIL,
+        committer_date=_committer_date_now(),
+    )
+    _cleanup_merge_scratch(cwd, scratch_branch, original_checkout)
+    return new_sha
 
 
 def discover_unclean_branches(cwd: Path) -> list[str]:

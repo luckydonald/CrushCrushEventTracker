@@ -34,6 +34,11 @@ SCRATCH_BRANCH = "_base_split_scratch"
 SCRATCH_REF = f"refs/heads/{SCRATCH_BRANCH}"
 BASE_REMOTE_REF = "refs/remotes/base/base"
 
+# Paths auto-resolved (in favor of base_sha's content) when a first-time
+# base/base fold conflicts on them -- see _fold_base(). Top-level, exact
+# match only.
+FIRST_FOLD_AUTO_RESOLVE_PATHS = ("README.md", ".gitignore")
+
 # Fixed name (not `logging.getLogger(__name__)`) so cli.py can attach handlers
 # to exactly this logger without needing to know this module's dotted path
 # (which, thanks to the `°split_lib` package name, is awkward to spell out).
@@ -117,28 +122,6 @@ def _log_completed(result: subprocess.CompletedProcess, *, label: str | None = N
 
 def _head_sha(cwd: Path) -> str:
     return _git(["rev-parse", "HEAD"], cwd, check=True).stdout.strip()
-
-
-def _first_parent_chain_reverse(range_expr: str, cwd: Path) -> list[str]:
-    """`git rev-list --first-parent --reverse <range_expr>`.
-
-    Used specifically for walking history-master's *own* previously-added
-    commits when replaying them onto a moved master: history-master's base-
-    merge commits have a second parent (base/base's tip) that must NOT be
-    treated as an independent commit needing its own replay -- it's handled
-    wholesale by recreate_base_merge() re-merging against the recorded
-    X-Base-History-Merge-Sha trailer instead. A plain (all-parents) rev-list
-    would otherwise walk into that second-parent side and misclassify its
-    commits as ordinary standalone commits to cherry-pick.
-    """
-    result = subprocess.run(
-        ["git", "rev-list", "--first-parent", "--reverse", range_expr],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return [line for line in result.stdout.splitlines() if line]
 
 
 def _delete_ref(ref: str, cwd: Path) -> None:
@@ -388,6 +371,28 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
     return new_sha
 
 
+def _auto_resolve_first_fold_conflicts(base_sha: str, conflicted: list[str], cwd: Path) -> set[str]:
+    """Auto-resolve base_sha's own README.md/.gitignore in a first-time (non-
+    recreation) base/base fold, mirroring recreate_base_merge's per-path
+    blob-reuse mechanism -- but sourcing content from base_sha (the incoming
+    tip) rather than a prior resolved merge, since a first-time fold has no
+    prior resolution to reuse. Returns the subset of `conflicted` actually
+    resolved (and staged via `git add`); everything else is left untouched so
+    genuine conflicts still surface normally.
+    """
+    resolved: set[str] = set()
+    for path in conflicted:
+        if path not in FIRST_FOLD_AUTO_RESOLVE_PATHS:
+            continue
+        content = git_ops.show_path_at(base_sha, path, cwd)
+        target = cwd / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+        _git(["add", "--", path], cwd, check=True)
+        resolved.add(path)
+    return resolved
+
+
 def _complete_base_fold(base_sha: str, cwd: Path) -> str:
     new_sha = _finish_merge_commit(cwd)
     new_message = trailers.write_trailers(
@@ -429,7 +434,10 @@ def _fold_base(base_sha: str, onto: str, cwd: Path) -> str:
             git_ops.merge_abort(cwd)
             _cleanup_scratch(cwd)
             raise HistoryMasterError(f"merge of {base_sha} onto {onto} failed: {result.stderr}")
-        raise MergeConflict(base_sha, onto, result.stderr)
+        auto_resolved = _auto_resolve_first_fold_conflicts(base_sha, conflicted, cwd)
+        remaining = [path for path in conflicted if path not in auto_resolved]
+        if remaining:
+            raise MergeConflict(base_sha, onto, result.stderr)
     return _complete_base_fold(base_sha, cwd)
 
 
@@ -578,7 +586,13 @@ def _build_plan(
         else:
             replay_start_tip = master_tip
             steps = []
-            for sha in _first_parent_chain_reverse(f"{old_master_sha}..{old_history_sha}", cwd):
+            # First-parent only (git_ops.rev_list_first_parent_reverse): a
+            # base-merge commit's second parent is base/base's own tip,
+            # which must NOT be treated as an independent commit needing its
+            # own replay -- it's handled wholesale by recreate_base_merge()
+            # instead, keyed off the recorded X-Base-History-Merge-Sha
+            # trailer.
+            for sha in git_ops.rev_list_first_parent_reverse(f"{old_master_sha}..{old_history_sha}", cwd):
                 if is_base_merge(sha, cwd):
                     steps.append({"kind": "base_merge", "sha": sha})
                 else:

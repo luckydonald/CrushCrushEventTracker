@@ -174,7 +174,19 @@ def auto_argv(repo_root: Path, worktree: Path) -> list[str] | None:
         return argv
 
     # UNCLEAN or non-master HISTORY: both mean "push my latest commits
-    # forward into clean+history for this branch".
+    # forward into clean+history for this branch". sync-splits needs
+    # ai/history/{main} to already exist (it forks each branch's own history
+    # branch from it) -- same prerequisite as the CLEAN case above, so this
+    # repo's very first action ever being an ai/UNCLEAN/* branch doesn't
+    # crash instead of just bootstrapping history-master first.
+    history_main_ref = branches.history_name(main_branch)
+    if git_ops.rev_parse(history_main_ref, repo_root) is None:
+        status(f"auto mode: {history_main_ref!r} missing -- running update-history-master first")
+        rc = run_split(repo_root, worktree, ["update-history-master", "--yes"])
+        if rc != 0:
+            status("auto mode: update-history-master failed; aborting")
+            return None
+
     argv = ["sync-splits", classification.base_name, "--direction=to-clean-history"]
     status(f"auto mode: selected {shlex.join(argv)}")
     return argv

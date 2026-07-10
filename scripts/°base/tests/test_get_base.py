@@ -241,12 +241,40 @@ class AutoArgvTests(unittest.TestCase):
             ["sync-splits", "feature", "--direction=to-clean-history"],
         )
 
+        # `ai/history/master` never existed -- auto mode must have run
+        # update-history-master as a prerequisite first (sync-splits forks
+        # each branch's own history branch from it), rather than handing
+        # back a command doomed to crash with an AssertionError.
+        self.assertIsNotNone(git(["rev-parse", "ai/history/master"], self.repo))
+
+    def test_on_unclean_branch_skips_update_history_master_if_present(self):
+        git(["checkout", "-b", "ai/UNCLEAN/feature"], self.repo)
+        self.module.run_split(self.repo, self.worktree, ["update-history-master", "--yes"])
+        self.assertIsNotNone(git(["rev-parse", "ai/history/master"], self.repo))
+
+        with mock.patch.object(self.module, "run_split") as run_split:
+            self.assertEqual(
+                self.module.auto_argv(self.repo, self.worktree),
+                ["sync-splits", "feature", "--direction=to-clean-history"],
+            )
+        run_split.assert_not_called()
+
+    def test_on_unclean_branch_aborts_if_update_history_master_fails(self):
+        git(["checkout", "-b", "ai/UNCLEAN/feature"], self.repo)
+
+        with mock.patch.object(self.module, "run_split", return_value=1) as run_split:
+            self.assertIsNone(self.module.auto_argv(self.repo, self.worktree))
+        run_split.assert_called_once_with(
+            self.repo, self.worktree, ["update-history-master", "--yes"],
+        )
+
     def test_on_non_master_history_branch_runs_forward_sync(self):
         git(["checkout", "-b", "ai/history/feature"], self.repo)
         self.assertEqual(
             self.module.auto_argv(self.repo, self.worktree),
             ["sync-splits", "feature", "--direction=to-clean-history"],
         )
+        self.assertIsNotNone(git(["rev-parse", "ai/history/master"], self.repo))
 
     def test_detached_head_refuses(self):
         head_sha = git(["rev-parse", "HEAD"], self.repo)

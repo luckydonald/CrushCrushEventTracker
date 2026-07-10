@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import argparse
 import logging
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from . import branches, classify, git_ops, push_checks
+from . import branches, classify, git_ops, push_checks, trailers
 from . import bootstrap as bootstrap_lib
 from . import history_master as history_master_lib
 from . import rebase_to_master as rebase_to_master_lib
@@ -142,19 +143,159 @@ def _check_push(remote_name: str, remote_url: str, stdin_text: str, *, repo_root
     return 0
 
 
+def _classify_for(sha: str, repo_root: Path) -> classify.CommitClassification:
+    return classify.classify_commit(
+        sha,
+        git_ops.subject_for_commit(sha, repo_root),
+        git_ops.changed_paths_for_commit(sha, repo_root),
+    )
+
+
+def _keep_predicate_for(target: str) -> Callable[[str], bool]:
+    if target == "clean":
+        return lambda p: not classify.is_ai_base_path(p)
+    return classify.is_ai_base_path
+
+
+def _resolve_unclean_merge(
+    exc: sync_splits_lib.UncleanMergeDetected,
+    branch: str,
+    *,
+    args: argparse.Namespace,
+    repo_root: Path,
+) -> str:
+    """Decide how to handle a merge commit sync-splits can't auto-split.
+    Returns "fake" (flatten it and every other merge for the rest of this
+    run), "resolved" (a real merge commit now sits on the target ref -- safe
+    to retry sync_branch), or "abort" (nothing moved; give up on `branch`).
+    """
+    target = exc.target
+    target_ref = branch if target == "clean" else branches.history_name(branch)
+    keep = _keep_predicate_for(target)
+    second_parent = exc.parents[-1]
+
+    flag = getattr(args, "unclean_merge", None)
+    if flag == "fake":
+        return "fake"
+    if flag == "abort":
+        return "abort"
+    if flag == "attempt":
+        onto = git_ops.rev_parse(target_ref, repo_root)
+        assert onto is not None
+        kind = sync_splits_lib.kind_for(_classify_for(exc.sha, repo_root))
+        new_sha = sync_splits_lib.build_filtered_merge_commit(onto, second_parent, exc.sha, kind, keep, repo_root)
+        if new_sha is None:
+            print(f"{branch}: --unclean-merge=attempt conflicted on paths other than README.md/.gitignore.", file=sys.stderr)
+            return "abort"
+        git_ops.move_ref(target_ref, new_sha, onto, repo_root)
+        return "resolved"
+
+    if not sys.stdin.isatty():
+        print(
+            f"sync-splits: {exc}\n"
+            "Non-interactive run has no safe default here -- pass "
+            "--unclean-merge={fake,attempt,abort} to pick one explicitly.",
+            file=sys.stderr,
+        )
+        return "abort"
+
+    excluded: set[str] = set()
+    while True:
+        subject = git_ops.subject_for_commit(exc.sha, repo_root)
+        print(f"\nsync-splits: {branch} ({target}): {exc.sha[:8]} {subject!r} is a merge commit and can't be auto-split.")
+        if "a" not in excluded:
+            print("  a) Fake it -- record it as one ordinary commit containing all of the merge's net")
+            print("     file changes, tagged with the real merge's metadata, but as a single-parent")
+            print("     commit -- not a real merge.")
+        if "b" not in excluded:
+            print(f"  b) Attempt a real merge of {second_parent[:8]} onto {target_ref}, auto-resolving")
+            print("     README.md/.gitignore; any other conflict returns here without offering (b) again.")
+        print(f"  c) You merge it yourself: run `git -C {repo_root} checkout {target_ref} && "
+              f"git -C {repo_root} merge --no-ff {second_parent}`, then press Enter -- I'll check it landed.")
+        print("  d) Abort (nothing has been moved yet).")
+        choice = input("Choice [a/b/c/d]: ").strip().lower()
+
+        if choice == "a" and "a" not in excluded:
+            return "fake"
+
+        if choice == "b" and "b" not in excluded:
+            onto = git_ops.rev_parse(target_ref, repo_root)
+            assert onto is not None
+            kind = sync_splits_lib.kind_for(_classify_for(exc.sha, repo_root))
+            new_sha = sync_splits_lib.build_filtered_merge_commit(onto, second_parent, exc.sha, kind, keep, repo_root)
+            if new_sha is None:
+                print("  -> merge attempt conflicted on paths other than README.md/.gitignore.")
+                excluded.add("b")
+                continue
+            git_ops.move_ref(target_ref, new_sha, onto, repo_root)
+            return "resolved"
+
+        if choice == "c":
+            onto = git_ops.rev_parse(target_ref, repo_root)
+            input("Press Enter once you've completed the merge above (or just Enter to cancel): ")
+            new_tip = git_ops.rev_parse(target_ref, repo_root)
+            new_parents = git_ops.parents_of(new_tip, repo_root) if new_tip else []
+            if new_tip != onto and second_parent in new_parents:
+                kind = sync_splits_lib.kind_for(_classify_for(exc.sha, repo_root))
+                message = trailers.write_trailers(
+                    git_ops.commit_message(new_tip, repo_root),
+                    {sync_splits_lib.SOURCE_TRAILER: exc.sha, sync_splits_lib.KIND_TRAILER: kind},
+                    repo_root,
+                )
+                subprocess.run(
+                    ["git", "-C", str(repo_root), "commit", "--amend", "-m", message],
+                    check=True,
+                    capture_output=True,
+                )
+                return "resolved"
+            print(f"  -> no merge of {second_parent[:8]} found on {target_ref} yet; returning to the menu.")
+            continue
+
+        if choice == "d":
+            return "abort"
+
+        print("Please choose one of the listed options.")
+
+
+def _sync_branch_handling_merges(
+    branch: str, *, args: argparse.Namespace, repo_root: Path, main_branch: str
+) -> sync_splits_lib.SyncSplitsResult | None:
+    fake_merges = getattr(args, "unclean_merge", None) == "fake"
+    while True:
+        try:
+            return sync_splits_lib.sync_branch(
+                branch,
+                repo_root=repo_root,
+                main_branch=main_branch,
+                dry_run=args.dry_run,
+                fake_merges=fake_merges,
+            )
+        except sync_splits_lib.UncleanMergeDetected as exc:
+            resolution = _resolve_unclean_merge(exc, branch, args=args, repo_root=repo_root)
+            if resolution == "fake":
+                fake_merges = True
+                continue
+            if resolution == "resolved":
+                continue
+            print(f"{branch}: aborted -- merge commit {exc.sha[:8]} ({exc.target}) left unresolved.", file=sys.stderr)
+            return None
+
+
 def _sync_splits(args: argparse.Namespace, *, repo_root: Path, main_branch: str) -> int:
     if args.direction == "to-clean-history":
         targets = [args.branch] if args.branch else sync_splits_lib.discover_unclean_branches(repo_root)
+        exit_code = 0
         for branch in targets:
-            result = sync_splits_lib.sync_branch(
-                branch, repo_root=repo_root, main_branch=main_branch, dry_run=args.dry_run
-            )
+            result = _sync_branch_handling_merges(branch, args=args, repo_root=repo_root, main_branch=main_branch)
+            if result is None:
+                exit_code = 1
+                continue
             print(
                 f"{branch}: clean +{result.clean_commits_created} "
                 f"(skipped {result.clean_commits_skipped_ai_only}), "
                 f"history +{result.history_commits_created}"
             )
-        return 0
+        return exit_code
 
     # to-unclean
     targets = [args.branch] if args.branch else sync_splits_lib.discover_unclean_branches(repo_root)
@@ -290,6 +431,14 @@ def main(argv: list[str] | None = None) -> int:
     sync_splits.add_argument("--dry-run", action="store_true")
     sync_splits.add_argument("--force", action="store_true")
     sync_splits.add_argument("--allow-diverge-rewrite", action="store_true")
+    sync_splits.add_argument(
+        "--unclean-merge",
+        choices=["fake", "attempt", "abort"],
+        default=None,
+        help="How to handle a merge commit found inside ai/UNCLEAN/*'s replay range, "
+        "non-interactively (e.g. for CI). Omit to get an interactive menu when a tty is "
+        "attached, or an error otherwise.",
+    )
 
     update_history = subparsers.add_parser("update-history-master", help="Rebuild ai/history/master.")
     update_history.add_argument("--force-merge", action="append", default=[], metavar="BRANCH")
