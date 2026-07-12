@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import branches, git_ops, identity, trailers
+from . import branches, git_ops, gitattributes_safety, identity, trailers
 
 MERGE_KIND_TRAILER = "X-Base-History-Merge-Kind"
 MERGE_SHA_TRAILER = "X-Base-History-Merge-Sha"
@@ -358,12 +358,29 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
             raise HistoryMasterError(
                 f"merge of {base_old_sha} onto {onto} failed for a non-conflict reason: {result.stderr}"
             )
+        # .gitattributes is the inverse of README.md/.gitignore: never take
+        # base's incoming LFS rules if onto's own history already has
+        # non-LFS blobs for an extension base would newly filter -- see
+        # gitattributes_safety.py. Handled before the generic
+        # reuse-the-original-merge's-resolution loop below, which would
+        # otherwise reapply old_merge_sha's (possibly also-risky) content.
+        gitattributes_resolved = (
+            gitattributes_safety.GITATTRIBUTES_PATH in conflicted
+            and gitattributes_safety.restore_original(base_old_sha, onto, cwd)
+        )
         for path in conflicted:
+            if path == gitattributes_safety.GITATTRIBUTES_PATH and gitattributes_resolved:
+                continue
             content = git_ops.show_path_at(old_merge_sha, path, cwd)
             target = cwd / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
             _git(["add", "--", path], cwd, check=True)
+    else:
+        # Merged cleanly -- but a clean merge is exactly how a risky
+        # .gitattributes change slips through unnoticed (e.g. onto never had
+        # one yet, so there's no conflict to catch it).
+        gitattributes_safety.restore_original(base_old_sha, onto, cwd)
 
     new_sha = _finish_merge_commit(cwd)
     new_message = trailers.write_trailers(
@@ -444,10 +461,29 @@ def _fold_base(base_sha: str, onto: str, cwd: Path) -> str:
             git_ops.merge_abort(cwd)
             _cleanup_scratch(cwd)
             raise HistoryMasterError(f"merge of {base_sha} onto {onto} failed: {result.stderr}")
-        auto_resolved = _auto_resolve_first_fold_conflicts(base_sha, conflicted, cwd)
-        remaining = [path for path in conflicted if path not in auto_resolved]
+        # .gitattributes gets the opposite treatment from README.md/
+        # .gitignore: base's incoming LFS rules must never win if onto's own
+        # history already has non-LFS blobs for an extension base would
+        # newly filter (see gitattributes_safety.py) -- resolved separately,
+        # before the "take base's content" auto-resolve below.
+        gitattributes_resolved = (
+            gitattributes_safety.GITATTRIBUTES_PATH in conflicted
+            and gitattributes_safety.restore_original(base_sha, onto, cwd)
+        )
+        still_conflicted = [
+            path
+            for path in conflicted
+            if not (path == gitattributes_safety.GITATTRIBUTES_PATH and gitattributes_resolved)
+        ]
+        auto_resolved = _auto_resolve_first_fold_conflicts(base_sha, still_conflicted, cwd)
+        remaining = [path for path in still_conflicted if path not in auto_resolved]
         if remaining:
             raise MergeConflict(base_sha, onto, result.stderr)
+    else:
+        # Merged cleanly -- but a clean merge is exactly how a risky
+        # .gitattributes change slips through unnoticed (e.g. onto never had
+        # one yet, so there's no conflict to catch it).
+        gitattributes_safety.restore_original(base_sha, onto, cwd)
     return _complete_base_fold(base_sha, cwd)
 
 

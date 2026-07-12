@@ -506,6 +506,43 @@ class BuildFilteredMergeCommitTests(SyncSplitsTestBase):
         self.assertEqual(status, "")
         self.assertEqual(git(["branch", "--show-current"], self.repo), "side-branch")
 
+    def test_real_merge_never_adopts_gitattributes_when_clean_side_has_matching_binaries(self):
+        # Regression: .gitattributes must never come from the incoming
+        # (second_parent) side if `onto`'s own history already has non-LFS
+        # blobs for an extension it would newly filter -- even when the
+        # merge is otherwise perfectly clean (no textual conflict at all,
+        # since onto has no .gitattributes yet).
+        shared_sha = git(["rev-parse", "master"], self.repo)
+
+        git(["checkout", "-b", "feature/x"], self.repo)
+        (self.repo / "logo.png").write_bytes(b"\x89PNG fake binary content")
+        git(["add", "logo.png"], self.repo)
+        git(["commit", "-m", "add logo"], self.repo)
+        clean_onto = git(["rev-parse", "HEAD"], self.repo)
+
+        git(["checkout", shared_sha], self.repo)
+        git(["checkout", "-b", "side-branch"], self.repo)
+        make_commit(
+            self.repo,
+            ".gitattributes",
+            "side gitattributes",
+            content="*.png filter=lfs diff=lfs merge=lfs -text\n",
+        )
+        second_parent_sha = git(["rev-parse", "HEAD"], self.repo)
+
+        new_sha = sync_splits.build_filtered_merge_commit(
+            clean_onto,
+            second_parent_sha,
+            second_parent_sha,
+            "mixed",
+            keep=lambda p: not classify.is_ai_base_path(p),
+            cwd=self.repo,
+        )
+
+        self.assertIsNotNone(new_sha)
+        entry = git_ops.ls_tree_entry(new_sha, ".gitattributes", self.repo)
+        self.assertIsNone(entry, "clean_onto never had .gitattributes and has a matching binary -- must stay absent")
+
 
 class UncleanMergeCliFlagTests(SyncSplitsTestBase):
     """End-to-end coverage of the non-interactive `--unclean-merge` flag

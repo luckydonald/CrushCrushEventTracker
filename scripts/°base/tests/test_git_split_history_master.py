@@ -290,6 +290,65 @@ class HistoryMasterTests(unittest.TestCase):
         self.assertEqual(readme, "base readme\n")
         self.assertEqual(gitignore, "*.base\n")
 
+    def test_first_base_fold_never_adopts_gitattributes_when_repo_already_has_matching_binaries(self) -> None:
+        # Regression: unlike README.md/.gitignore, base's .gitattributes must
+        # NEVER win if master's own history already has non-LFS blobs for an
+        # extension base would newly filter through git-lfs -- retroactively
+        # turning on filter=lfs for already-committed plain blobs causes
+        # checkout/smudge-filter mismatches. This is the dangerous case even
+        # with ZERO textual conflict: master has no .gitattributes at all
+        # yet, so the merge succeeds cleanly and would otherwise silently
+        # adopt base's copy.
+        (self.repo_root / "logo.png").write_bytes(b"\x89PNG fake binary content")
+        git(["add", "logo.png"], self.repo_root)
+        git(["commit", "-m", "add logo"], self.repo_root)
+
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(
+            base_repo_root,
+            ".gitattributes",
+            "base gitattributes",
+            content="*.png filter=lfs diff=lfs merge=lfs -text\n",
+        )
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "ok")
+
+        # master never had a .gitattributes -- it must still not have one
+        # after the fold, rather than silently gaining base's LFS rules.
+        entry = git_ops.ls_tree_entry(result["history_master"], ".gitattributes", self.repo_root)
+        self.assertIsNone(entry)
+
+    def test_first_base_fold_adopts_gitattributes_when_no_risk(self) -> None:
+        # Sanity check for the inverse: when there's genuinely no risk (no
+        # matching pre-existing binaries), base's .gitattributes is adopted
+        # normally, same as any other ordinary file.
+        base_repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(base_repo_tmp.cleanup)
+        base_repo_root = Path(base_repo_tmp.name)
+        init_repo(base_repo_root, branch="base")
+        make_commit(
+            base_repo_root,
+            ".gitattributes",
+            "base gitattributes",
+            content="*.png filter=lfs diff=lfs merge=lfs -text\n",
+        )
+
+        git(["remote", "add", "base", str(base_repo_root)], self.repo_root)
+        git(["fetch", "base"], self.repo_root)
+
+        result = history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
+        self.assertEqual(result["status"], "ok")
+
+        content = git_ops.show_path_at(result["history_master"], ".gitattributes", self.repo_root).decode()
+        self.assertIn("*.png", content)
+
     def test_master_is_never_mutated_by_a_base_merge(self) -> None:
         # Regression test for the invariant that adopting/updating base can
         # never touch `master` (and therefore never any clean branch) --

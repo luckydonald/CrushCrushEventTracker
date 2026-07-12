@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from . import branches, classify, git_ops, identity, trailers, tree_ops
+from . import branches, classify, git_ops, gitattributes_safety, identity, trailers, tree_ops
 from . import sync_unclean
 
 SOURCE_TRAILER = "X-Base-Split-Source"
@@ -386,8 +386,19 @@ def build_filtered_merge_commit(
             git_ops.merge_abort(cwd)
             _cleanup_merge_scratch(cwd, scratch_branch, original_checkout)
             return None
+        # .gitattributes is the inverse of KNOWN_NOISY_MERGE_PATHS: the
+        # incoming side must never win if onto's own history already has
+        # non-LFS blobs for an extension it would newly filter (see
+        # gitattributes_safety.py) -- resolved separately, before the
+        # generic "take theirs" loop below.
+        gitattributes_resolved = (
+            gitattributes_safety.GITATTRIBUTES_PATH in conflicted
+            and gitattributes_safety.restore_original(second_parent_sha, onto, cwd)
+        )
         remaining: list[str] = []
         for path in conflicted:
+            if path == gitattributes_safety.GITATTRIBUTES_PATH and gitattributes_resolved:
+                continue
             if path in KNOWN_NOISY_MERGE_PATHS:
                 content = git_ops.show_path_at(second_parent_sha, path, cwd)
                 target = cwd / path
@@ -400,6 +411,10 @@ def build_filtered_merge_commit(
             git_ops.merge_abort(cwd)
             _cleanup_merge_scratch(cwd, scratch_branch, original_checkout)
             return None
+    else:
+        # Merged cleanly -- but a clean merge is exactly how a risky
+        # .gitattributes change slips through unnoticed.
+        gitattributes_safety.restore_original(second_parent_sha, onto, cwd)
 
     tracked = subprocess.run(
         ["git", "ls-files"], cwd=cwd, capture_output=True, text=True, check=True
