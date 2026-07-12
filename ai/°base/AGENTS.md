@@ -99,7 +99,7 @@ Hooks:
 
 | Hook | Trigger | Output |
 |---|---|---|
-| `save-prompt/hook.py` | `UserPromptSubmit` | `ai/°base/query.md` |
+| `save-prompt/hook.py` | `UserPromptSubmit` | `ai/°base/query.md`, plus caught-up direct Codex command output under `output/commands/` |
 | `save-decision/hook.py` | `AskUserQuestion` post | `ai/°base/query.md` |
 | `save-plan/hook.py` | `Write`, `ExitPlanMode`, `Stop` | `ai/°base/plans/NNN_*.md` |
 | `record-memory/hook.py` | `Write`, `Edit`, `Bash`, `SessionStart` | syncs memory hardlinks |

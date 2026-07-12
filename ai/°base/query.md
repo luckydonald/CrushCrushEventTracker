@@ -3462,3 +3462,59 @@ tree
 
 ❯ patch the script to print the error
 
+› \! echo "/plan I want to log the raw execution of commands to \`ai[/°base]/query.md\`, too. Not only normal prompts."
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which command executions should be added to query.md?
+>> 2. How should each direct command execution appear in query.md?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Commands** (1/2) <kbd>Single Select</kbd><br>
+>> Which command executions should be added to query.md?
+> - [x] 1\. Direct user commands (Recommended)
+>   - _Log only shell commands run directly from the Codex prompt via the shell-command shortcut, matching your reproduction._
+> - [ ] 2\. All shell commands
+>   - _Also log commands executed by the AI through Bash/unified_exec, which can make query.md very large and hook coverage is currently incomplete._
+> - [ ] 3\. _Type something._
+>
+>> **Rendering** (2/2) <kbd>Single Select</kbd><br>
+>> How should each direct command execution appear in query.md?
+> - [ ] 1\. Exact raw block (Recommended)
+>   - _Fence and preserve the complete user_shell_command XML payload, including command, exit code, duration, and output._
+> - [x] 2\. Console-style block
+>   - _Render a cleaner command-plus-result block while preserving all values and output._
+>   - > Probably the details should be `<details>` (hah!). Similar to questions. The output shall be `output/commands/*.log`, similar to `output/agents/*/result.md`.
+> - [ ] 3\. Command only
+>   - _Log the executed command without exit code, duration, or output._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which timing contract should the implementation use?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Timing** (1/1) <kbd>Single Select</kbd><br>
+>> Which timing contract should the implementation use?
+> - [x] 1\. Next prompt catch-up (Recommended)
+>   - _At the next ordinary Codex prompt, append all intervening direct commands in order, then log that prompt; no background process is introduced._
+> - [ ] 2\. Background watcher
+>   - _Start and manage a per-session transcript watcher for near-immediate commits, adding lifecycle, concurrency, and stale-process handling._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+> › Implement the [Plan](./plans/043_log-direct-codex-shell-executions.md).
+

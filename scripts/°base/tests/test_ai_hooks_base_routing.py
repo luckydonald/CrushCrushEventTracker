@@ -112,6 +112,50 @@ def long_plan(title: str = "Saved Plan") -> str:
     return "\n".join(lines) + "\n"
 
 
+def transcript_user_message(text: str, turn_id: str) -> dict:
+    return {
+        "type": "response_item",
+        "payload": {
+            "type": "message",
+            "role": "user",
+            "content": [{"type": "input_text", "text": text}],
+            "internal_chat_message_metadata_passthrough": {"turn_id": turn_id},
+        },
+    }
+
+
+def transcript_user_event(message: str) -> dict:
+    return {"type": "event_msg", "payload": {"type": "user_message", "message": message}}
+
+
+def transcript_shell_command(
+    command: str,
+    *,
+    turn_id: str,
+    exit_code: int = 0,
+    duration: str = "0.125 seconds",
+    output: str = "",
+) -> dict:
+    text = (
+        "<user_shell_command>\n"
+        f"<command>\n{command}\n</command>\n"
+        "<result>\n"
+        f"Exit code: {exit_code}\n"
+        f"Duration: {duration}\n"
+        f"Output:\n{output}\n"
+        "</result>\n"
+        "</user_shell_command>"
+    )
+    return transcript_user_message(text, turn_id)
+
+
+def write_transcript(path: Path, records: list[dict]) -> None:
+    path.write_text(
+        "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in records),
+        encoding="utf-8",
+    )
+
+
 def claude_github_worker_prompt(
     *,
     title: str,
@@ -155,6 +199,256 @@ def claude_github_worker_prompt(
 
 
 class AiHooksBaseRoutingTests(unittest.TestCase):
+    def test_codex_prompt_catches_up_direct_shell_commands_with_output_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://luckydonald@github.com/luckydonald/base.git")
+            transcript = Path(tmp) / "rollout.jsonl"
+            current_prompt = "Investigate both failures"
+            write_transcript(
+                transcript,
+                [
+                    transcript_user_message("Earlier prompt", "turn-earlier"),
+                    transcript_user_event("Earlier prompt"),
+                    transcript_shell_command(
+                        "printf 'first\\n'",
+                        turn_id="turn-command-1",
+                        output="first\n",
+                    ),
+                    transcript_shell_command(
+                        "git pull\necho after",
+                        turn_id="turn-command-2",
+                        exit_code=1,
+                        duration="1.0816 seconds",
+                        output="fatal: failed\nsecond line\n",
+                    ),
+                    # Context fragments share the current turn id but are not
+                    # ordinary prompt boundaries and must not clear commands.
+                    transcript_user_message(
+                        "<environment_context>test</environment_context>",
+                        "turn-current",
+                    ),
+                    transcript_user_message(current_prompt, "turn-current"),
+                ],
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": current_prompt,
+                    "turn_id": "turn-current",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+
+            commands_dir = repo / "ai" / "°base" / "output" / "commands"
+            self.assertEqual((commands_dir / "001.log").read_text(encoding="utf-8"), "first\n")
+            self.assertEqual(
+                (commands_dir / "002.log").read_text(encoding="utf-8"),
+                "fatal: failed\nsecond line\n",
+            )
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertEqual(query.count("› Command executed."), 2)
+            self.assertLess(
+                query.index("output/commands/001.log"),
+                query.index("output/commands/002.log"),
+            )
+            self.assertLess(query.index("output/commands/002.log"), query.index(current_prompt))
+            self.assertIn("<code>$ git pull …</code>", query)
+            self.assertIn("Exit code: <kbd>1</kbd> · Duration: `1.0816 seconds`", query)
+            self.assertIn("› Investigate both failures\n\n", query)
+            subjects = run_git(repo, "log", "--pretty=%s").stdout.strip().splitlines()
+            self.assertEqual(
+                subjects[:2],
+                [
+                    "[base] ai: updated prompt",
+                    "[base] ai: commands 001-002 results",
+                ],
+            )
+            command_commit_files = run_git(
+                repo,
+                "-c",
+                "core.quotepath=false",
+                "show",
+                "--pretty=",
+                "--name-only",
+                "HEAD~1",
+            ).stdout.strip().splitlines()
+            self.assertEqual(
+                command_commit_files,
+                [
+                    "ai/°base/output/commands/001.log",
+                    "ai/°base/output/commands/002.log",
+                    "ai/°base/query.md",
+                ],
+            )
+
+    def test_codex_command_catchup_uses_latest_prompt_boundary_and_next_number(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            transcript = Path(tmp) / "rollout.jsonl"
+            records = [
+                transcript_shell_command("old command", turn_id="turn-old", output="old\n"),
+                transcript_user_message("Previous prompt", "turn-previous"),
+                transcript_user_event("Previous prompt"),
+                transcript_shell_command("new command", turn_id="turn-new", output="new\n"),
+                transcript_user_message("Current prompt", "turn-current"),
+            ]
+            write_transcript(transcript, records)
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "Current prompt",
+                    "turn_id": "turn-current",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+
+            commands_dir = repo / "ai" / "°base" / "output" / "commands"
+            self.assertEqual((commands_dir / "001.log").read_text(encoding="utf-8"), "new\n")
+            self.assertFalse((commands_dir / "002.log").exists())
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertNotIn("old command", query)
+            self.assertIn("new command", query)
+
+            records.extend(
+                [
+                    transcript_user_event("Current prompt"),
+                    transcript_shell_command("second new command", turn_id="turn-next-command"),
+                    transcript_user_message("Next prompt", "turn-next"),
+                ]
+            )
+            write_transcript(transcript, records)
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "Next prompt",
+                    "turn_id": "turn-next",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+
+            self.assertEqual((commands_dir / "002.log").read_text(encoding="utf-8"), "")
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertEqual(query.count("<code>$ new command</code>"), 1)
+            self.assertEqual(query.count("<code>$ second new command</code>"), 1)
+            self.assertEqual(query.count("output/commands/001.log"), 1)
+            self.assertEqual(query.count("output/commands/002.log"), 1)
+
+    def test_codex_skipped_prompt_still_flushes_direct_command(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            transcript = Path(tmp) / "rollout.jsonl"
+            write_transcript(
+                transcript,
+                [
+                    transcript_shell_command("pwd", turn_id="turn-command", output="/tmp\n"),
+                    transcript_user_message("yes", "turn-current"),
+                ],
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "yes",
+                    "turn_id": "turn-current",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("<code>$ pwd</code>", query)
+            self.assertNotIn("› yes", query)
+            self.assertEqual(last_subject(repo), "[base] ai: command 001 result")
+
+    def test_codex_command_output_follows_consumer_by_issue_routing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "myproject"
+            init_repo(repo, "https://github.com/example/consumer.git")
+            issue_file = repo / "ai" / ".by-issue"
+            issue_file.parent.mkdir(parents=True)
+            issue_file.write_text("DEMO-42\n", encoding="utf-8")
+            transcript = Path(tmp) / "rollout.jsonl"
+            write_transcript(
+                transcript,
+                [
+                    transcript_shell_command("pwd", turn_id="turn-command", output="/repo\n"),
+                    transcript_user_message("Continue", "turn-current"),
+                ],
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "Continue",
+                    "turn_id": "turn-current",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+
+            issue_dir = repo / "ai" / "by-issue" / "DEMO-42"
+            self.assertEqual(
+                (issue_dir / "output" / "commands" / "001.log").read_text(encoding="utf-8"),
+                "/repo\n",
+            )
+            query = (issue_dir / "query.md").read_text(encoding="utf-8")
+            self.assertIn("output/commands/001.log", query)
+            self.assertEqual(last_subject(repo), "DEMO-42: ai: updated prompt")
+
+    def test_codex_malformed_or_missing_transcript_is_ignored(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            transcript = Path(tmp) / "rollout.jsonl"
+            write_transcript(
+                transcript,
+                [
+                    transcript_user_message(
+                        "<user_shell_command>changed shape</user_shell_command>",
+                        "command",
+                    ),
+                    transcript_user_message("Normal prompt", "turn-current"),
+                ],
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "Normal prompt",
+                    "turn_id": "turn-current",
+                    "transcript_path": str(transcript),
+                },
+                "codex",
+            )
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "Another prompt",
+                    "turn_id": "turn-another",
+                    "transcript_path": str(Path(tmp) / "missing.jsonl"),
+                },
+                "codex",
+            )
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertEqual(query, "› Normal prompt\n\n› Another prompt\n\n")
+            self.assertFalse((repo / "ai" / "°base" / "output" / "commands").exists())
+
     def test_codex_prompt_in_base_repo_with_only_origin_routes_and_prefixes(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"

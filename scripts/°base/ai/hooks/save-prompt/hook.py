@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: append the user's prompt to ai/query.md and commit.
 
+For Codex, also catch up direct user shell-command turns found in the session
+transcript and save their output under ai[/°base]/output/commands/.
+
 Usage: hook.py [ai_tool_name]   (default: unknown)
 
 Task notifications (<task-notification> XML) are intercepted and written as a
@@ -9,6 +12,7 @@ and Explore results to ai/output/explore/NNN.task-id/ (or °base equivalents).
 """
 from __future__ import annotations
 
+import html
 import importlib
 import json
 import re
@@ -91,6 +95,210 @@ class PromptLogEntry(NamedTuple):
     text: str
     preformatted: bool = False
     extra_paths: tuple[Path, ...] = ()
+
+
+class CommandExecution(NamedTuple):
+    command: str
+    exit_code: str
+    duration: str
+    output: str
+
+
+def _parse_user_shell_command(text: str) -> CommandExecution | None:
+    """Parse Codex's transcript-only direct-shell-command envelope.
+
+    This is intentionally strict: Codex documents transcript_path as a
+    convenience rather than a stable hook interface, so an unfamiliar shape
+    must be ignored instead of producing partial or misleading artifacts.
+    """
+    match = re.fullmatch(
+        r"<user_shell_command>\n"
+        r"<command>\n(.*?)\n</command>\n"
+        r"<result>\n(.*)\n</result>\n"
+        r"</user_shell_command>",
+        text,
+        flags=re.DOTALL,
+    )
+    if not match:
+        return None
+
+    result = re.fullmatch(
+        r"Exit code: ([^\n]*)\n"
+        r"Duration: ([^\n]*)\n"
+        r"Output:\n(.*)",
+        match.group(2),
+        flags=re.DOTALL,
+    )
+    if not result:
+        return None
+    return CommandExecution(
+        command=match.group(1),
+        exit_code=result.group(1),
+        duration=result.group(2),
+        output=result.group(3),
+    )
+
+
+def _user_input_texts(obj: dict) -> tuple[str, list[str]] | None:
+    """Return (turn_id, input_text values) for a transcript user message."""
+    if obj.get("type") != "response_item":
+        return None
+    message = obj.get("payload")
+    if (
+        not isinstance(message, dict)
+        or message.get("type") != "message"
+        or message.get("role") != "user"
+    ):
+        return None
+    content = message.get("content")
+    if not isinstance(content, list):
+        return None
+    texts = [
+        item.get("text", "")
+        for item in content
+        if isinstance(item, dict)
+        and item.get("type") == "input_text"
+        and isinstance(item.get("text"), str)
+    ]
+    metadata = message.get("internal_chat_message_metadata_passthrough")
+    turn_id = metadata.get("turn_id", "") if isinstance(metadata, dict) else ""
+    return turn_id, texts
+
+
+def _commands_before_current_prompt(payload: dict, prompt: str) -> list[CommandExecution]:
+    """Return direct shell commands since the preceding ordinary user prompt."""
+    transcript_path = payload.get("transcript_path")
+    current_turn_id = payload.get("turn_id")
+    if not isinstance(transcript_path, str) or not transcript_path:
+        return []
+    if not isinstance(current_turn_id, str) or not current_turn_id:
+        return []
+
+    pending: list[CommandExecution] = []
+    try:
+        with open(transcript_path, encoding="utf-8") as transcript:
+            for line in transcript:
+                try:
+                    obj = json.loads(line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+
+                user_message = _user_input_texts(obj)
+                if user_message is not None:
+                    turn_id, texts = user_message
+                    parsed = [
+                        command
+                        for text in texts
+                        if (command := _parse_user_shell_command(text)) is not None
+                    ]
+                    if parsed:
+                        pending.extend(parsed)
+                        continue
+                    if turn_id == current_turn_id and prompt in texts:
+                        return pending
+
+                event = obj.get("payload") if obj.get("type") == "event_msg" else None
+                if isinstance(event, dict) and event.get("type") == "user_message":
+                    # This is the stable transcript marker for an ordinary
+                    # user prompt. Direct shell-command turns have no such
+                    # event, so only commands after this boundary remain.
+                    pending.clear()
+    except OSError:
+        return []
+    return []
+
+
+def _next_command_number(commands_dir: Path) -> int:
+    if not commands_dir.exists():
+        return 1
+    numbers = [
+        int(match.group(1))
+        for path in commands_dir.iterdir()
+        if path.is_file() and (match := re.fullmatch(r"(\d+)\.log", path.name))
+    ]
+    return max(numbers, default=0) + 1
+
+
+def _code_fence(text: str) -> str:
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    return "`" * max(3, longest + 1)
+
+
+def _render_command_execution(
+    prefix: str,
+    execution: CommandExecution,
+    output_file: Path,
+    rel_output: str,
+) -> str:
+    command_lines = execution.command.splitlines() or [""]
+    summary = html.escape(f"$ {command_lines[0]}")
+    if len(command_lines) > 1:
+        summary += " …"
+    fence = _code_fence(execution.command)
+    command_block = "\n".join([f"$ {command_lines[0]}", *command_lines[1:]])
+    output_chars = len(execution.output)
+    return (
+        f"{prefix} Command executed.\n"
+        "> <details><summary>\n"
+        ">\n"
+        f">> <code>{summary}</code>\n"
+        ">\n"
+        "> (click to expand)\n"
+        ">\n"
+        "> </summary>\n"
+        ">\n"
+        ">> **Command**\n"
+        ">\n"
+        f"> {fence}console\n"
+        + "".join(f"> {line}\n" if line else ">\n" for line in command_block.splitlines())
+        + f"> {fence}\n"
+        ">\n"
+        f">> Exit code: <kbd>{html.escape(execution.exit_code)}</kbd>"
+        f" · Duration: `{html.escape(execution.duration)}`\n"
+        f">> {_markdown_file_link('Output', output_chars, _human_size(str(output_file)), rel_output)}\n"
+        ">\n"
+        "> </details>\n"
+        ">\n"
+        "\n"
+    )
+
+
+def _capture_codex_commands(payload: dict, prompt: str, prefix: str, log_path: Path) -> None:
+    commands = _commands_before_current_prompt(payload, prompt)
+    if not commands:
+        return
+
+    commands_dir = log_path.parent / "output" / "commands"
+    commands_dir.mkdir(parents=True, exist_ok=True)
+    first_number = _next_command_number(commands_dir)
+    output_files: list[Path] = []
+    blocks: list[str] = []
+    for offset, execution in enumerate(commands):
+        number = first_number + offset
+        output_file = commands_dir / f"{number:03d}.log"
+        output_file.write_text(execution.output, encoding="utf-8")
+        output_files.append(output_file)
+        blocks.append(
+            _render_command_execution(
+                prefix,
+                execution,
+                output_file,
+                f"output/commands/{output_file.name}",
+            )
+        )
+
+    last_number = first_number + len(commands) - 1
+    if first_number == last_number:
+        commit_message = f"ai: command {first_number:03d} result"
+    else:
+        commit_message = f"ai: commands {first_number:03d}-{last_number:03d} results"
+    append_and_commit(
+        log_path,
+        "".join(blocks),
+        commit_template_relpath="",
+        default_commit_msg=commit_message,
+        extra_paths=tuple(output_files),
+    )
 
 
 def _latest_numbered_plan(plans_dir: Path) -> Path | None:
@@ -700,13 +908,14 @@ def main() -> int:
         prompt = payload["tool_input"].get("prompt") or ""
     if not prompt.strip():
         return 0
+    raw_prompt = prompt
+    log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
+    if ai_tool == "codex":
+        _capture_codex_commands(payload, prompt, prefix, log_path)
     if prompt.strip() in SKIP_PROMPTS:
         return 0
     if prompt.strip().startswith(HARNESS_TASK_COMPLETE_REMINDER_PREFIX):
         return 0
-    raw_prompt = prompt
-
-    log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     preformatted_prompt = False
     entry = PromptLogEntry(prompt)
     if ai_tool == "copilot":
