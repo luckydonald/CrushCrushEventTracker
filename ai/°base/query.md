@@ -3448,3 +3448,17 @@ The plan shall have basically the same line as the later commit but in _current 
 
 › Do not edit the original, commit as fix.
 
+❯ Does `./scripts/°base/git/split.py sync-splits --direction to-clean-history --direction to-clean-history` sync only the current branch? i.e. `ai/UNCLEAN/feature/foo`?
+
+❯ It always fails with something lile @ai/°base/errors/21.txt
+
+❯ $ git cat-file -t ab1d3b5a8020622115f29ee272937909c6fc1b84
+commit
+$ git cat-file -t ab1d3b5a8020622115f29ee272937909c6fc1b84
+commit
+
+❯ $ git cat-file -t 092bf2822bb4132ff5dee8472797bf4de0a0a70b
+tree
+
+❯ patch the script to print the error
+

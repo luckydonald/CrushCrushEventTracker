@@ -214,8 +214,11 @@ def commit_tree(
         capture_output=True,
         text=True,
         env=env,
-        check=True,
     )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"`{' '.join(args)}` failed (exit {result.returncode}):\n{result.stderr.strip()}"
+        )
     return result.stdout.strip()
 
 
