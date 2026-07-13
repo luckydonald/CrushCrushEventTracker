@@ -3942,3 +3942,5 @@ d) Abort (print revert instructions)
 > </details>
 >
 
+❯ /commit-with-lplp-style commit bugsink-triage/enable,SKILL.md with good explaining commit message (ammending this ai auto-commit)
+

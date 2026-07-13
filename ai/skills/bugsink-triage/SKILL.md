@@ -13,6 +13,10 @@ read on what's actually broken right now across all of them — nothing more.
 Root-causing and fixing is a separate, heavier follow-up the user can ask
 for once they know which issue is worth their time.
 
+If `mcp__bugsink__*` tools aren't available yet, the server is probably
+still disabled in this project's settings — see [`enable.md`](enable.md) for
+how to turn it on (and a gotcha with `.codex/config.toml` fighting the sync).
+
 ## Why triage is its own step
 
 Every issue in Bugsink costs real investigation time to run down. Jumping
