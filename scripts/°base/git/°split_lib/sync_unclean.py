@@ -405,6 +405,10 @@ def build_merged_commit(unclean_prev: str, item: dict, cwd: Path, *, dry_run: bo
         recon_key = key if isinstance(key, str) else solo.sha
 
     message = trailers.write_trailers(message, {RECON_TRAILER: recon_key}, cwd)
+    committer = identity.resolve_identity(
+        cwd,
+        remaining=identity.CommitIdentity(author_name, author_email),
+    )
 
     return git_ops.commit_tree(
         tree,
@@ -414,8 +418,8 @@ def build_merged_commit(unclean_prev: str, item: dict, cwd: Path, *, dry_run: bo
         author_name=author_name,
         author_email=author_email,
         author_date=author_date,
-        committer_name=identity.BOT_NAME,
-        committer_email=identity.BOT_EMAIL,
+        committer_name=committer.name,
+        committer_email=committer.email,
         committer_date=_committer_date_now(),
     )
 
@@ -436,6 +440,10 @@ def _rewrite_from(unclean_ref: str, old_sha: str, new_tree: str, cwd: Path, *, d
     parents = [parent_sha] if parent_sha else []
     message = git_ops.commit_message(old_sha, cwd)
     author_name, author_email, author_date = _author_info(old_sha, cwd)
+    committer = identity.resolve_identity(
+        cwd,
+        remaining=identity.CommitIdentity(author_name, author_email),
+    )
 
     new_prev = git_ops.commit_tree(
         new_tree,
@@ -445,8 +453,8 @@ def _rewrite_from(unclean_ref: str, old_sha: str, new_tree: str, cwd: Path, *, d
         author_name=author_name,
         author_email=author_email,
         author_date=author_date,
-        committer_name=identity.BOT_NAME,
-        committer_email=identity.BOT_EMAIL,
+        committer_name=committer.name,
+        committer_email=committer.email,
         committer_date=_committer_date_now(),
     )
 
@@ -455,6 +463,10 @@ def _rewrite_from(unclean_ref: str, old_sha: str, new_tree: str, cwd: Path, *, d
         d_tree = tree_ops.apply_path_changes(git_ops.tree_for_commit(new_prev, cwd), d_changes, d_sha, cwd)
         d_message = git_ops.commit_message(d_sha, cwd)
         d_author_name, d_author_email, d_author_date = _author_info(d_sha, cwd)
+        descendant_committer = identity.resolve_identity(
+            cwd,
+            remaining=identity.CommitIdentity(d_author_name, d_author_email),
+        )
         new_prev = git_ops.commit_tree(
             d_tree,
             [new_prev],
@@ -463,8 +475,8 @@ def _rewrite_from(unclean_ref: str, old_sha: str, new_tree: str, cwd: Path, *, d
             author_name=d_author_name,
             author_email=d_author_email,
             author_date=d_author_date,
-            committer_name=identity.BOT_NAME,
-            committer_email=identity.BOT_EMAIL,
+            committer_name=descendant_committer.name,
+            committer_email=descendant_committer.email,
             committer_date=_committer_date_now(),
         )
 

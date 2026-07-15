@@ -174,6 +174,10 @@ def make_split_commit(
     trailer_values = {SOURCE_TRAILER: source_sha, KIND_TRAILER: kind}
     trailer_values.update(extra_trailers)
     message = trailers.write_trailers(base_message, trailer_values, cwd)
+    committer = identity.resolve_identity(
+        cwd,
+        remaining=identity.CommitIdentity(author_name, author_email),
+    )
 
     return git_ops.commit_tree(
         tree,
@@ -183,8 +187,8 @@ def make_split_commit(
         author_name=author_name,
         author_email=author_email,
         author_date=author_date,
-        committer_name=identity.BOT_NAME,
-        committer_email=identity.BOT_EMAIL,
+        committer_name=committer.name,
+        committer_email=committer.email,
         committer_date=_committer_date_now(),
     )
 

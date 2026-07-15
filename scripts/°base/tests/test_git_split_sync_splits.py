@@ -43,6 +43,23 @@ class SyncSplitsTestBase(unittest.TestCase):
 
 
 class BasicClassificationSplitTests(SyncSplitsTestBase):
+    def test_special_identity_config_sets_generated_commit_committer(self):
+        git(["config", "base.split.name", "Configured Split Bot"], self.repo)
+        git(["config", "base.split.email", "configured-split@example.com"], self.repo)
+        self.make_unclean("feature/identity")
+        make_commit(self.repo, "src/app.py", "add app code")
+
+        sync_splits.sync_branch(
+            "feature/identity", repo_root=self.repo, main_branch="master"
+        )
+
+        clean_tip = git_ops.rev_parse("feature/identity", self.repo)
+        self.assertEqual(
+            git(["log", "-1", "--format=%cn%x1f%ce", clean_tip], self.repo),
+            "Configured Split Bot\x1fconfigured-split@example.com",
+        )
+    # end def
+
     def test_pure_code_commit_lands_on_clean_only(self):
         self.make_unclean("feature/x")
         code_sha = make_commit(self.repo, "src/app.py", "add app code")

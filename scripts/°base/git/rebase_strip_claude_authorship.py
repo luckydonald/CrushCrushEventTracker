@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Rebase the current branch onto its merge-base with origin/mane, rewriting any
-claude[bot] author/committer identity to Lucky Lucy's along the way.
+"""Rebase onto the origin/mane merge-base while removing AI attribution.
 
 Usage:
     python3 rebase_strip_claude_authorship.py            # run the rebase
@@ -19,36 +18,92 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-_identity = importlib.import_module("°split_lib.identity")
-NEW_AUTHOR, NEW_NAME, NEW_EMAIL = _identity.BOT_AUTHOR, _identity.BOT_NAME, _identity.BOT_EMAIL
+identity = importlib.import_module("°split_lib.identity")
 
 UPSTREAM = "origin/mane"
-CLAUDE_EMAIL = "41898282+claude[bot]@users.noreply.github.com"
 
 
 def capture(*args: str) -> str:
     return subprocess.run(args, check=True, text=True, capture_output=True).stdout.strip()
+# end def
 
 
 def shell_join(args: list[str]) -> str:
     return " ".join(shlex.quote(arg) for arg in args)
+# end def
+
+
+def head_message() -> str:
+    return subprocess.run(
+        ["git", "log", "-1", "--format=%B"],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout
+# end def
+
+
+def remove_coauthored_by(message: str) -> str:
+    kept_lines = [
+        line
+        for line in message.splitlines(keepends=True)
+        if not line.lstrip().casefold().startswith("co-authored-by:")
+    ]
+    return "".join(kept_lines)
+# end def
+
+
+def head_identities() -> tuple[identity.CommitIdentity, identity.CommitIdentity]:
+    values = capture("git", "log", "-1", "--format=%an%x1f%ae%x1f%cn%x1f%ce").split("\x1f")
+    author_name, author_email, committer_name, committer_email = values
+    return (
+        identity.CommitIdentity(author_name, author_email),
+        identity.CommitIdentity(committer_name, committer_email),
+    )
+# end def
 
 
 def amend_step() -> None:
-    """Rewrite HEAD's author/committer if it's the claude[bot] identity."""
-    author_email = capture("git", "log", "-1", "--format=%ae")
-    committer_email = capture("git", "log", "-1", "--format=%ce")
-    if CLAUDE_EMAIL not in (author_email, committer_email):
+    """Remove AI author/committer identities and Co-authored-by trailers."""
+    author, committer = head_identities()
+    original_message = head_message()
+    cleaned_message = remove_coauthored_by(original_message)
+    has_ai_identity = identity.is_ai_identity(author) or identity.is_ai_identity(committer)
+    if not has_ai_identity and cleaned_message == original_message:
         return
+    # end if
+
+    replacement_author = author
+    replacement_committer = committer
+    if has_ai_identity:
+        repo_root = Path(capture("git", "rev-parse", "--show-toplevel"))
+        remaining = identity.remaining_identity(author, committer)
+        replacement = identity.resolve_identity(repo_root, remaining=remaining)
+        replacement_author = replacement
+        replacement_committer = replacement
+    # end if
 
     env = os.environ.copy()
-    env["GIT_COMMITTER_NAME"] = NEW_NAME
-    env["GIT_COMMITTER_EMAIL"] = NEW_EMAIL
+    env["GIT_COMMITTER_NAME"] = replacement_committer.name
+    env["GIT_COMMITTER_EMAIL"] = replacement_committer.email
     subprocess.run(
-        ["git", "commit", "--amend", "--no-edit", "--author", NEW_AUTHOR],
+        [
+            "git",
+            "commit",
+            "--amend",
+            "--allow-empty",
+            "--allow-empty-message",
+            "--author",
+            replacement_author.author,
+            "--file",
+            "-",
+        ],
         check=True,
         env=env,
+        input=cleaned_message,
+        text=True,
     )
+# end def
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -56,10 +111,11 @@ def main(argv: list[str] | None = None) -> int:
     if "--amend-step" in args:
         amend_step()
         return 0
+    # end if
 
     subprocess.run(["git", "fetch", "origin", "mane"], check=True)
     merge_base = capture("git", "merge-base", "HEAD", UPSTREAM)
-    print(f"Rebasing onto merge-base {merge_base} with {UPSTREAM}, stripping claude[bot] authorship...")
+    print(f"Rebasing onto merge-base {merge_base} with {UPSTREAM}, stripping AI attribution...")
 
     script_path = Path(__file__).resolve()
     tmp = Path(tempfile.mkdtemp(prefix="rebase-strip-claude-"))
@@ -73,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
         subprocess.run(["git", "rebase", merge_base, "--exec", exec_cmd], check=True)
     except subprocess.CalledProcessError as exc:
         print(
-            "\nRebase stopped before claude[bot] authorship stripping completed.",
+            "\nRebase stopped before AI attribution stripping completed.",
             file=sys.stderr,
         )
         print(f"Kept the rebase --exec callback at: {exec_script}", file=sys.stderr)
@@ -84,7 +140,9 @@ def main(argv: list[str] | None = None) -> int:
         return exc.returncode
     shutil.rmtree(tmp)
     return 0
+# end def
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# end if

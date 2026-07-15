@@ -3962,3 +3962,110 @@ End logical indetion with an `# end <word>`, i.e. `# end if`: `if`, `with`, `for
 
 › When moving those bases around, _backup_ the previous ones by tagging the commits with `bak/split/YYYY-MM-DD_HH-MM-SS/{clean,UNCLEAN,history}`. That date is the same for the same run.
 
+› We need a way to configure the `✨❯ Lucky Lucy` name, and the email.
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Where should the generated-commit name and email be configured?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Config source** (1/1) <kbd>Single Select</kbd><br>
+>> Where should the generated-commit name and email be configured?
+> - [ ] 1\. Git config (Recommended)
+>   - _Use `base.split.name` and `base.split.email`, supporting normal local/global Git config precedence per target repository._
+> - [ ] 2\. Environment variables
+>   - _Use `BASE_SPLIT_NAME` and `BASE_SPLIT_EMAIL`, convenient for one shell or CI run but less durable per repository._
+> - [x] 3\. Both sources
+>   - _Support environment overrides above Git config above current defaults, with a larger interface and test surface._
+>   - > Also, add a simple check, that if a email it's not ending with `@luckydonald.de`, the commit will not be touched.
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› [
+  {
+    "internal_id": "row-001",
+    "full_name": "Ada Lovelace",
+    "age": 36,
+    "score": 98.5,
+    "active": true,
+    "tags": [
+      "math",
+      "computing",
+      "pioneer"
+    ],
+    "metadata": {
+      "source": "manual-entry",
+      "verified": true
+    },
+    "salary": 8500,
+    "created_at": "2024-01-15T10:30:00",
+    "birth_date": "1815-12-10",
+    "phone": "+49123456789",
+    "email": "ada@example.com",
+    "website": "https://example.com/ada",
+    "avatar_icon": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Example_en.svg",
+    "status_icon": "check",
+    "external_link_pds": "https://example.com/reports/ada",
+    "external_link_custom": "https://example.com/profile/ada",
+    "department_group": "S-1-5-21-1234567890-1234567890-1234567890-1001",
+    "assigned_user": "admin",
+    "actions": {
+      "edit_action": "https://example.com/edit/1",
+      "view_action": "https://example.com/view/1",
+      "remove_action": "https://example.com/remove/1"
+    }
+  },
+  {
+    "internal_id": "row-002",
+    "full_name": "Alan Turing",
+    "age": 41,
+    "score": 87.25,
+    "active": false,
+    "tags": [
+      "cryptography",
+      "logic"
+    ],
+    "metadata": {
+      "source": "import",
+      "verified": false
+    },
+    "salary": 7200,
+    "created_at": "2024-03-02T08:15:00",
+    "birth_date": "1912-06-23",
+    "phone": "+441234567890",
+    "email": "alan@example.com",
+    "website": "https://example.com/alan",
+    "avatar_icon": "https://upload.wikimedia.org/wikipedia/commons/8/8f/Example_image.svg",
+    "status_icon": "close",
+    "external_link_pds": "https://example.com/reports/alan",
+    "external_link_custom": "https://example.com/profile/alan",
+    "department_group": "S-1-5-21-1234567890-1234567890-1234567890-1002",
+    "assigned_user": "alanturing",
+    "actions": {
+      "edit_action": "https://example.com/edit/2",
+      "view_action": "https://example.com/view/2",
+      "remove_action": "https://example.com/remove/2"
+    }
+  }
+]
+
+› It should at any case remove the claude/codex/copilot committer/author. (also btw, Co-authored-by, must be removed as well). Here's what the commit author/commiter will be set to:
+
+Direct Overrides (in any case it's ai):
+1. environment variable we "invented" earlier
+2. special git config we "invented" earlier
+If any matches we're done, use that email.
+
+Now, it shall try to get an email from the following sources and decide based on it ending with `@luckydonald.de`
+1. the "remaining" email of the commit (if author & commiter differ - and are non-ai)
+2. git config for normal commits
+If either of tem is, replace with the values as before (Lucky Lucy)
+
+If neither is, just replace with the winner from before ("remaining" or config).
+

@@ -496,16 +496,17 @@ def _create_merge_marker(clean_merge_sha: str, branch_name: str, onto: str, cwd:
     now = f"{int(datetime.now(timezone.utc).timestamp())} +0000"
     base_message = f"[base] history: mark end of {branch_name!r}'s replayed history\n"
     message = trailers.write_trailers(base_message, {MERGE_MARKER_TRAILER: clean_merge_sha}, cwd)
+    commit_identity = identity.resolve_identity(cwd)
     return git_ops.commit_tree(
         tree,
         [onto],
         message,
         cwd,
-        author_name=identity.BOT_NAME,
-        author_email=identity.BOT_EMAIL,
+        author_name=commit_identity.name,
+        author_email=commit_identity.email,
         author_date=now,
-        committer_name=identity.BOT_NAME,
-        committer_email=identity.BOT_EMAIL,
+        committer_name=commit_identity.name,
+        committer_email=commit_identity.email,
         committer_date=now,
     )
 

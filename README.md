@@ -304,4 +304,13 @@ To run a specific subcommand instead, append it after the script:
 curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 - bootstrap-branch feature
 ```
 
-`get-base.py` adds a `base` remote (name always literally `base`, so it's never confused with `origin`) if missing, fetches it, sets up a worktree at `.git/base-tools`, and delegates to the real tool there — it never touches your currently checked-out branch or working tree. If your GitHub username differs from `luckydonald`, set `BASE_GIT_USERNAME` first.
+`get-base.py` adds a `base` remote (name always literally `base`, so it's never confused with `origin`) if missing, fetches it, sets up a worktree at `.git/luckydonald/base#get-base.py`, and delegates to the real tool there — it never touches your currently checked-out branch or working tree. If your GitHub username differs from `luckydonald`, set `BASE_GIT_USERNAME` first.
+
+Generated split commits default to `✨❯ Lucky Lucy <claude._.ai._.code@luckydonald.de>`. Override that identity for one shell or CI job with `BASE_SPLIT_NAME` and `BASE_SPLIT_EMAIL`, or persist it through Git's normal local/global configuration:
+
+```bash
+git config --local base.split.name "My Split Bot"
+git config --local base.split.email "split@example.com"
+```
+
+Environment configuration takes precedence over `base.split.*`. Without either email override, the tool prefers a surviving non-AI identity from the source commit and then `user.name`/`user.email`; `@luckydonald.de` identities map back to the Lucky Lucy default, while other domains retain their own identity. The authorship-rewrite helper recognizes Claude, Codex, and Copilot author/committer identities and removes all `Co-authored-by` trailers.
