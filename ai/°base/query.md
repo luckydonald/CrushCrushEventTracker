@@ -3954,3 +3954,9 @@ End logical indetion with an `# end <word>`, i.e. `# end if`: `if`, `with`, `for
 
 › Alright, do that and commit LPLP style
 
+› apply `curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -` (but via local `cat get-base.py | python3`) to `/path/to/<redacted>/frontend` - to see if we have any outstanding bugs.
+
+› Alright, fix the stale `base-tools` by deleting & recreating it. Call it `luckydonald/base#get-base.py`, so it's unique enough that we wouldn't hit (and delete) user workspaces accidentally.
+
+› Also show propper git stderr instead of showing only an unhelpful CalledProcessError traceback.
+

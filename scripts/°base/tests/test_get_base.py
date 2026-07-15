@@ -93,6 +93,25 @@ class GetBaseTests(unittest.TestCase):
         self.assertEqual(url, str(self.base_repo))
         self.assertIn(f"get-base.py: base remote already exists: {self.base_repo}", stderr.getvalue())
 
+    def test_run_reports_git_stderr_without_called_process_error_traceback(self):
+        completed = subprocess.CompletedProcess(
+            args=["git", "worktree", "add"],
+            returncode=128,
+            stdout="",
+            stderr="fatal: the worktree path is already registered\n",
+        )
+        with mock.patch.object(self.module.subprocess, "run", return_value=completed):
+            with self.assertRaises(SystemExit) as raised:
+                self.module._run(["worktree", "add"])
+            # end with
+        # end with
+
+        message = str(raised.exception)
+        self.assertIn("Git command failed with exit code 128: git worktree add", message)
+        self.assertIn("fatal: the worktree path is already registered", message)
+        self.assertNotIn("CalledProcessError", message)
+    # end def
+
     def test_ensure_worktree_creates_then_refreshes(self):
         self._add_real_base_remote()
         self.module.fetch_base(self.repo)
@@ -114,6 +133,29 @@ class GetBaseTests(unittest.TestCase):
         self.assertIn(f"get-base.py: refreshing worktree: {path}", stderr.getvalue())
         second_tip = git(["rev-parse", "HEAD"], path_again)
         self.assertNotEqual(first_tip, second_tip)
+
+    def test_ensure_worktree_replaces_only_its_unique_stale_path(self):
+        self._add_real_base_remote()
+        self.module.fetch_base(self.repo)
+        path = self.module.worktree_path(self.repo)
+        stale_file = path / "stale.txt"
+        stale_file.parent.mkdir(parents=True)
+        stale_file.write_text("stale\n")
+        sibling_file = path.parent / "user-workspace" / "keep.txt"
+        sibling_file.parent.mkdir()
+        sibling_file.write_text("keep\n")
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            result = self.module.ensure_worktree(self.repo)
+        # end with
+
+        self.assertEqual(result, path)
+        self.assertFalse(stale_file.exists())
+        self.assertEqual(sibling_file.read_text(), "keep\n")
+        self.assertEqual(git(["rev-parse", "--show-toplevel"], path), str(path))
+        self.assertIn(f"get-base.py: removing stale worktree: {path}", stderr.getvalue())
+    # end def
 
     def test_main_delegates_with_repo_root_and_forwarded_argv(self):
         self._add_real_base_remote()
@@ -143,7 +185,7 @@ class GetBaseTests(unittest.TestCase):
         self.assertIn(f"get-base.py: repo root: {self.repo}", progress)
         self.assertIn(f"get-base.py: {self.module.REMOTE_NAME} remote already exists: {self.base_repo}", progress)
         self.assertIn("get-base.py: fetching base/base", progress)
-        self.assertIn(f"get-base.py: creating worktree: {self.repo / '.git' / 'base-tools'}", progress)
+        self.assertIn(f"get-base.py: creating worktree: {self.module.worktree_path(self.repo)}", progress)
         self.assertIn("get-base.py: delegating:", progress)
         self.assertIn("bootstrap-branch feature", progress)
 

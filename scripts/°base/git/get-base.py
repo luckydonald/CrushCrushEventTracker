@@ -33,6 +33,7 @@ from __future__ import annotations
 import importlib
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -40,6 +41,7 @@ from pathlib import Path
 REMOTE_NAME = "base"
 REMOTE_BRANCH = "base"
 DEFAULT_USERNAME = "luckydonald"
+WORKTREE_RELATIVE_PATH = Path(".git") / "luckydonald" / "base#get-base.py"
 
 
 def status(message: str) -> None:
@@ -47,7 +49,17 @@ def status(message: str) -> None:
 
 
 def _run(args: list[str], cwd: Path | None = None, *, check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=check)
+    command = ["git", *args]
+    result = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        details = result.stderr.strip() or result.stdout.strip() or "Git produced no output."
+        raise SystemExit(
+            f"get-base.py: Git command failed with exit code {result.returncode}: "
+            f"{shlex.join(command)}\n{details}"
+        )
+    # end if
+    return result
+# end def
 
 
 def find_repo_root(cwd: Path | None = None) -> Path:
@@ -77,7 +89,28 @@ def fetch_base(repo_root: Path) -> None:
 
 
 def worktree_path(repo_root: Path) -> Path:
-    return repo_root / ".git" / "base-tools"
+    return repo_root / WORKTREE_RELATIVE_PATH
+
+
+def remove_stale_worktree(repo_root: Path) -> None:
+    """Remove only this launcher's invalid worktree path."""
+    path = worktree_path(repo_root)
+    if not path.exists() and not path.is_symlink():
+        return
+    # end if
+
+    status(f"removing stale worktree: {path}")
+    result = _run(["worktree", "remove", "--force", str(path)], cwd=repo_root, check=False)
+    if result.returncode == 0:
+        return
+    # end if
+
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+    # end if
+# end def
 
 
 def _is_valid_worktree(path: Path) -> bool:
@@ -97,8 +130,9 @@ def ensure_worktree(repo_root: Path) -> Path:
         _run(["checkout", "--detach", ref], cwd=path)
         return path
 
+    remove_stale_worktree(repo_root)
     status(f"creating worktree: {path}")
-    _run(["worktree", "add", "--detach", str(path), ref], cwd=repo_root)
+    _run(["worktree", "add", "--force", "--detach", str(path), ref], cwd=repo_root)
     return path
 
 
