@@ -1,0 +1,16 @@
+---
+name: "code-style"
+description: "Apply project code-style rules when writing, modifying, or reviewing code. Detect the languages used by the files in scope and load only their matching references; use the Python guide only for Python code."
+---
+
+# Code Style
+
+1. Identify the languages and frameworks used by the files in scope.
+2. Read only the matching files under `references/`.
+3. Apply every matching guide while writing, modifying, or reviewing code.
+4. Prefer the repository's more local instructions when they conflict with this reusable base guidance.
+5. Do not read references for languages outside the task's scope.
+
+## References
+
+- Python: read `references/python.md` when the task touches Python code.

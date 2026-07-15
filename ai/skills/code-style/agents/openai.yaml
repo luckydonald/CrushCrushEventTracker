@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Style"
+  short_description: "Apply language-specific project code style"
+  default_prompt: "Use $code-style when writing or reviewing the code in this task."

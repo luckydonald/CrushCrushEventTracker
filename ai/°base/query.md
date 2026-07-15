@@ -3944,3 +3944,13 @@ d) Abort (print revert instructions)
 
 ❯ /commit-with-lplp-style commit bugsink-triage/enable,SKILL.md with good explaining commit message (ammending this ai auto-commit)
 
+› In this base, how can I best provide code style guidelines without spamming every subproject with unneeded tokens - especially if they don't use that language?
+
+› Here's my python rules:
+Do not use `_` prefixes. We don't do "private" classes/functions here. Instead separate stuff out in modules where it makes sense.
+End logical indetion with an `# end <word>`, i.e. `# end if`: `if`, `with`, `for`, `while`, `def`, `class`. No repeating of the class/func name. Just a simple comment based closing bracket basically, to enhance readability.
+
+› `async def foo():` => `# end def`
+
+› Alright, do that and commit LPLP style
+
