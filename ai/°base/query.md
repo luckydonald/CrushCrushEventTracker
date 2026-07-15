@@ -4069,3 +4069,7 @@ If either of tem is, replace with the values as before (Lucky Lucy)
 
 If neither is, just replace with the winner from before ("remaining" or config).
 
+› apply `curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -` (but via local `cat get-base.py | python3`) to `/path/to/<redacted>/frontend` - to see if we have any outstanding bugs.
+
+› the backup tags should contain the name, too. I forgot. Fix for next time with a commit. `bak/split/<name>/YYYY-MM-DD_HH-MM-SS/{clean,UNCLEAN,history}`, where name can contain slashes.
+

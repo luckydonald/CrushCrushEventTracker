@@ -74,7 +74,7 @@ def backup_split_refs(
     while True:
         timestamp = candidate.strftime("%Y-%m-%d_%H-%M-%S")
         reserved_tag_refs = {
-            label: f"{BACKUP_TAG_ROOT}/{timestamp}/{label}"
+            label: f"{BACKUP_TAG_ROOT}/{base_branch}/{timestamp}/{label}"
             for label in tips
         }
         tag_refs = {

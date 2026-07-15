@@ -80,17 +80,18 @@ class SnapshotTests(RecoveryTestBase):
 
 class BackupSplitRefsTests(RecoveryTestBase):
     def test_tags_all_existing_variants_with_one_run_timestamp(self):
-        git(["branch", "feature"], self.repo)
-        git(["branch", branches.unclean_name("feature")], self.repo)
-        git(["branch", branches.history_name("feature")], self.repo)
+        base_branch = "feature/team/topic"
+        git(["branch", base_branch], self.repo)
+        git(["branch", branches.unclean_name(base_branch)], self.repo)
+        git(["branch", branches.history_name(base_branch)], self.repo)
         tips = {
-            "clean": git_ops.rev_parse("feature", self.repo),
-            "UNCLEAN": git_ops.rev_parse(branches.unclean_name("feature"), self.repo),
-            "history": git_ops.rev_parse(branches.history_name("feature"), self.repo),
+            "clean": git_ops.rev_parse(base_branch, self.repo),
+            "UNCLEAN": git_ops.rev_parse(branches.unclean_name(base_branch), self.repo),
+            "history": git_ops.rev_parse(branches.history_name(base_branch), self.repo),
         }
 
         tags = recovery.backup_split_refs(
-            "feature",
+            base_branch,
             self.repo,
             when=datetime(2026, 7, 15, 17, 4, 5),
         )
@@ -98,9 +99,9 @@ class BackupSplitRefsTests(RecoveryTestBase):
         self.assertEqual(
             tags,
             {
-                "clean": "refs/tags/bak/split/2026-07-15_17-04-05/clean",
-                "UNCLEAN": "refs/tags/bak/split/2026-07-15_17-04-05/UNCLEAN",
-                "history": "refs/tags/bak/split/2026-07-15_17-04-05/history",
+                "clean": "refs/tags/bak/split/feature/team/topic/2026-07-15_17-04-05/clean",
+                "UNCLEAN": "refs/tags/bak/split/feature/team/topic/2026-07-15_17-04-05/UNCLEAN",
+                "history": "refs/tags/bak/split/feature/team/topic/2026-07-15_17-04-05/history",
             },
         )
         for label, tag_ref in tags.items():
@@ -115,11 +116,11 @@ class BackupSplitRefsTests(RecoveryTestBase):
         first = recovery.backup_split_refs("feature", self.repo, when=when)
         second = recovery.backup_split_refs("feature", self.repo, when=when)
 
-        self.assertEqual(first["clean"], "refs/tags/bak/split/2026-07-15_17-04-05/clean")
-        self.assertEqual(second["clean"], "refs/tags/bak/split/2026-07-15_17-04-06/clean")
+        self.assertEqual(first["clean"], "refs/tags/bak/split/feature/2026-07-15_17-04-05/clean")
+        self.assertEqual(second["clean"], "refs/tags/bak/split/feature/2026-07-15_17-04-06/clean")
     # end def
 
-    def test_same_second_does_not_mix_disjoint_variant_sets(self):
+    def test_different_branches_can_use_the_same_timestamp(self):
         git(["branch", "feature"], self.repo)
         git(["branch", branches.history_name("other")], self.repo)
         when = datetime(2026, 7, 15, 17, 4, 5)
@@ -127,8 +128,8 @@ class BackupSplitRefsTests(RecoveryTestBase):
         first = recovery.backup_split_refs("feature", self.repo, when=when)
         second = recovery.backup_split_refs("other", self.repo, when=when)
 
-        self.assertEqual(first["clean"], "refs/tags/bak/split/2026-07-15_17-04-05/clean")
-        self.assertEqual(second["history"], "refs/tags/bak/split/2026-07-15_17-04-06/history")
+        self.assertEqual(first["clean"], "refs/tags/bak/split/feature/2026-07-15_17-04-05/clean")
+        self.assertEqual(second["history"], "refs/tags/bak/split/other/2026-07-15_17-04-05/history")
     # end def
 
     def test_missing_variants_do_not_create_misleading_tags(self):
@@ -140,9 +141,9 @@ class BackupSplitRefsTests(RecoveryTestBase):
             when=datetime(2026, 7, 15, 17, 4, 5),
         )
 
-        self.assertEqual(tags, {"clean": "refs/tags/bak/split/2026-07-15_17-04-05/clean"})
-        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/2026-07-15_17-04-05/UNCLEAN", self.repo))
-        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/2026-07-15_17-04-05/history", self.repo))
+        self.assertEqual(tags, {"clean": "refs/tags/bak/split/feature/2026-07-15_17-04-05/clean"})
+        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/feature/2026-07-15_17-04-05/UNCLEAN", self.repo))
+        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/feature/2026-07-15_17-04-05/history", self.repo))
     # end def
 # end class
 

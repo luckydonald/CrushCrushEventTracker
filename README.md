@@ -314,3 +314,5 @@ git config --local base.split.email "split@example.com"
 ```
 
 Environment configuration takes precedence over `base.split.*`. Without either email override, the tool prefers a surviving non-AI identity from the source commit and then `user.name`/`user.email`; `@luckydonald.de` identities map back to the Lucky Lucy default, while other domains retain their own identity. The authorship-rewrite helper recognizes Claude, Codex, and Copilot author/committer identities and removes all `Co-authored-by` trailers.
+
+Before a mutating split run, existing branch tips are backed up as lightweight tags under `bak/split/<branch>/YYYY-MM-DD_HH-MM-SS/{clean,UNCLEAN,history}`. The full branch name is preserved, including any slashes; missing variants simply have no corresponding backup tag.
