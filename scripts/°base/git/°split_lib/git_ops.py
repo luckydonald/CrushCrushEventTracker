@@ -181,6 +181,28 @@ def create_branch(ref: str, at_sha: str, cwd: Path) -> None:
     subprocess.run(["git", "update-ref", _full_ref(ref), at_sha], cwd=cwd, check=True)
 
 
+def create_refs(refs: dict[str, str], cwd: Path) -> None:
+    """Atomically create refs, refusing to overwrite any existing ref."""
+    if not refs:
+        return
+    # end if
+
+    commands = ["start"]
+    for ref, sha in refs.items():
+        commands.append(f"create {ref} {sha}")
+    # end for
+    commands.extend(["prepare", "commit", ""])
+    subprocess.run(
+        ["git", "update-ref", "--stdin"],
+        cwd=cwd,
+        input="\n".join(commands),
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+# end def
+
+
 def move_ref(ref: str, new_sha: str, old_sha: str | None, cwd: Path) -> None:
     """Update a ref, optionally asserting its current value first (race guard)."""
     args = ["git", "update-ref", _full_ref(ref), new_sha]

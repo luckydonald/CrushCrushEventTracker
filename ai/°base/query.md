@@ -3960,3 +3960,5 @@ End logical indetion with an `# end <word>`, i.e. `# end if`: `if`, `with`, `for
 
 › Also show propper git stderr instead of showing only an unhelpful CalledProcessError traceback.
 
+› When moving those bases around, _backup_ the previous ones by tagging the commits with `bak/split/YYYY-MM-DD_HH-MM-SS/{clean,UNCLEAN,history}`. That date is the same for the same run.
+

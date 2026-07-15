@@ -8,11 +8,13 @@ so recovery information survives even if the process is killed mid-run.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import branches, git_ops, sync_splits, sync_unclean
 
 RECOVERY_FILENAME = ".rebase-recovery.tmp"
+BACKUP_TAG_ROOT = "refs/tags/bak/split"
 
 ABORT_COMMANDS = (
     "git rebase --abort || true",
@@ -49,6 +51,48 @@ def resolve_watched_refs(branch: str | None, main_branch: str, cwd: Path) -> lis
 
 def snapshot(refs: list[str], cwd: Path) -> dict[str, str | None]:
     return {ref: git_ops.rev_parse(ref, cwd) for ref in refs}
+
+
+def backup_split_refs(
+    base_branch: str,
+    cwd: Path,
+    *,
+    when: datetime | None = None,
+) -> dict[str, str]:
+    """Tag the existing clean, UNCLEAN, and history tips before a split run."""
+    tips = {
+        "clean": git_ops.rev_parse(base_branch, cwd),
+        "UNCLEAN": git_ops.rev_parse(branches.unclean_name(base_branch), cwd),
+        "history": git_ops.rev_parse(branches.history_name(base_branch), cwd),
+    }
+    existing_tips = {label: sha for label, sha in tips.items() if sha is not None}
+    if not existing_tips:
+        return {}
+    # end if
+
+    candidate = when or datetime.now()
+    while True:
+        timestamp = candidate.strftime("%Y-%m-%d_%H-%M-%S")
+        reserved_tag_refs = {
+            label: f"{BACKUP_TAG_ROOT}/{timestamp}/{label}"
+            for label in tips
+        }
+        tag_refs = {
+            label: reserved_tag_refs[label]
+            for label in existing_tips
+        }
+        if all(git_ops.rev_parse(tag_ref, cwd) is None for tag_ref in reserved_tag_refs.values()):
+            break
+        # end if
+        candidate += timedelta(seconds=1)
+    # end while
+
+    git_ops.create_refs(
+        {tag_refs[label]: sha for label, sha in existing_tips.items()},
+        cwd,
+    )
+    return tag_refs
+# end def
 
 
 def _full_ref(ref: str) -> str:

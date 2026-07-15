@@ -4,7 +4,7 @@ import argparse
 import logging
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable
 
@@ -52,11 +52,12 @@ def _build_logger(repo_root: Path) -> logging.Logger:
     return logger
 
 
-def _run_with_recovery(
+def run_with_recovery(
     *,
     repo_root: Path,
     main_branch: str,
     branch: str | None,
+    backup_base_branches: list[str],
     dry_run: bool,
     invocation: str,
     run_fn: Callable[[], int],
@@ -72,6 +73,7 @@ def _run_with_recovery(
     """
     if dry_run:
         return run_fn()
+    # end if
 
     logger = _build_logger(repo_root)
     try:
@@ -82,6 +84,22 @@ def _run_with_recovery(
         logger.debug(entry)
         logger.info("snapshotted %d ref(s) -> %s", len(watched), repo_root / recovery.RECOVERY_FILENAME)
 
+        backup_time = datetime.now()
+        for offset, base_branch in enumerate(backup_base_branches):
+            backup_tags = recovery.backup_split_refs(
+                base_branch,
+                repo_root,
+                when=backup_time.replace(microsecond=0) + timedelta(seconds=offset),
+            )
+            if backup_tags:
+                logger.info(
+                    "backed up %s -> %s",
+                    base_branch,
+                    ", ".join(tag.removeprefix("refs/tags/") for tag in backup_tags.values()),
+                )
+            # end if
+        # end for
+
         try:
             return run_fn()
         finally:
@@ -91,10 +109,13 @@ def _run_with_recovery(
                 logger.info(summary)
             else:
                 logger.debug(summary)
+            # end if
     finally:
         for handler in list(logger.handlers):
             logger.removeHandler(handler)
             handler.close()
+        # end for
+# end def
 
 
 def _parse_ref_lines(text: str) -> list[push_checks.RefUpdate]:
@@ -475,10 +496,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "sync-splits":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _run_with_recovery(
+        backup_base_branches = (
+            [args.branch]
+            if args.branch
+            else sync_splits_lib.discover_unclean_branches(root)
+        )
+        return run_with_recovery(
             repo_root=root,
             main_branch=main_branch,
             branch=args.branch,
+            backup_base_branches=backup_base_branches,
             dry_run=args.dry_run,
             invocation=invocation,
             run_fn=lambda: _sync_splits(args, repo_root=root, main_branch=main_branch),
@@ -487,10 +514,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "update-history-master":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _run_with_recovery(
+        return run_with_recovery(
             repo_root=root,
             main_branch=main_branch,
             branch=None,
+            backup_base_branches=[main_branch],
             dry_run=args.dry_run,
             invocation=invocation,
             run_fn=lambda: _update_history_master(args, repo_root=root, main_branch=main_branch),
@@ -499,10 +527,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "rebase-branches-to-master":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _run_with_recovery(
+        backup_base_branches = (
+            [args.branch]
+            if args.branch
+            else sync_splits_lib.discover_unclean_branches(root)
+        )
+        return run_with_recovery(
             repo_root=root,
             main_branch=main_branch,
             branch=args.branch,
+            backup_base_branches=backup_base_branches,
             dry_run=args.dry_run,
             invocation=invocation,
             run_fn=lambda: _rebase_branches_to_master(args, repo_root=root, main_branch=main_branch),
@@ -511,10 +545,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "bootstrap-branch":
         root = _resolve_repo_root(args)
         main_branch = branches.detect_main_branch(root)
-        return _run_with_recovery(
+        return run_with_recovery(
             repo_root=root,
             main_branch=main_branch,
             branch=args.branch,
+            backup_base_branches=[args.branch],
             dry_run=args.dry_run,
             invocation=invocation,
             run_fn=lambda: _bootstrap_branch(args, repo_root=root, main_branch=main_branch),

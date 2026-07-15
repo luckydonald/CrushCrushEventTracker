@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -75,6 +76,75 @@ class SnapshotTests(RecoveryTestBase):
         snap = recovery.snapshot(["master", "does-not-exist"], self.repo)
         self.assertEqual(snap["master"], git_ops.rev_parse("master", self.repo))
         self.assertIsNone(snap["does-not-exist"])
+
+
+class BackupSplitRefsTests(RecoveryTestBase):
+    def test_tags_all_existing_variants_with_one_run_timestamp(self):
+        git(["branch", "feature"], self.repo)
+        git(["branch", branches.unclean_name("feature")], self.repo)
+        git(["branch", branches.history_name("feature")], self.repo)
+        tips = {
+            "clean": git_ops.rev_parse("feature", self.repo),
+            "UNCLEAN": git_ops.rev_parse(branches.unclean_name("feature"), self.repo),
+            "history": git_ops.rev_parse(branches.history_name("feature"), self.repo),
+        }
+
+        tags = recovery.backup_split_refs(
+            "feature",
+            self.repo,
+            when=datetime(2026, 7, 15, 17, 4, 5),
+        )
+
+        self.assertEqual(
+            tags,
+            {
+                "clean": "refs/tags/bak/split/2026-07-15_17-04-05/clean",
+                "UNCLEAN": "refs/tags/bak/split/2026-07-15_17-04-05/UNCLEAN",
+                "history": "refs/tags/bak/split/2026-07-15_17-04-05/history",
+            },
+        )
+        for label, tag_ref in tags.items():
+            self.assertEqual(git_ops.rev_parse(tag_ref, self.repo), tips[label])
+        # end for
+    # end def
+
+    def test_same_second_uses_next_free_timestamp_without_overwriting(self):
+        git(["branch", "feature"], self.repo)
+        when = datetime(2026, 7, 15, 17, 4, 5)
+
+        first = recovery.backup_split_refs("feature", self.repo, when=when)
+        second = recovery.backup_split_refs("feature", self.repo, when=when)
+
+        self.assertEqual(first["clean"], "refs/tags/bak/split/2026-07-15_17-04-05/clean")
+        self.assertEqual(second["clean"], "refs/tags/bak/split/2026-07-15_17-04-06/clean")
+    # end def
+
+    def test_same_second_does_not_mix_disjoint_variant_sets(self):
+        git(["branch", "feature"], self.repo)
+        git(["branch", branches.history_name("other")], self.repo)
+        when = datetime(2026, 7, 15, 17, 4, 5)
+
+        first = recovery.backup_split_refs("feature", self.repo, when=when)
+        second = recovery.backup_split_refs("other", self.repo, when=when)
+
+        self.assertEqual(first["clean"], "refs/tags/bak/split/2026-07-15_17-04-05/clean")
+        self.assertEqual(second["history"], "refs/tags/bak/split/2026-07-15_17-04-06/history")
+    # end def
+
+    def test_missing_variants_do_not_create_misleading_tags(self):
+        git(["branch", "feature"], self.repo)
+
+        tags = recovery.backup_split_refs(
+            "feature",
+            self.repo,
+            when=datetime(2026, 7, 15, 17, 4, 5),
+        )
+
+        self.assertEqual(tags, {"clean": "refs/tags/bak/split/2026-07-15_17-04-05/clean"})
+        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/2026-07-15_17-04-05/UNCLEAN", self.repo))
+        self.assertIsNone(git_ops.rev_parse("refs/tags/bak/split/2026-07-15_17-04-05/history", self.repo))
+    # end def
+# end class
 
 
 class FormatTests(unittest.TestCase):
