@@ -397,6 +397,19 @@ class MainAutoModeTests(unittest.TestCase):
         self.assertEqual(code, 1)
         execvp.assert_not_called()
 
+    def test_auto_failure_on_attached_branch_does_not_claim_detached_head(self):
+        git(["checkout", "-b", "feature"], self.repo)
+        stderr = io.StringIO()
+
+        with contextlib.redirect_stderr(stderr), \
+             mock.patch.object(self.module, "run_split", return_value=1), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+            code = self.module.main([])
+
+        self.assertEqual(code, 1)
+        self.assertIn("auto mode could not complete", stderr.getvalue())
+        self.assertNotIn("detached HEAD?", stderr.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()

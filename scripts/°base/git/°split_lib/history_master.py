@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import branches, git_ops, gitattributes_safety, identity, trailers
+from . import branches, git_ops, gitattributes_safety, identity, recovery, trailers
 
 MERGE_KIND_TRAILER = "X-Base-History-Merge-Kind"
 MERGE_SHA_TRAILER = "X-Base-History-Merge-Sha"
@@ -139,10 +139,30 @@ def _checkout_scratch(onto: str, cwd: Path) -> None:
     Detaches HEAD first so this is safe to call even when currently sitting
     on a stale scratch branch from a previous (finished) step.
     """
+    status = _git(["status", "--porcelain"], cwd, check=True).stdout
+    dirty_paths = [
+        line[3:]
+        for line in status.splitlines()
+        if len(line) > 3 and line[3:] != recovery.RECOVERY_FILENAME
+    ]
+    if dirty_paths:
+        paths = ", ".join(dirty_paths)
+        raise HistoryMasterError(
+            "cannot check out the history-master scratch branch while the working "
+            f"tree is dirty ({paths}); commit or stash these changes first."
+        )
+    # end if
     _git(["checkout", "--detach", "HEAD"], cwd)
     _delete_ref(SCRATCH_REF, cwd)
     git_ops.create_branch(SCRATCH_REF, onto, cwd)
-    git_ops.checkout_branch(SCRATCH_BRANCH, cwd)
+    try:
+        git_ops.checkout_branch(SCRATCH_BRANCH, cwd)
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "Git produced no output.").strip()
+        raise HistoryMasterError(
+            f"git checkout {SCRATCH_BRANCH!r} failed (exit {exc.returncode}): {detail}"
+        ) from exc
+    # end try
 
 
 def _cleanup_scratch(cwd: Path) -> None:

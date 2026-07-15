@@ -4073,3 +4073,9 @@ If neither is, just replace with the winner from before ("remaining" or config).
 
 › the backup tags should contain the name, too. I forgot. Fix for next time with a commit. `bak/split/<name>/YYYY-MM-DD_HH-MM-SS/{clean,UNCLEAN,history}`, where name can contain slashes.
 
+› it's pushed now.
+
+› Now do the same for `/path/to/redacted/gb/`
+
+› restore; then fix bug and $commit-with-lplp-style
+

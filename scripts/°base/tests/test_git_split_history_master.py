@@ -49,6 +49,16 @@ class HistoryMasterTests(unittest.TestCase):
         history_tip = git(["rev-parse", "ai/history/master"], self.repo_root)
         self.assertEqual(master_tip, history_tip)
 
+    def test_scratch_checkout_refuses_dirty_worktree_without_detaching(self) -> None:
+        (self.repo_root / "root.txt").write_text("dirty local edit\n")
+
+        with self.assertRaises(history_master.HistoryMasterError) as ctx:
+            history_master._checkout_scratch("HEAD", self.repo_root)
+
+        self.assertIn("working tree is dirty", str(ctx.exception))
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), "master")
+        self.assertEqual(git(["rev-parse", "HEAD"], self.repo_root), git(["rev-parse", "master"], self.repo_root))
+
     def test_idempotent_rerun_is_a_no_op(self) -> None:
         history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
         history_tip_after_first = git(["rev-parse", "ai/history/master"], self.repo_root)

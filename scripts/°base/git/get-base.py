@@ -249,7 +249,11 @@ def main(argv: list[str] | None = None) -> int:
     if not argv:
         argv = auto_argv(repo_root, worktree)
         if argv is None:
-            print(USAGE, file=sys.stderr, end="")
+            if current_branch(repo_root):
+                status("auto mode could not complete; see the delegated command error above")
+            else:
+                print(USAGE, file=sys.stderr, end="")
+            # end if
             return 1
 
     delegate(repo_root, worktree, argv)
