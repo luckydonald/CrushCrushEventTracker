@@ -4184,3 +4184,13 @@ must be stripped on **clean**.
 
 ❯ I still don't see a commit implementing `86311138e3eadc40b7a6fa69b75c3741a18d9671`, or is that actually kinda part of `230b59efb747a39e26d2ef9a673db5f3a808a4ad`?
 
+❯ Check that none of the commits (including ai/query.md etc.) include repo names outside of the `luckydonald/` namespace. These need to be redacted. (rule for base)
+
+❯ Make that a memory for the base repository.
+
+❯ ...apply that memory ... on that memory, please ...
+
+❯ Add to also check on `ai/°base/errors/*.*` files.
+
+❯ squash it
+

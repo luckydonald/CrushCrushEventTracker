@@ -1,2 +1,3 @@
+- [redact external repo/client names](feedback_redact_external_repo_names.md) — base commits (query.md, plans, tests, errors/*) must not name repos/clients outside `luckydonald/`; bracket scope tags for own repos are fine.
 - [commit prefix: [base] [ssp]](feedback_commit_prefix_ssp_tag.md) — use `[base] [ssp] ` prefix, not bare `[base] `, for the git branch-split feature work.
 - [lib naming convention](feedback_lib_naming_convention.md) — new shared logic goes in a `°name_lib` package, not `_lib.py`; public functions there have no leading underscore.

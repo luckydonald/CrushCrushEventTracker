@@ -79,6 +79,9 @@ SKIP_PROMPTS = {
     "please commit", "pls commit", "plz commit",
     "commit now", "now commit",
     "keep committing", "always commit",
+    # squashing/cleanup
+    "squash", "squash it", "squash it with lplp style",
+    "rebase", "rebase it", "rebase it with lplp style",
     # bumping the AI to continue
     "continue", "go on", "bump",
     # confirmations
