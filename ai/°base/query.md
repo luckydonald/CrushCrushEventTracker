@@ -4260,3 +4260,5 @@ python3.12 -m unittest discover -s "scripts/°base/tests" -p "test_git_split*.py
 
 ❯ I think you analyized the wrong `query.md`. I meant the section under `#### General AI development guidelines` in `ai/query.md`; not the whole log of `ai/°base/query.md`.
 
+❯ Extract testing, too.
+

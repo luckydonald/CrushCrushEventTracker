@@ -16,6 +16,10 @@
 - Web framework: `FastAPI`.
 - Database: typed `sqlalchemy` models for Postgres; `alembic` for migrations.
 
+## Testing
+
+- Write tests for the backend code.
+
 ## Explicit block endings
 
 End every logical indentation block opened by one of the following statements with a comment aligned with that statement:
