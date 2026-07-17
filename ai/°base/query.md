@@ -4247,3 +4247,14 @@ python3.12 -m unittest discover -s "scripts/°base/tests" -p "test_git_split*.py
 > - [Answer (`230` chars, `230 B`)](output/agents/042.b1l17xnf1/result.md)
 > - [Raw log (`230` chars, `230 B`)](/tmp/claude-1000/-home-user-git-luckydonald-base/0dcdee12-bcc8-4ffa-8679-7f88974e2f82/tasks/b1l17xnf1.output)
 
+❯ Extract the language constraints from `ai/query.md` to `ai/skills/code-style/references/{language-extension}.md` (mentioning them in `SKILL.md`)
+
+❯ Task Notification:
+> - Task `a7e4912738d979980` <kbd>completed</kbd>
+> - Tool `toolu_01LhyEmpuV5tiFrEjMQV3p7j`
+> - > Agent "Find language style constraints scattered in query.md" finished
+> - [Query (`1735` chars, `1.71 KB`)](output/agents/043.a7e4912738d979980/prompt.md)
+> - [Answer (`3457` chars, `3.4 KB`)](output/agents/043.a7e4912738d979980/result.md)
+> - [Raw log (`165481` chars, `162 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/0dcdee12-bcc8-4ffa-8679-7f88974e2f82/tasks/a7e4912738d979980.output)
+> - `20` tools, `33256` tokens, `1.54388 s`
+

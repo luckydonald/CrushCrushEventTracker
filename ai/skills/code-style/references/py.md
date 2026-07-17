@@ -6,6 +6,7 @@
 - Do not create private classes or functions. This codebase does not use underscore naming to express private APIs.
 - Separate implementation into appropriately scoped modules when that improves organization.
 - Python-defined special names such as `__init__`, `__enter__`, and `__all__` are exempt.
+- Don't add a bare `_lib.py` for shared helpers; split it into one or more `°<name>_lib.py`/`°<name>_lib/` modules instead, following the naming already used for e.g. `°split_lib` or `°dllink_lib`. Functions inside those modules don't get underscore-prefixed names either.
 
 ## Explicit block endings
 
