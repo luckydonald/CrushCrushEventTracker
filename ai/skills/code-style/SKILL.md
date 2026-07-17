@@ -1,6 +1,6 @@
 ---
 name: "code-style"
-description: "Apply project code-style rules when writing, modifying, or reviewing code. Detect the languages used by the files in scope and load only their matching references; Languages: py."
+description: "Apply project code-style rules when writing, modifying, or reviewing code. Detect the languages used by the files in scope and load only their matching references; Languages: py, ts, vue."
 ---
 
 # Code Style
@@ -14,3 +14,5 @@ description: "Apply project code-style rules when writing, modifying, or reviewi
 ## References
 
 - [Python](./references/py.md)
+- [TypeScript](./references/ts.md)
+- [Vue](./references/vue.md)

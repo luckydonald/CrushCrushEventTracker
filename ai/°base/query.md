@@ -4258,3 +4258,5 @@ python3.12 -m unittest discover -s "scripts/°base/tests" -p "test_git_split*.py
 > - [Raw log (`165481` chars, `162 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/0dcdee12-bcc8-4ffa-8679-7f88974e2f82/tasks/a7e4912738d979980.output)
 > - `20` tools, `33256` tokens, `1.54388 s`
 
+❯ I think you analyized the wrong `query.md`. I meant the section under `#### General AI development guidelines` in `ai/query.md`; not the whole log of `ai/°base/query.md`.
+
