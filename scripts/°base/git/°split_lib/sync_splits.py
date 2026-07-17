@@ -21,6 +21,7 @@ SOURCE_TRAILER = "X-Base-Split-Source"
 KIND_TRAILER = "X-Base-Split-Kind"
 COUNTERPART_TREE_TRAILER = "X-Base-Split-Counterpart-Tree"
 ORIGINAL_MERGE_PARENTS_TRAILER = "X-Base-Split-Original-Merge-Parents"
+CLEAN_COMMIT_TRAILER = "X-Base-History-Clean-Commit"
 
 # Mirrors history_master.FIRST_FOLD_AUTO_RESOLVE_PATHS: these two files
 # predictably differ between any two independently-maintained trees, so a
@@ -60,6 +61,23 @@ def find_last_synced_source(target_ref: str, cwd: Path) -> str | None:
         return None
     message = git_ops.commit_message(tip, cwd)
     return trailers.read_trailer_value(message, SOURCE_TRAILER, cwd)
+
+
+def forward_cursor_ref(base_branch: str, target: str) -> str:
+    """Ref storing the most recent unclean source processed for one target."""
+    assert target in ("clean", "history")
+    return f"refs/base-split/forward-cursor/{target}/{base_branch}"
+# end def
+
+
+def find_forward_cursor(base_branch: str, target: str, target_ref: str, cwd: Path) -> str | None:
+    """Read the side cursor, falling back to old message trailers once."""
+    cursor = git_ops.rev_parse(forward_cursor_ref(base_branch, target), cwd)
+    if cursor is not None:
+        return cursor
+    # end if
+    return find_last_synced_source(target_ref, cwd)
+# end def
 
 
 def find_reconstruction_correlated_cursor(unclean_ref: str, target_ref: str, cwd: Path) -> str | None:
@@ -167,13 +185,19 @@ def make_split_commit(
     kind: str,
     extra_trailers: dict[str, str],
     cwd: Path,
+    *,
+    include_provenance: bool = True,
 ) -> str:
     author_name, author_email, author_date = _author_info(source_sha, cwd)
     base_message = git_ops.commit_message(source_sha, cwd)
 
-    trailer_values = {SOURCE_TRAILER: source_sha, KIND_TRAILER: kind}
-    trailer_values.update(extra_trailers)
-    message = trailers.write_trailers(base_message, trailer_values, cwd)
+    if include_provenance:
+        trailer_values = {SOURCE_TRAILER: source_sha, KIND_TRAILER: kind}
+        trailer_values.update(extra_trailers)
+        message = trailers.write_trailers(base_message, trailer_values, cwd)
+    else:
+        message = trailers.strip_trailers_with_prefix(base_message, "X-Base-")
+    # end if
     committer = identity.resolve_identity(
         cwd,
         remaining=identity.CommitIdentity(author_name, author_email),
@@ -199,6 +223,7 @@ class SyncSplitsResult:
     clean_ref: str
     clean_commits_created: int
     clean_commits_skipped_ai_only: int
+    clean_commits_skipped_noop: int
     history_ref: str
     history_commits_created: int
 
@@ -237,14 +262,15 @@ def sync_branch(
         git_ops.create_branch(branches.history_fork_point_ref(base_branch), history_tip, cwd)
 
     # --- clean pass ---
-    clean_last_source = find_last_synced_source(clean_ref, cwd)
+    clean_last_source = find_forward_cursor(base_branch, "clean", clean_ref, cwd)
     if clean_last_source is None:
         clean_last_source = find_reconstruction_correlated_cursor(unclean_ref, clean_ref, cwd)
     clean_source_shas = commits_to_replay(unclean_ref, clean_last_source, main_branch, cwd)
 
-    source_to_clean_tree: dict[str, str] = {}
+    source_to_clean_commit: dict[str, str] = {}
     clean_commits_created = 0
     clean_commits_skipped_ai_only = 0
+    clean_commits_skipped_noop = 0
 
     for source_sha in clean_source_shas:
         parents = git_ops.parents_of(source_sha, cwd)
@@ -270,18 +296,25 @@ def sync_branch(
             cwd,
             keep=lambda p: not classify.is_ai_base_path(p),
         )
-        source_to_clean_tree[source_sha] = clean_tree
+        if clean_tree == git_ops.tree_for_commit(clean_tip, cwd):
+            clean_commits_skipped_noop += 1
+            continue
+        # end if
 
-        extra_trailers = {ORIGINAL_MERGE_PARENTS_TRAILER: " ".join(parents)} if len(parents) > 1 else {}
-        new_clean_tip = make_split_commit(clean_tip, clean_tree, source_sha, kind, extra_trailers, cwd)
+        new_clean_tip = make_split_commit(
+            clean_tip, clean_tree, source_sha, kind, {}, cwd, include_provenance=False
+        )
         clean_tip = new_clean_tip
+        source_to_clean_commit[source_sha] = new_clean_tip
         clean_commits_created += 1
 
     if not dry_run and clean_commits_created > 0:
         git_ops.move_ref(clean_ref, clean_tip, None, cwd)
+    if not dry_run and clean_source_shas:
+        git_ops.move_ref(forward_cursor_ref(base_branch, "clean"), clean_source_shas[-1], None, cwd)
 
     # --- history pass ---
-    history_last_source = find_last_synced_source(history_ref, cwd)
+    history_last_source = find_forward_cursor(base_branch, "history", history_ref, cwd)
     if history_last_source is None:
         history_last_source = find_reconstruction_correlated_cursor(unclean_ref, history_ref, cwd)
     history_source_shas = commits_to_replay(unclean_ref, history_last_source, history_main_ref, cwd)
@@ -310,9 +343,10 @@ def sync_branch(
         )
 
         extra_trailers: dict[str, str] = {}
-        counterpart_tree = source_to_clean_tree.get(source_sha)
-        if counterpart_tree is not None:
-            extra_trailers[COUNTERPART_TREE_TRAILER] = counterpart_tree
+        counterpart_commit = source_to_clean_commit.get(source_sha)
+        if counterpart_commit is not None:
+            extra_trailers[CLEAN_COMMIT_TRAILER] = counterpart_commit
+            extra_trailers[COUNTERPART_TREE_TRAILER] = git_ops.tree_for_commit(counterpart_commit, cwd)
         if len(parents) > 1:
             extra_trailers[ORIGINAL_MERGE_PARENTS_TRAILER] = " ".join(parents)
 
@@ -322,12 +356,15 @@ def sync_branch(
 
     if not dry_run and history_commits_created > 0:
         git_ops.move_ref(history_ref, history_tip, None, cwd)
+    if not dry_run and history_source_shas:
+        git_ops.move_ref(forward_cursor_ref(base_branch, "history"), history_source_shas[-1], None, cwd)
 
     return SyncSplitsResult(
         branch=base_branch,
         clean_ref=clean_ref,
         clean_commits_created=clean_commits_created,
         clean_commits_skipped_ai_only=clean_commits_skipped_ai_only,
+        clean_commits_skipped_noop=clean_commits_skipped_noop,
         history_ref=history_ref,
         history_commits_created=history_commits_created,
     )
@@ -432,12 +469,7 @@ def build_filtered_merge_commit(
 
     tree = subprocess.run(["git", "write-tree"], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
     author_name, author_email, author_date = _author_info(source_sha, cwd)
-    trailer_values = {
-        SOURCE_TRAILER: source_sha,
-        KIND_TRAILER: kind,
-        ORIGINAL_MERGE_PARENTS_TRAILER: " ".join(git_ops.parents_of(source_sha, cwd)),
-    }
-    message = trailers.write_trailers(git_ops.commit_message(source_sha, cwd), trailer_values, cwd)
+    message = trailers.strip_trailers_with_prefix(git_ops.commit_message(source_sha, cwd), "X-Base-")
     new_sha = git_ops.commit_tree(
         tree,
         [onto, second_parent_sha],

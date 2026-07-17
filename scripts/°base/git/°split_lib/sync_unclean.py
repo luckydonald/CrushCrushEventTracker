@@ -27,7 +27,7 @@ from __future__ import annotations
 import re
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from . import branches, classify, git_ops, identity, trailers, tree_ops
@@ -36,6 +36,7 @@ from .tree_ops import PathChange
 SOURCE_TRAILER = "X-Base-Split-Source"
 KIND_TRAILER = "X-Base-Split-Kind"
 COUNTERPART_TREE_TRAILER = "X-Base-Split-Counterpart-Tree"
+CLEAN_COMMIT_TRAILER = "X-Base-History-Clean-Commit"
 
 # Our own bookkeeping trailer -- see module docstring.
 RECON_TRAILER = "X-Base-Unclean-Reconstructed-From"
@@ -86,6 +87,7 @@ class CommitInfo:
     paths: list[PathChange]
     source: str | None
     kind: str | None
+    clean_commit: str | None
 
 
 def read_commit_info(sha: str, cwd: Path) -> CommitInfo:
@@ -95,6 +97,7 @@ def read_commit_info(sha: str, cwd: Path) -> CommitInfo:
 
     source = trailers.read_trailer_value(message, SOURCE_TRAILER, cwd)
     kind = trailers.read_trailer_value(message, KIND_TRAILER, cwd)
+    clean_commit = trailers.read_trailer_value(message, CLEAN_COMMIT_TRAILER, cwd)
     author_name, author_email, author_date = _author_info(sha, cwd)
     paths = tree_ops.raw_diff_for_commit(sha, cwd)
 
@@ -108,7 +111,39 @@ def read_commit_info(sha: str, cwd: Path) -> CommitInfo:
         paths=paths,
         source=source,
         kind=kind,
+        clean_commit=clean_commit,
     )
+
+
+def correlate_clean_infos(
+    clean_infos: list[CommitInfo], history_infos: list[CommitInfo], cwd: Path
+) -> list[CommitInfo]:
+    """Restore history-side source identity onto otherwise trailer-free clean commits."""
+    by_sha = {info.sha: info for info in clean_infos}
+    source_by_clean_sha: dict[str, str] = {}
+    for history_info in history_infos:
+        if history_info.clean_commit and history_info.source and git_ops.rev_exists(history_info.source, cwd):
+            previous = source_by_clean_sha.setdefault(history_info.clean_commit, history_info.source)
+            if previous != history_info.source:
+                raise ValueError(
+                    f"History commits assign different sources to clean commit {history_info.clean_commit}: "
+                    f"{previous} and {history_info.source}"
+                )
+            # end if
+        # end if
+    # end for
+
+    correlated: list[CommitInfo] = []
+    for info in clean_infos:
+        source = source_by_clean_sha.get(info.sha)
+        if info.source is None and source is not None and info.sha in by_sha:
+            correlated.append(replace(info, source=source))
+        else:
+            correlated.append(info)
+        # end if
+    # end for
+    return correlated
+# end def
 
 
 def _key_for_info(info: CommitInfo, cwd: Path):
@@ -540,8 +575,10 @@ def reconstruct_unclean(
     new_clean_shas = _new_shas_since_cursor(clean_tip, clean_cursor, main_branch, cwd)
     new_history_shas = _new_shas_since_cursor(history_tip, history_cursor, history_main_ref, cwd)
 
-    clean_infos = [read_commit_info(sha, cwd) for sha in new_clean_shas]
     history_infos = [read_commit_info(sha, cwd) for sha in new_history_shas]
+    clean_infos = correlate_clean_infos(
+        [read_commit_info(sha, cwd) for sha in new_clean_shas], history_infos, cwd
+    )
 
     buckets = bucket_commits(clean_infos, history_infos, cwd)
 
@@ -560,8 +597,23 @@ def reconstruct_unclean(
     # cursor commits) since either side of an already-reconciled pair may
     # have been edited/amended in place without producing any "new" commit
     # for the other side in this run. ---
-    full_clean_map = _full_matched_infos(clean_ref, cwd)
-    full_history_map = _full_matched_infos(history_ref, cwd)
+    full_history_infos = [
+        read_commit_info(sha, cwd)
+        for sha in (git_ops.rev_list_reverse(history_tip, cwd) if history_tip is not None else [])
+    ]
+    full_clean_infos = correlate_clean_infos(
+        [read_commit_info(sha, cwd) for sha in (git_ops.rev_list_reverse(clean_tip, cwd) if clean_tip is not None else [])],
+        full_history_infos,
+        cwd,
+    )
+    full_clean_map = {
+        key: info for info in full_clean_infos
+        if isinstance((key := _key_for_info(info, cwd)), str)
+    }
+    full_history_map = {
+        key: info for info in full_history_infos
+        if isinstance((key := _key_for_info(info, cwd)), str)
+    }
     divergence_candidates = {
         key: {"clean": full_clean_map.get(key), "history": full_history_map.get(key)}
         for key in key_to_sha

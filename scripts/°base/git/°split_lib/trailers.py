@@ -29,6 +29,29 @@ def split_trailer_block(message: str) -> tuple[str, str]:
     return "\n".join(lines), "\n".join(trailer_lines)
 
 
+def strip_trailers_with_prefix(message: str, prefix: str) -> str:
+    """Remove trailing trailer entries whose keys start with ``prefix``.
+
+    Commit messages copied to clean branches must not expose base workflow
+    bookkeeping.  Keep the human message and unrelated trailers verbatim
+    enough for ``git interpret-trailers`` to retain their normal meaning.
+    """
+    body, trailer_block = split_trailer_block(message)
+    if not trailer_block:
+        return message
+    # end if
+
+    retained = [
+        line for line in trailer_block.splitlines()
+        if not line.partition(":")[0].startswith(prefix)
+    ]
+    if not retained:
+        return f"{body}\n" if body else ""
+    # end if
+    return f"{body}\n\n{'\n'.join(retained)}\n" if body else f"{'\n'.join(retained)}\n"
+# end def
+
+
 def read_trailers(message: str, cwd: Path) -> dict[str, list[str]]:
     """Parse trailers out of a full commit message body.
 

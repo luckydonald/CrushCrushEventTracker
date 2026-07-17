@@ -116,10 +116,6 @@ class DeepFlowTests(unittest.TestCase):
         code_containing = [r for r in unclean_manifest if r.code]
         self.assertEqual(len(clean_shas), len(code_containing))
         for clean_sha, record in zip(clean_shas, code_containing):
-            source = trailers.read_trailer_value(
-                git_ops.commit_message(clean_sha, self.repo_root), sync_splits.SOURCE_TRAILER, self.repo_root
-            )
-            self.assertEqual(source, record.commit)
             if record.ai:
                 # a "both" commit: only the non-ai half should have landed.
                 clean_paths = set(git_ops.changed_paths_for_commit(clean_sha, self.repo_root))
@@ -130,14 +126,7 @@ class DeepFlowTests(unittest.TestCase):
 
         # ai-only unclean commits have no counterpart at all on feature/test-eins.
         ai_only_sources = {r.commit for r in unclean_manifest if r.ai and not r.code}
-        clean_sources = set()
-        for clean_sha in clean_shas:
-            source = trailers.read_trailer_value(
-                git_ops.commit_message(clean_sha, self.repo_root), sync_splits.SOURCE_TRAILER, self.repo_root
-            )
-            if source:
-                clean_sources.add(source)
-        self.assertTrue(ai_only_sources.isdisjoint(clean_sources))
+        self.assertTrue(ai_only_sources.isdisjoint({r.commit for r in code_containing}))
 
     def _assert_history_branch(self, unclean_manifest) -> None:
         fork_point = git_ops.rev_parse(branches.history_fork_point_ref("feature/test-eins"), self.repo_root)

@@ -82,8 +82,7 @@ class BasicClassificationSplitTests(SyncSplitsTestBase):
         self.assertNotIn("src/app.py", history_paths)
 
         clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
-        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [code_sha])
-        self.assertEqual(clean_trailers[sync_splits.KIND_TRAILER], ["code"])
+        self.assertFalse(any(key.startswith("X-Base-") for key in clean_trailers))
 
         history_trailers = trailers.read_trailers(self.message_for(history_tip), self.repo)
         self.assertEqual(history_trailers[sync_splits.SOURCE_TRAILER], [code_sha])
@@ -141,9 +140,8 @@ class BasicClassificationSplitTests(SyncSplitsTestBase):
 
         clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
         history_trailers = trailers.read_trailers(self.message_for(history_tip), self.repo)
-        self.assertEqual(clean_trailers[sync_splits.KIND_TRAILER], ["mixed"])
+        self.assertFalse(any(key.startswith("X-Base-") for key in clean_trailers))
         self.assertEqual(history_trailers[sync_splits.KIND_TRAILER], ["mixed"])
-        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [mixed_sha])
         self.assertEqual(history_trailers[sync_splits.SOURCE_TRAILER], [mixed_sha])
         self.assertIn(sync_splits.COUNTERPART_TREE_TRAILER, history_trailers)
 
@@ -298,6 +296,54 @@ class AllAiOnlyBranchTests(SyncSplitsTestBase):
         self.assertEqual(clean_tip, main_tip)
 
 
+class EmptyUncleanCommitTests(SyncSplitsTestBase):
+    def test_empty_unclean_commits_do_not_create_clean_commits(self):
+        self.make_unclean("feature/empty-provenance")
+        git(["commit", "--allow-empty", "-m", "ai: actually call apis instead of the mock."], self.repo)
+        git(
+            [
+                "commit",
+                "--allow-empty",
+                "-m",
+                'Revert "ai: Attempt to fix the expander being in both rows somehow."',
+            ],
+            self.repo,
+        )
+        code_sha = make_commit(self.repo, "src/widget.py", "add widget refresh")
+
+        result = sync_splits.sync_branch(
+            "feature/empty-provenance", repo_root=self.repo, main_branch="master"
+        )
+
+        self.assertEqual(result.clean_commits_created, 1)
+        self.assertEqual(result.clean_commits_skipped_noop, 2)
+        self.assertEqual(result.history_commits_created, 3)
+        clean_shas = git(
+            ["log", "--reverse", "--format=%H", "master..feature/empty-provenance"], self.repo
+        ).splitlines()
+        self.assertEqual(len(clean_shas), 1)
+        clean_message = self.message_for(clean_shas[0])
+        self.assertFalse(any(key.startswith("X-Base-") for key in trailers.read_trailers(clean_message, self.repo)))
+
+        history_shas = git(
+            ["log", "--reverse", "--format=%H", "ai/history/master..ai/history/feature/empty-provenance"],
+            self.repo,
+        ).splitlines()
+        self.assertEqual(len(history_shas), 3)
+        self.assertEqual(
+            trailers.read_trailer_value(self.message_for(history_shas[-1]), sync_splits.SOURCE_TRAILER, self.repo),
+            code_sha,
+        )
+
+        rerun = sync_splits.sync_branch(
+            "feature/empty-provenance", repo_root=self.repo, main_branch="master"
+        )
+        self.assertEqual(rerun.clean_commits_created, 0)
+        self.assertEqual(rerun.history_commits_created, 0)
+    # end def
+# end class
+
+
 class DryRunTests(SyncSplitsTestBase):
     def test_dry_run_makes_no_ref_changes(self):
         self.make_unclean("feature/dry")
@@ -435,7 +481,7 @@ class UncleanMergeDetectionTests(SyncSplitsTestBase):
         clean_tip = git_ops.rev_parse("feature/x", self.repo)
         clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
         app_code_sha = git_ops.parents_of(merge_sha, self.repo)[0]
-        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [app_code_sha])
+        self.assertFalse(any(key.startswith("X-Base-") for key in clean_trailers))
 
     def test_fake_merges_flattens_merge_into_a_single_parent_commit(self):
         merge_sha, second_parent_sha = self._make_merge_commit_on_unclean(
@@ -452,8 +498,7 @@ class UncleanMergeDetectionTests(SyncSplitsTestBase):
         self.assertEqual(len(parents), 1, "fake-merge commit must be single-parent, not a real merge")
 
         clean_trailers = trailers.read_trailers(self.message_for(clean_tip), self.repo)
-        self.assertEqual(clean_trailers[sync_splits.SOURCE_TRAILER], [merge_sha])
-        self.assertIn(sync_splits.ORIGINAL_MERGE_PARENTS_TRAILER, clean_trailers)
+        self.assertFalse(any(key.startswith("X-Base-") for key in clean_trailers))
 
         clean_paths = git(["ls-tree", "-r", "--name-only", clean_tip], self.repo).splitlines()
         self.assertIn("docs/extra.txt", clean_paths)

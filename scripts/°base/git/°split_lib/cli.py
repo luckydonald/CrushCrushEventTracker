@@ -210,6 +210,7 @@ def _resolve_unclean_merge(
             print(f"{branch}: --unclean-merge=attempt conflicted on paths other than README.md/.gitignore.", file=sys.stderr)
             return "abort"
         git_ops.move_ref(target_ref, new_sha, onto, repo_root)
+        git_ops.move_ref(sync_splits_lib.forward_cursor_ref(branch, target), exc.sha, None, repo_root)
         return "resolved"
 
     if not sys.stdin.isatty():
@@ -250,6 +251,7 @@ def _resolve_unclean_merge(
                 excluded.add("b")
                 continue
             git_ops.move_ref(target_ref, new_sha, onto, repo_root)
+            git_ops.move_ref(sync_splits_lib.forward_cursor_ref(branch, target), exc.sha, None, repo_root)
             return "resolved"
 
         if choice == "c":
@@ -269,6 +271,7 @@ def _resolve_unclean_merge(
                     check=True,
                     capture_output=True,
                 )
+                git_ops.move_ref(sync_splits_lib.forward_cursor_ref(branch, target), exc.sha, None, repo_root)
                 return "resolved"
             print(f"  -> no merge of {second_parent[:8]} found on {target_ref} yet; returning to the menu.")
             continue
@@ -314,7 +317,8 @@ def _sync_splits(args: argparse.Namespace, *, repo_root: Path, main_branch: str)
                 continue
             print(
                 f"{branch}: clean +{result.clean_commits_created} "
-                f"(skipped {result.clean_commits_skipped_ai_only}), "
+                f"(skipped {result.clean_commits_skipped_ai_only} AI-only, "
+                f"{result.clean_commits_skipped_noop} no-op), "
                 f"history +{result.history_commits_created}"
             )
         return exit_code
@@ -361,10 +365,19 @@ Choose one:
 def _update_history_master(args: argparse.Namespace, *, repo_root: Path, main_branch: str) -> int:
     logger = logging.getLogger(history_master_lib.LOGGER_NAME)
     try:
+        registered_merges: list[tuple[str, str]] = []
+        for item in args.register_clean_merge:
+            branch, separator, sha = item.partition("=")
+            if not separator or not branch or not sha:
+                raise ValueError("--register-clean-merge must be BRANCH=MASTER_SHA")
+            # end if
+            registered_merges.append((branch, sha))
+        # end for
         result = history_master_lib.update_history_master(
             repo_root=repo_root,
             main_branch=main_branch,
             force_merge=args.force_merge,
+            registered_merges=registered_merges,
             pull_master=args.pull_master,
             pull_base=args.pull_base,
             yes=args.yes,
@@ -372,7 +385,7 @@ def _update_history_master(args: argparse.Namespace, *, repo_root: Path, main_br
             abort=args.abort,
             dry_run=args.dry_run,
         )
-    except history_master_lib.HistoryMasterError as exc:
+    except (history_master_lib.HistoryMasterError, ValueError) as exc:
         logger.error("update-history-master: %s", exc)
         return 1
 
@@ -464,6 +477,13 @@ def main(argv: list[str] | None = None) -> int:
 
     update_history = subparsers.add_parser("update-history-master", help="Rebuild ai/history/master.")
     update_history.add_argument("--force-merge", action="append", default=[], metavar="BRANCH")
+    update_history.add_argument(
+        "--register-clean-merge",
+        action="append",
+        default=[],
+        metavar="BRANCH=MASTER_SHA",
+        help="Register a squash merge without putting base metadata on master.",
+    )
     update_history.add_argument("--pull-master", action="store_true")
     update_history.add_argument("--pull-base", action="store_true")
     update_history.add_argument("--yes", action="store_true")

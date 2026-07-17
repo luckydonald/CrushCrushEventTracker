@@ -37,6 +37,8 @@ def resolve_watched_refs(branch: str | None, main_branch: str, cwd: Path) -> lis
                 branches.history_fork_point_ref(base_branch),
                 sync_unclean.clean_cursor_ref(base_branch),
                 sync_unclean.history_cursor_ref(base_branch),
+                sync_splits.forward_cursor_ref(base_branch, "clean"),
+                sync_splits.forward_cursor_ref(base_branch, "history"),
             ]
         )
 

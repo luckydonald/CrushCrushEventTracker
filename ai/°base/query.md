@@ -4079,3 +4079,104 @@ If neither is, just replace with the winner from before ("remaining" or config).
 
 › restore; then fix bug and $commit-with-lplp-style
 
+› please investigate a issue with `get-base.py` and the stuff it calls:
+It is applied to the project `/path/to/<redacted>`, please clone that into `/tmp/`, checkout the **UNCLEAN** branch on `cc6a7ba707569322b4d66d1652e00050d7542b08` and delete existing **clean** or **history** branches for that branch (not **ai/history/master** though).
+Run `get-base.py` without parameters in auto mode.
+Observe that **clean** branch will get two empty commits, `ai: actually call apis instead of the mock.` (e.g. `b83ce54612a431fffa3e89593d8fa506d6f35f1e`) and `Revert "ai: Attempt to fix the expander being in both rows somehow."` (e.g. `acb858aafe13fafe73e3f343adc33a7ab72a12c9`), followed by the actual expected code commit `49967ded6ef2dbaa1b57572c6d6468d4cac5a2a0` (Source aka. unclean: `336441f25222e3a25826bcfb95f4eaf974b7206f`).
+
+› Question answered.
+> <details><summary>
+>
+>> 1. The two source commits are already empty in `ai/UNCLEAN/*`; their filtered clean trees therefore equal `master`. Should the fix remove only their generated clean commits, while preserving empty history commits for timeline/provenance?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **History behavior** (1/1) <kbd>Single Select</kbd><br>
+>> The two source commits are already empty in `ai/UNCLEAN/*`; their filtered clean trees therefore equal `master`. Should the fix remove only their generated clean commits, while preserving empty history commits for timeline/provenance?
+> - [x] 1\. Clean only (Recommended)
+>   - _Keep history’s current per-source timeline; skip only no-op clean projections._
+> - [ ] 2\. Skip both branches
+>   - _Suppress no-op generated commits from both clean and history, changing existing history behavior._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+› Additionally, the trailers
+```text
+X-Base-Split-Source: 336441f25222e3a25826bcfb95f4eaf974b7206f
+X-Base-Split-Kind: code
+```
+must be stripped on **clean**.
+
+› Actually, all of those trailers, not just the above examples.
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Should trailer-free clean commits include the separately-added `X-Base-Split-Clean-Branch` merge marker, or only provenance trailers generated while projecting `ai/UNCLEAN/*` into a clean branch?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Clean scope** (1/1) <kbd>Single Select</kbd><br>
+>> Should trailer-free clean commits include the separately-added `X-Base-Split-Clean-Branch` merge marker, or only provenance trailers generated while projecting `ai/UNCLEAN/*` into a clean branch?
+> - [ ] 1\. Projection provenance only (Recommended)
+>   - _Strip all `sync-splits` provenance from generated clean commits; retain the merge marker used by history-master integration._
+> - [x] 2\. No X-Base trailers
+>   - _Require every clean commit, including merge markers, to be free of all `X-Base-*` trailers._
+>   - > If this needs to be stored, add that to **history** somehow. Possibly a specific empty commit with a json payload as message, or with annotation on the history commits themselves.
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. With all clean/master trailers forbidden, how should `update-history-master` identify a clean branch that was squash-merged (its clean tip is not an ancestor of `master`)?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Squash merges** (1/1) <kbd>Single Select</kbd><br>
+>> With all clean/master trailers forbidden, how should `update-history-master` identify a clean branch that was squash-merged (its clean tip is not an ancestor of `master`)?
+> - [x] 1\. Explicit registration (Recommended)
+>   - _Auto-detect merge/fast-forward integrations from history manifests; require an explicit branch-and-master-SHA registration for squash merges._
+> - [ ] 2\. Merge only
+>   - _Support only merge/fast-forward integrations automatically; report squash merges as unsupported._
+> - [ ] 3\. Keep a master trailer
+>   - _Retain one integration trailer on master, despite the clean trailer-free rule._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Should this rewrite existing clean/master history to remove old trailers, or enforce trailer-free output only for newly generated/rebuilt clean commits?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Existing history** (1/1) <kbd>Single Select</kbd><br>
+>> Should this rewrite existing clean/master history to remove old trailers, or enforce trailer-free output only for newly generated/rebuilt clean commits?
+> - [x] 1\. New output only (Recommended)
+>   - _Avoid rewriting published clean/master history; read legacy trailers only as a migration fallback._
+> - [ ] 2\. Rewrite generated refs
+>   - _Rebuild local generated clean refs to remove historical trailers, but do not rewrite master._
+> - [ ] 3\. Rewrite all clean history
+>   - _Also rewrite master and published clean history, requiring coordinated force-pushes._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+> › Implement the [Plan](./plans/045_make-clean-branches-trailer-free-while-preserving-split-meta.md).
+

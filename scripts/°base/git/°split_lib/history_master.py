@@ -621,6 +621,7 @@ def _build_plan(
     master_tip: str,
     old_history_sha: str | None,
     force_merge: list[str],
+    registered_merges: list[tuple[str, str]],
 ) -> tuple[list[dict], str, str | None]:
     """Compute the ordered list of steps to bring history-master up to date,
     plus the sha to start replaying from. Pure planning -- no mutation.
@@ -674,6 +675,15 @@ def _build_plan(
         for sha, branch in find_newly_merged_clean_branches(None, master_tip, cwd):
             if branch in wanted:
                 combined[sha] = branch
+
+    for branch, clean_sha in registered_merges:
+        if not git_ops.is_ancestor(clean_sha, master_tip, cwd):
+            raise HistoryMasterError(
+                f"Registered clean merge {clean_sha!r} for {branch!r} is not reachable from {main_branch!r}."
+            )
+        # end if
+        combined[clean_sha] = branch
+    # end for
 
     master_order = git_ops.rev_list_reverse(master_tip, cwd)
     order_index = {sha: idx for idx, sha in enumerate(master_order)}
@@ -824,6 +834,7 @@ def update_history_master(
     repo_root: Path,
     main_branch: str,
     force_merge: list[str] | None = None,
+    registered_merges: list[tuple[str, str]] | None = None,
     pull_master: bool = False,
     pull_base: bool = False,
     yes: bool = False,
@@ -832,6 +843,7 @@ def update_history_master(
     dry_run: bool = False,
 ) -> dict:
     force_merge = list(force_merge or [])
+    registered_merges = list(registered_merges or [])
     cwd = repo_root
     history_ref_name = branches.history_name(main_branch)
     history_ref = f"refs/heads/{history_ref_name}"
@@ -878,6 +890,7 @@ def update_history_master(
         master_tip=master_tip,
         old_history_sha=old_history_sha,
         force_merge=force_merge,
+        registered_merges=registered_merges,
     )
     logger.info("planned %d step(s) (%s)", len(steps), "first run" if first_run else f"replaying onto {history_ref_name}")
 
