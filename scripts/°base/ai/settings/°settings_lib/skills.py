@@ -89,7 +89,18 @@ def _iter_skill_source_paths() -> list[tuple[Path, str]]:
 
 
 def _collect_skill_sources() -> tuple[dict[str, dict[str, Any]], dict[str, set[Path]]]:
+    # `kind == "shared"` (the canonical ai/skills/<slug>/SKILL.md) always wins over
+    # symlink-discovered duplicates or generated command shims sharing the same
+    # `name`. Without this, a symlinked codex_skill/claude_skill path resolving to
+    # the identical file as its shared source has the same (or a racily-ordered)
+    # mtime, so the old plain mtime tie-break (`>=`) could nondeterministically pick
+    # the symlink path as `source["path"]` instead of the real one — and a later
+    # `_promote_extra_skill_files` call, walking that symlink path's *parent*
+    # directory (e.g. `.claude/commands/`, full of every other skill's generated
+    # shim) instead of the real skill directory, would copy every sibling skill's
+    # file into this skill's canonical directory.
     selected: dict[str, dict[str, Any]] = {}
+    selected_kind: dict[str, str] = {}
     claude_paths: dict[str, set[Path]] = {}
 
     for path, kind in _iter_skill_source_paths():
@@ -100,8 +111,14 @@ def _collect_skill_sources() -> tuple[dict[str, dict[str, Any]], dict[str, set[P
         if kind.startswith("claude_"):
             claude_paths.setdefault(name, set()).add(path)
         current = selected.get(name)
-        if current is None or float(source["mtime"]) >= float(current["mtime"]):
+        current_kind = selected_kind.get(name)
+        if current_kind == "shared" and kind != "shared":
+            continue
+        # end if
+        if current is None or kind == "shared" or (current_kind != "shared" and float(source["mtime"]) >= float(current["mtime"])):
             selected[name] = source
+            selected_kind[name] = kind
+        # end if
 
     return selected, claude_paths
 
