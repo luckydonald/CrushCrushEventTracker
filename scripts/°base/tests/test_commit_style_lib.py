@@ -5,6 +5,7 @@ scripts/°base/ai/hooks/°commit_style_lib/__init__.py).
 """
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 import uuid
@@ -107,6 +108,64 @@ class CommitStyleLibOverrideTests(unittest.TestCase):
             )
 
             self.assertEqual(last_subject(repo), "🗺️ ai: save plan 001_styled-plan")
+        # end with
+    # end def
+
+    def test_agent_results_honors_prompt_override_and_keeps_dynamic_id(self):
+        """Regression test: these `append_and_commit` call sites used to pass
+        `commit_template_relpath=""` specifically to avoid a whole-message-
+        replacing override clobbering the dynamic agent-id -- no longer
+        needed now that overrides preserve it via `{msg}`, but the styling
+        was silently skipped until that bypass was removed too (real repro:
+        commit a499dd0 landed unstyled, `ai: agent 004.... results`)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "consumer"
+            init_repo(repo, "https://github.com/example/consumer.git")
+            template = repo / "ai" / "commit-templates" / "prompt.md"
+            template.parent.mkdir(parents=True)
+            template.write_text("🤌 {msg}", encoding="utf-8")
+
+            output_file = Path(tmp) / "agent.output"
+            output_file.write_text(
+                json.dumps(
+                    {
+                        "message": {
+                            "content": [
+                                {
+                                    "type": "tool_use",
+                                    "id": "toolu_test",
+                                    "name": "Agent",
+                                    "input": {"prompt": "Inspect the compose window."},
+                                }
+                            ]
+                        }
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": (
+                        "<task-notification>\n"
+                        "<task-id>a6f364ce63ffebb84</task-id>\n"
+                        "<tool-use-id>toolu_test</tool-use-id>\n"
+                        f"<output-file>{output_file}</output-file>\n"
+                        "<status>completed</status>\n"
+                        "<summary>Agent came to rest</summary>\n"
+                        "<result>Done.</result>\n"
+                        "<usage><subagent_tokens>1</subagent_tokens>"
+                        "<tool_uses>1</tool_uses><duration_ms>1</duration_ms></usage>\n"
+                        "</task-notification>"
+                    )
+                },
+                "claude",
+            )
+
+            self.assertEqual(last_subject(repo), "🤌 ai: agent 001.a6f364ce63ffebb84 results")
         # end with
     # end def
 

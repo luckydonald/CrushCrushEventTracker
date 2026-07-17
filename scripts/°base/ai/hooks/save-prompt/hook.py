@@ -373,7 +373,7 @@ def _capture_codex_commands(payload: dict, prompt: str, prefix: str, log_path: P
     append_and_commit(
         log_path,
         "".join(blocks),
-        commit_template_relpath="",
+        commit_template_relpath="ai/commit-templates/prompt",
         default_commit_msg=commit_message,
         extra_paths=tuple(output_files),
     )
@@ -918,7 +918,7 @@ def _handle_task_notification(
         append_and_commit(
             log_path,
             content,
-            commit_template_relpath="",  # never let a prompt-commit template clobber the more-interesting explore-result message
+            commit_template_relpath="ai/commit-templates/prompt",
             default_commit_msg=f"ai: explore {dir_name} result",
             extra_paths=(result_file,),
         )
@@ -966,7 +966,7 @@ def _handle_task_notification(
     append_and_commit(
         log_path,
         content,
-        commit_template_relpath="",  # never let a prompt-commit template clobber the more-interesting agent-results message
+        commit_template_relpath="ai/commit-templates/prompt",
         default_commit_msg=f"ai: agent {dir_name} results",
         extra_paths=(prompt_file, result_file),
     )
