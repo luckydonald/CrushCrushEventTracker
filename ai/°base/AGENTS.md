@@ -109,6 +109,10 @@ Hooks:
 - `reject_co_authored_by.py` — blocks `Co-Authored-By:` in commit messages (stage: commit-msg)
 - `require_memory_delete_marker.py` — requires an explicit marker when memory files are deleted (stage: commit-msg)
 
+### Plan mode
+
+Before implementing an approved plan, ask once per session (via `AskUserQuestion`, choices `yes`/`no`) whether to enable the `commit-with-lplp-style` skill for the implementation. Skip asking again for the rest of the session — once answered (either way), respect that answer for every later plan in the same session too, unless the user changes their mind.
+
 ### Commit format
 
 ```
