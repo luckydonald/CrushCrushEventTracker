@@ -40,13 +40,13 @@ from _lib import (  # noqa: E402
     _chdir_to_git_root,
     _is_inside_base_repo,
     _subproject_root,
-    base_ai_commit_subject,
     dump_debug_payload,
     read_payload,
     running_copilot,
 )
 
 memory_lib = importlib.import_module("°memory_lib")
+commit_message = importlib.import_module("°commit_style_lib").commit_message
 
 
 def _encoded_project_dir(subproject: Path) -> Path:
@@ -252,7 +252,7 @@ def _commit(dst_dir_rel: str, names: list[str]) -> None:
         head = ", ".join(Path(n).stem for n in names[:3])
         extra = f" (+{len(names) - 3} more)" if len(names) > 3 else ""
         msg = f"ai: record memories {head}{extra}"
-    msg = base_ai_commit_subject(msg)
+    msg = commit_message("ai/commit-templates/memory", msg)
     subprocess.run(["git", "commit", "--no-verify", "--only", dst_dir_rel, "-m", msg], capture_output=True)
 
 
