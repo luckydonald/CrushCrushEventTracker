@@ -20,6 +20,13 @@ from pathlib import Path
 # because parent dirs contain non-ASCII / hyphenated names).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from merge_staged import merge as _merge_lines  # noqa: E402
+from importlib import import_module  # noqa: E402
+
+_commit_style = import_module("°commit_style_lib")
+base_ai_commit_subject = _commit_style.base_ai_commit_subject
+_commit_message = _commit_style.commit_message
+_is_inside_base_repo = _commit_style._is_inside_base_repo
+_read_by_issue = _commit_style._read_by_issue
 
 
 def read_payload() -> dict:
@@ -70,46 +77,6 @@ def _git_bytes(*args: str) -> bytes:
     return subprocess.run(["git", *args], capture_output=True).stdout or b""
 
 
-def _is_inside_base_repo(subproject_root: Path) -> bool:
-    """True iff we are inside the `base` meta-repo: subproject directory named
-    `base`, with origin pointing at luckydonald/base.
-
-    In a stand-alone consuming repo, subproject_root == git_root and the name
-    won't be `base`, so this returns False. In a monorepo, subproject_root is
-    the per-project directory below the git root and again won't match.
-    """
-    if subproject_root.name != "base":
-        return False
-    origin = _git_text("remote", "get-url", "origin")
-    return bool(re.search(r"(^|[:/])luckydonald/base(\.git)?/?$", origin, re.I))
-
-
-def base_ai_commit_subject(msg: str) -> str:
-    """Prefix AI auto-commit subjects with the base marker and issue key."""
-    subproject = _subproject_root()
-    git_root_text = _git_text("rev-parse", "--show-toplevel")
-    git_root = Path(git_root_text) if git_root_text else subproject
-    is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
-    ai_prefix = "ai/°base" if is_base else "ai"
-    issue = _read_by_issue(subproject, ai_prefix)
-
-    subject = msg
-    for _ in range(2):
-        if issue and subject.startswith(f"{issue}: "):
-            subject = subject[len(issue) + 2:]
-        if is_base and subject.startswith("[base] "):
-            subject = subject[len("[base] "):]
-
-    if is_base:
-        subject = f"[base] {subject}"
-    if issue:
-        if is_base:
-            subject = f"[base] {issue}: {subject[len('[base] '):]}"
-        else:
-            subject = f"{issue}: {subject}"
-    return subject
-
-
 def running_copilot() -> bool:
     """True when this process is actually running under Copilot CLI, per its
     own env markers. Unlike Claude's/Codex's markers, these are set directly
@@ -153,17 +120,6 @@ def _chdir_to_git_root() -> Path:
         sys.exit(1)
     os.chdir(root)
     return Path(root)
-
-
-def _read_by_issue(subproject: Path, ai_prefix: str) -> str:
-    """Read the issue key from <subproject>/<ai_prefix>/.by-issue.
-
-    Returns the stripped content (e.g. ``PROJ-1234``) or ``""`` when the file
-    is absent or empty."""
-    by_issue = subproject / ai_prefix / ".by-issue"
-    if by_issue.is_file():
-        return by_issue.read_text(encoding="utf-8").strip()
-    return ""
 
 
 def resolve_log_path(default_relpath: str, base_relpath: str) -> Path:
@@ -211,16 +167,6 @@ def _staged_snapshot(relpath: str) -> tuple[Path, Path] | None:
     base_tmp.write_bytes(_git_bytes("cat-file", "blob", head_hash) if head_hash else b"")
     staged_tmp.write_bytes(_git_bytes("cat-file", "blob", staged_hash))
     return base_tmp, staged_tmp
-
-
-def _commit_message(template_relpath: str, default_msg: str) -> str:
-    # Templates live alongside the AI artifacts, so they're subproject-scoped
-    # (relevant in monorepos where cwd is the git root, not the subproject).
-    template = _subproject_root() / template_relpath
-    if not template.is_file():
-        return base_ai_commit_subject(default_msg)
-    text = template.read_text(encoding="utf-8").replace("\n", "").replace("\r", "").strip()
-    return base_ai_commit_subject(text or default_msg)
 
 
 def _restore_staged(snap: tuple[Path, Path], relpath: str) -> None:

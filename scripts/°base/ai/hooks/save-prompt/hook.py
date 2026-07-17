@@ -936,7 +936,7 @@ def main() -> int:
 
     if _handle_compact_prompt(
         prefix, prompt, log_path,
-        commit_template_relpath="ai/commit-templates/prompt.md",
+        commit_template_relpath="ai/commit-templates/prompt",
         default_commit_msg="ai: updated prompt",
     ):
         return 0
@@ -952,7 +952,7 @@ def main() -> int:
             append_and_commit(
                 log_path,
                 f"{prefix} {remaining_after_task}\n\n",
-                commit_template_relpath="ai/commit-templates/prompt.md",
+                commit_template_relpath="ai/commit-templates/prompt",
                 default_commit_msg="ai: updated prompt",
             )
         return 0
@@ -961,7 +961,7 @@ def main() -> int:
     append_and_commit(
         log_path,
         content,
-        commit_template_relpath="ai/commit-templates/prompt.md",
+        commit_template_relpath="ai/commit-templates/prompt",
         default_commit_msg="ai: updated prompt",
         extra_paths=entry.extra_paths,
     )

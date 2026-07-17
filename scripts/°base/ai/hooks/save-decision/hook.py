@@ -592,7 +592,7 @@ def main() -> int:
     append_and_commit(
         log_path,
         block,
-        commit_template_relpath="ai/commit-templates/decision.md",
+        commit_template_relpath="ai/commit-templates/decision",
         default_commit_msg=f"ai: save decision {slug}",
     )
     return 0
