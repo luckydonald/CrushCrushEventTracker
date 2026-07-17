@@ -4320,3 +4320,6 @@ Add a pre-commit hook, which if enabled in `settings.json`, prevents old yarn ve
 › Machine-local settings setting that config is an error.
 Adapt the json schema as well, so it's direcly detected in the IDE.
 
+› Having `pre_commit` key in local is fine, just `yarn_4` is not. Also call that key `yarn@4`.
+The tests shall be automated, not manual.
+
