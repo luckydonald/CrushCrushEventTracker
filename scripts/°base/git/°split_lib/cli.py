@@ -11,6 +11,7 @@ from typing import Callable
 from . import branches, classify, git_ops, push_checks, trailers
 from . import bootstrap as bootstrap_lib
 from . import history_master as history_master_lib
+from . import merge_base as merge_base_lib
 from . import rebase_to_master as rebase_to_master_lib
 from . import recovery
 from . import sync_splits as sync_splits_lib
@@ -484,6 +485,18 @@ def main(argv: list[str] | None = None) -> int:
     bootstrap_branch.add_argument("branch", help="Base branch name (must already exist as a clean branch).")
     bootstrap_branch.add_argument("--dry-run", action="store_true")
 
+    merge_base = subparsers.add_parser(
+        "merge-base",
+        help="Merge base/base into the current branch, auto-resolving predictable "
+        "conflicts (README.md, .gitignore, .gitattributes), like a consuming repo would.",
+    )
+    merge_base.add_argument(
+        "--message-prefix",
+        default="",
+        help="Text to prepend to the resulting merge commit message (e.g. a repo-specific "
+        "marker), applied via --amend after the merge lands.",
+    )
+
     real_argv = argv if argv is not None else sys.argv[1:]
     args = parser.parse_args(real_argv)
     invocation = "scripts/°base/git/split.py " + " ".join(real_argv)
@@ -554,6 +567,17 @@ def main(argv: list[str] | None = None) -> int:
             invocation=invocation,
             run_fn=lambda: _bootstrap_branch(args, repo_root=root, main_branch=main_branch),
         )
+
+    if args.command == "merge-base":
+        root = _resolve_repo_root(args)
+        try:
+            new_sha = merge_base_lib.merge_base_into_current_branch(root, message_prefix=args.message_prefix)
+        except merge_base_lib.MergeBaseError as exc:
+            print(f"merge-base failed: {exc}", file=sys.stderr)
+            return 1
+        # end try
+        print(f"Merged base/base -> {new_sha}")
+        return 0
 
     parser.error(f"Unknown command: {args.command}")
     return 2
