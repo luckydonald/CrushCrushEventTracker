@@ -208,6 +208,81 @@ def _commands_before_current_prompt(payload: dict, prompt: str) -> list[CommandE
     return []
 
 
+def _queued_commands_before_current_prompt(payload: dict) -> list[str]:
+    """Return queued/interjected prompt texts sent while Claude was still
+    mid-turn ("type ahead" queueing -- spliced into the ongoing turn's
+    context rather than starting a fresh one) since the last genuine
+    top-level prompt, up to (not including) the current one.
+
+    These never trigger their own UserPromptSubmit event -- the harness
+    doesn't start a new turn for them -- so without this scan they're never
+    seen or logged at all. They show up in the transcript as a
+    `type: "attachment"` record with `attachment.type == "queued_command"`
+    (holding the full text), not as a normal `type: "user"` turn. Mirrors
+    Codex's `_commands_before_current_prompt` above, just for this
+    Claude-specific envelope shape and boundary marker (`promptId` instead of
+    `turn_id`).
+    """
+    transcript_path = payload.get("transcript_path")
+    current_prompt_id = payload.get("prompt_id")
+    if not isinstance(transcript_path, str) or not transcript_path:
+        return []
+    # end if
+    if not isinstance(current_prompt_id, str) or not current_prompt_id:
+        return []
+    # end if
+
+    pending: list[str] = []
+    try:
+        with open(transcript_path, encoding="utf-8") as transcript:
+            for line in transcript:
+                try:
+                    obj = json.loads(line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                # end try
+
+                if obj.get("type") == "attachment":
+                    attachment = obj.get("attachment")
+                    if isinstance(attachment, dict) and attachment.get("type") == "queued_command":
+                        text = attachment.get("prompt")
+                        if isinstance(text, str) and text.strip():
+                            pending.append(text)
+                        # end if
+                        continue
+                    # end if
+                # end if
+
+                if obj.get("type") == "user" and "promptId" in obj:
+                    if obj.get("promptId") == current_prompt_id:
+                        return pending
+                    # end if
+                    # A genuine top-level prompt turn boundary -- anything
+                    # queued before it already belongs to that turn, already
+                    # captured by save-prompt's own normal logging for it.
+                    pending = []
+                # end if
+            # end for
+        # end with
+    except OSError:
+        return []
+    # end try
+    return []
+# end def
+
+
+def _capture_claude_queued_commands(payload: dict, prefix: str, log_path: Path) -> None:
+    for text in _queued_commands_before_current_prompt(payload):
+        append_and_commit(
+            log_path,
+            f"{prefix} {text}\n\n",
+            commit_template_relpath="ai/commit-templates/prompt",
+            default_commit_msg="ai: updated prompt",
+        )
+    # end for
+# end def
+
+
 def _next_command_number(commands_dir: Path) -> int:
     if not commands_dir.exists():
         return 1
@@ -912,6 +987,8 @@ def main() -> int:
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     if ai_tool == "codex":
         _capture_codex_commands(payload, prompt, prefix, log_path)
+    elif ai_tool == "claude":
+        _capture_claude_queued_commands(payload, prefix, log_path)
     if prompt.strip() in SKIP_PROMPTS:
         return 0
     if prompt.strip().startswith(HARNESS_TASK_COMPLETE_REMINDER_PREFIX):
