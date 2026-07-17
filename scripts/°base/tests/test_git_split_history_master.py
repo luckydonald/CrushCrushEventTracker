@@ -59,6 +59,17 @@ class HistoryMasterTests(unittest.TestCase):
         self.assertEqual(git(["branch", "--show-current"], self.repo_root), "master")
         self.assertEqual(git(["rev-parse", "HEAD"], self.repo_root), git(["rev-parse", "master"], self.repo_root))
 
+    def test_scratch_checkout_ignores_untracked_files(self) -> None:
+        (self.repo_root / "scratch.log").write_text("build noise\n")
+        (self.repo_root / "assets").mkdir()
+        (self.repo_root / "assets" / "foo.html").write_text("<p>noise</p>\n")
+
+        history_master._checkout_scratch("HEAD", self.repo_root)
+
+        self.assertEqual(git(["branch", "--show-current"], self.repo_root), history_master.SCRATCH_BRANCH)
+        self.assertTrue((self.repo_root / "scratch.log").exists())
+        self.assertTrue((self.repo_root / "assets" / "foo.html").exists())
+
     def test_idempotent_rerun_is_a_no_op(self) -> None:
         history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
         history_tip_after_first = git(["rev-parse", "ai/history/master"], self.repo_root)

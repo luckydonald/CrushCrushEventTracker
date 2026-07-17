@@ -143,7 +143,10 @@ def _checkout_scratch(onto: str, cwd: Path) -> None:
     dirty_paths = [
         line[3:]
         for line in status.splitlines()
-        if len(line) > 3 and line[3:] != recovery.RECOVERY_FILENAME
+        # Untracked files (`??`) aren't touched by `checkout --detach HEAD`,
+        # and any real collision with `onto`'s tree is caught below by git's
+        # own checkout error -- don't refuse over untracked build/log cruft.
+        if len(line) > 3 and not line.startswith("??") and line[3:] != recovery.RECOVERY_FILENAME
     ]
     if dirty_paths:
         paths = ", ".join(dirty_paths)
