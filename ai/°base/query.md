@@ -4267,3 +4267,56 @@ Rather look into extracting functions as a module to import from.
 
 ❯ Planning should ask once per session if lplp commit style should be enabled for the implementation (choices: yes, no)
 
+› Add `ai/skills/code-style/references/yarn.md` and reference it from `ts.md`.
+It should describe in detail how to set up `yarn@4` aka. `yarn berry`.
+You can inspect `../../littlepipslittleparty/pipbuck` for that `yarn` usage — docker (compose), github actions, project usage, `package.json`, lock files, `.yarn`, `.yarnrc`, `.gitignore`, `.pnp.*`, `corepack`, commit history, etc.
+Add a pre-commit hook, which if enabled in `settings.json`, prevents old yarn version files (especially the common v2) to be commited accidentially (I can think of at least the lock files, and a `node_modules/` dir — though a gitignred (default) `node_modules/` dir shall only emit a warning).
+
+› Question answered.
+> <details><summary>
+>
+>> 1. How should a consuming repository enable the Yarn 4 pre-commit check in `ai/tool-settings/settings.json`?
+>> 2. Which staged-state violations should make the hook fail?
+>> 3. When should an ignored local `node_modules/` directory emit its non-blocking warning?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Opt-in key** (1/3) <kbd>Single Select</kbd><br>
+>> How should a consuming repository enable the Yarn 4 pre-commit check in `ai/tool-settings/settings.json`?
+> - [x] 1\. pre_commit.yarn_4 (Recommended)
+>   - _Use `"pre_commit": {"yarn_4": {"enabled": true}}`, keeping Git policy separate from AI hooks._
+> - [ ] 2\. yarn.version
+>   - _Use `"yarn": {"version": 4}`, where declaring the required major implicitly enables the check._
+> - [ ] 3\. packageManager only
+>   - _Infer enablement from a root `package.json` containing `"packageManager": "yarn@4..."` and add no settings key._
+> - [ ] 4\. _Type something._
+>
+>> **Blocking** (2/3) <kbd>Single Select</kbd><br>
+>> Which staged-state violations should make the hook fail?
+> - [x] 1\. Strict Yarn 4 (Recommended)
+>   - _Require Yarn 4 packageManager/lock signatures and block legacy rc/releases plus any tracked or staged node_modules paths._
+>   - > but it should remain silent if there's no node/npm usage at all, so the `base` default can be enabled, to be disabled if you really need legacy stuff.
+> - [ ] 2\. Known old files
+>   - _Block only provably old lock formats, legacy rc/release files, and tracked or staged node_modules paths._
+> - [ ] 3\. Lock plus modules
+>   - _Only validate yarn.lock as Yarn 4 and block tracked or staged node_modules paths._
+> - [ ] 4\. _Type something._
+>
+>> **Warnings** (3/3) <kbd>Single Select</kbd><br>
+>> When should an ignored local `node_modules/` directory emit its non-blocking warning?
+> - [x] 1\. Every commit (Recommended)
+>   - _Warn whenever the opt-in is enabled and an ignored node_modules directory exists, making the mismatch continuously visible._
+> - [ ] 2\. Yarn changes only
+>   - _Warn only when the commit stages Yarn/package files, reducing noise during unrelated commits._
+> - [ ] 3\. Respect linker
+>   - _Warn whenever found under PnP/default, but suppress it when `.yarnrc.yml` explicitly uses `nodeLinker: node-modules`._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Machine-local settings setting that config is an error.
+Adapt the json schema as well, so it's direcly detected in the IDE.
+
