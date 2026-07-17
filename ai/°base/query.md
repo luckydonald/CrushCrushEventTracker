@@ -4194,3 +4194,25 @@ must be stripped on **clean**.
 
 ❯ squash it
 
+❯ /plan I want you to store `/compact` commands.
+This should create `[\`/compact\` possible prompt](./ouput/compacted/NNN.md`.
+`hoass_plugin-template` just ran a `/compact` with custom prompt.
+
+❯ Task Notification:
+> - Task `aae065ad4cee0cf27` <kbd>completed</kbd>
+> - Tool `toolu_01W5BCsrV5Gvcikz7z3x7o6h`
+> - > Agent "Find compact hook and existing save-pattern conventions" finished
+> - [Query (`1979` chars, `1.95 KB`)](output/agents/038.aae065ad4cee0cf27/prompt.md)
+> - [Answer (`12156` chars, `12 KB`)](output/agents/038.aae065ad4cee0cf27/result.md)
+> - [Raw log (`427330` chars, `419 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/0dcdee12-bcc8-4ffa-8679-7f88974e2f82/tasks/aae065ad4cee0cf27.output)
+> - `20` tools, `87295` tokens, `1.98165 s`
+
+❯ Task Notification:
+> - Task `a8c7257388c9674a1` <kbd>completed</kbd>
+> - Tool `toolu_01PwmDqdZYU7rdTtUTPMQaTx`
+> - > Agent "Design PreCompact hook for saving /compact custom prompts" finished
+> - [Query (`7639` chars, `7.53 KB`)](output/agents/039.a8c7257388c9674a1/prompt.md)
+> - [Answer (`11435` chars, `11.2 KB`)](output/agents/039.a8c7257388c9674a1/result.md)
+> - [Raw log (`336290` chars, `329 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base/0dcdee12-bcc8-4ffa-8679-7f88974e2f82/tasks/a8c7257388c9674a1.output)
+> - `25` tools, `68995` tokens, `4.44922 s`
+

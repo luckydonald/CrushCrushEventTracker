@@ -20,6 +20,7 @@ def _encode_project_path(p: Path) -> str:
 PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-prompt" / "hook.py"
 PLAN_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-plan" / "hook.py"
 MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-memory" / "hook.py"
+COMPACT_PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-compact-prompt" / "hook.py"
 
 
 def run_git(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -1714,6 +1715,74 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             compact_dir = repo / "ai" / "°base" / "output" / "compact"
             self.assertTrue((compact_dir / "001").is_dir(), "first compact → 001")
             self.assertTrue((compact_dir / "002").is_dir(), "second compact → 002")
+
+    def test_precompact_manual_with_instructions_writes_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            run_hook(
+                repo, COMPACT_PROMPT_HOOK,
+                {"trigger": "manual", "custom_instructions": "focus on the auth refactor"},
+                "claude",
+            )
+
+            compacted_file = repo / "ai" / "°base" / "output" / "compacted" / "001.md"
+            self.assertTrue(compacted_file.exists(), "001.md should be created")
+            self.assertEqual(compacted_file.read_text(encoding="utf-8"), "focus on the auth refactor")
+
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("[`/compact` possible prompt](./output/compacted/001.md)", query)
+
+    def test_precompact_manual_no_instructions_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            run_hook(repo, COMPACT_PROMPT_HOOK, {"trigger": "manual", "custom_instructions": ""}, "claude")
+
+            self.assertFalse((repo / "ai" / "°base" / "output" / "compacted").exists())
+            self.assertFalse((repo / "ai" / "°base" / "query.md").exists())
+
+    def test_precompact_auto_trigger_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            run_hook(
+                repo, COMPACT_PROMPT_HOOK,
+                {"trigger": "auto", "custom_instructions": "some text"},
+                "claude",
+            )
+
+            self.assertFalse((repo / "ai" / "°base" / "output" / "compacted").exists())
+
+    def test_precompact_sequential_numbering(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            run_hook(repo, COMPACT_PROMPT_HOOK, {"trigger": "manual", "custom_instructions": "first"}, "claude")
+            run_hook(repo, COMPACT_PROMPT_HOOK, {"trigger": "manual", "custom_instructions": "second"}, "claude")
+
+            compacted_dir = repo / "ai" / "°base" / "output" / "compacted"
+            self.assertEqual((compacted_dir / "001.md").read_text(encoding="utf-8"), "first")
+            self.assertEqual((compacted_dir / "002.md").read_text(encoding="utf-8"), "second")
+
+    def test_precompact_consuming_repo_routes_to_plain_ai_prefix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "consumer"
+            init_repo(repo, "https://github.com/luckydonald/hoass_plugin-template.git")
+
+            run_hook(
+                repo, COMPACT_PROMPT_HOOK,
+                {"trigger": "manual", "custom_instructions": "consumer repo prompt"},
+                "claude",
+            )
+
+            compacted_file = repo / "ai" / "output" / "compacted" / "001.md"
+            self.assertTrue(compacted_file.exists(), "consuming repo should route to ai/output/compacted/")
+            self.assertFalse((repo / "ai" / "°base").exists(), "should NOT write to ai/°base/ outside base repo")
 
     def test_referenced_file_mention_untracked_gets_own_commit(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -13,6 +13,16 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-compact-prompt/hook.py\" 'claude'"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
