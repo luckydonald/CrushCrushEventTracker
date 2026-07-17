@@ -4180,3 +4180,7 @@ must be stripped on **clean**.
 
 > › Implement the [Plan](./plans/045_make-clean-branches-trailer-free-while-preserving-split-meta.md).
 
+❯ Fix the unpushed commits still containing unsquashed ai commits
+
+❯ I still don't see a commit implementing `86311138e3eadc40b7a6fa69b75c3741a18d9671`, or is that actually kinda part of `230b59efb747a39e26d2ef9a673db5f3a808a4ad`?
+
