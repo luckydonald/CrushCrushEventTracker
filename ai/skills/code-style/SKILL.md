@@ -13,4 +13,4 @@ description: "Apply project code-style rules when writing, modifying, or reviewi
 
 ## References
 
-- Python: `references/python.md`
+- Python: `references/py.md`
