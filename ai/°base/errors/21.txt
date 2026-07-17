@@ -1,0 +1,32 @@
+
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/cli.py", line 48, in _run_with_recovery
+    return run_fn()
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/cli.py", line 254, in <lambda>
+    run_fn=lambda: _sync_splits(args, repo_root=root, main_branch=main_branch),
+                   ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/cli.py", line 104, in _sync_splits
+    result = sync_splits_lib.sync_branch(
+        branch, repo_root=repo_root, main_branch=main_branch, dry_run=args.dry_run
+    )
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/sync_splits.py", line 220, in sync_branch
+    new_clean_tip = make_split_commit(clean_tip, clean_tree, source_sha, kind, {}, cwd)
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/sync_splits.py", line 143, in make_split_commit
+    return git_ops.commit_tree(
+           ~~~~~~~~~~~~~~~~~~~^
+        tree,
+        ^^^^^
+    ...<8 lines>...
+        committer_date=_committer_date_now(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/path/to/<redacted>/scripts/°base/git/°split_lib/git_ops.py", line 210, in commit_tree
+    result = subprocess.run(
+        args,
+    ...<5 lines>...
+        check=True,
+    )
+  File "/usr/lib64/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', 'commit-tree', '092bf2822bb4132ff5dee8472797bf4de0a0a70b', '-p', 'ab1d3b5a8020622115f29ee272937909c6fc1b84']' returned non-zero exit status 128.

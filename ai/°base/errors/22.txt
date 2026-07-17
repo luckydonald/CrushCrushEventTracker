@@ -1,0 +1,17 @@
+(<redacted-venv2>) user@fedora:~/Documents/PycharmProjects/<redacted>/<redacted>$ curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100  10047 100  10047   0      0  39474      0                              0
+get-base.py: repo root: /home/user/Documents/PycharmProjects/<redacted>/<redacted>
+get-base.py: base remote already exists: https://luckydonald@github.com/luckydonald/base.git
+get-base.py: fetching base/base
+get-base.py: refreshing worktree: /home/user/Documents/PycharmProjects/<redacted>/<redacted>/.git/luckydonald/base#get-base.py
+get-base.py: auto mode: current branch feature/REDACTED-0000/schema-versioning/pr1
+get-base.py: auto mode: 'ai/history/main' missing -- running update-history-master first
+get-base.py: running: /home/user/.cache/pypoetry/virtualenvs/<redacted-venv>/bin/python3 '/home/user/Documents/PycharmProjects/<redacted>/<redacted>/.git/luckydonald/base#get-base.py/scripts/°base/git/split.py' --repo-root /home/user/Documents/PycharmProjects/<redacted>/<redacted> update-history-master --yes
+snapshotted 2 ref(s) -> /home/user/Documents/PycharmProjects/<redacted>/<redacted>/.rebase-recovery.tmp
+backed up main -> bak/split/main/2026-07-17_19-06-52/clean
+planned 0 step(s) (first run)
+update-history-master: cannot check out the history-master scratch branch while the working tree is dirty (1, README/, ai/, all:5.moz_log, assets/foo.html, assets/query.md, docker/, start.log, yeet_db.py, yeet_db.yml); commit or stash these changes first.
+get-base.py: auto mode: update-history-master failed; aborting
+get-base.py: auto mode could not complete; see the delegated command error above
