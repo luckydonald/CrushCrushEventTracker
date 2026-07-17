@@ -4262,3 +4262,6 @@ python3.12 -m unittest discover -s "scripts/°base/tests" -p "test_git_split*.py
 
 ❯ Extract testing, too.
 
+❯ Add to the `py.md` that there shouldn't be "private" function, classes or files starting with `_`.
+Rather look into extracting functions as a module to import from.
+
