@@ -2,59 +2,58 @@
 
 ## Summary
 
-- Add `ai/skills/code-style/references/yarn.md` with detailed Yarn 4/Berry setup guidance and link it from `ts.md`.
-- Add an enabled-by-default Yarn 4 pre-commit policy that remains silent when the repository contains no Node/package-manager artifacts.
-- Add IDE-discoverable schemas for tracked and machine-local tool settings. Machine-local declaration of the Yarn policy is always an error.
+- Add `ai/skills/code-style/references/yarn.md` with detailed Yarn 4/Berry guidance and link it from `ts.md`.
+- Add an enabled-by-default Yarn 4 pre-commit guard that remains silent in repositories without Node/package-manager artifacts.
+- Add IDE-discoverable schemas for shared and local settings, with automated schema and hook tests.
 
-## Settings and Schema Contract
+## Settings and Schemas
 
-- Add this shared configuration to `ai/tool-settings/settings.json`:
+- Add the shared configuration:
   ```json
   {
     "$schema": "./settings.schema.json",
     "pre_commit": {
-      "yarn_4": {
+      "yarn@4": {
         "enabled": true
       }
     }
   }
   ```
-- Introduce `settings.schema.json` for the complete neutral settings shape, including hooks, permissions, plugins, MCP via a reference to `mcp.schema.json`, downloader metadata, and `pre_commit.yarn_4.enabled`.
-- Introduce `settings-local.schema.json`, composing the shared definitions while explicitly prohibiting the entire `pre_commit` key.
-- Have settings sync preserve/inject the appropriate `$schema`:
-  - `settings.json` → `./settings.schema.json`
-  - `settings.local.json` → `./settings-local.schema.json`
-- Reject `pre_commit` in `ai/tool-settings/settings.local.json` during settings sync with an actionable message directing the user to the tracked file. The Yarn hook independently performs the same check so local configuration cannot bypass or shadow repository policy.
-- Treat an absent shared `pre_commit.yarn_4.enabled` as `true`; only tracked `"enabled": false` disables enforcement for legacy projects.
-- Document the shared-only rule and both schemas in the tool-settings README and repository guidance.
+- Introduce `settings.schema.json` for the neutral settings format, composing the existing MCP schema and defining `pre_commit["yarn@4"].enabled` as a boolean.
+- Introduce `settings-local.schema.json` for local overlays:
+  - Allow `pre_commit` and any other valid pre-commit settings.
+  - Explicitly prohibit only the nested `pre_commit["yarn@4"]` property.
+- Have settings sync preserve or inject the appropriate `$schema` reference in tracked and local settings.
+- Reject any local declaration of `pre_commit["yarn@4"]`, regardless of its value, during settings sync and in the Yarn hook. Direct users to configure it in tracked `settings.json`.
+- Treat a missing shared `pre_commit["yarn@4"].enabled` as enabled; legacy projects must explicitly set tracked `"enabled": false`.
+- Document this contract in the tool-settings README and repository guidance.
 
-## Hook Behavior
+## Hook and Yarn Guide
 
 - Add `require_yarn_4.py` and register `require-yarn-4` in both pre-commit manifests with `pass_filenames: false`.
-- Read blocking inputs from the staged index. Exit silently when it contains no Node/Yarn signals.
-- When Node/package-manager artifacts exist:
-  - Require every independent project to have `package.json`, `yarn.lock`, and an exact Yarn 4 `packageManager` pin; workspace manifests may inherit their containing root.
-  - Require Yarn 4 lock metadata and reject Yarn Classic, Yarn 2, Yarn 3, malformed, or missing lockfiles.
-  - Reject legacy `.yarnrc`, non-v4 `yarnPath` or `.yarn/releases` binaries, competing npm/pnpm locks, and tracked or staged `node_modules/**`.
-  - Allow valid Yarn 4 `.pnp.*`, `.yarnrc.yml`, patches, plugins, releases, SDKs, versions, and Zero-Install artifacts.
-- Inspect the working tree only for ignored `node_modules/` directories and emit a non-blocking warning on every commit when any exist.
-- Report exact offending paths and Yarn 4/Corepack recovery commands.
+- Read blocking state from Git’s index and:
+  - Exit silently when no Node/package-manager artifacts exist.
+  - Require each independent Node project to have a Yarn 4 project root with an exact `packageManager: "yarn@4.x.y"` pin and Yarn 4 lockfile.
+  - Allow workspace manifests to inherit their containing Yarn root.
+  - Reject Yarn v1/v2/v3 locks, legacy `.yarnrc`, non-v4 `yarnPath` or release binaries, competing npm/pnpm locks, and tracked or staged `node_modules/**`.
+  - Allow valid Yarn 4 PnP, Zero-Install, patch, plugin, SDK, release, and version artifacts.
+  - Warn without failing on every commit when ignored local `node_modules/` directories exist.
+- Make failures list exact paths and Corepack/Yarn 4 recovery commands.
+- Cover Corepack installation, exact version pinning, package and lock files, `.yarnrc.yml`, PnP versus node-modules, workspaces, tracked/ignored files, local commands, migrations, Docker/Compose, and GitHub Actions. [Yarn installation](https://yarnpkg.com/getting-started/install), [version pinning](https://yarnpkg.com/cli/set/version), [ignore guidance](https://yarnpkg.com/getting-started/qa), [setup-node](https://github.com/actions/setup-node)
+- Prefer deterministic Corepack setup and immutable installs; explain that Node 25 no longer bundles Corepack. [Node Corepack notice](https://nodejs.org/download/release/v25.8.0/docs/api/corepack.html)
 
-## Yarn Guide
+## Automated Test Plan
 
-- Cover Yarn Modern/Berry terminology, Node requirements, Corepack installation—including Node 25’s removal of bundled Corepack—and deterministic exact Yarn 4 pinning. [Yarn installation](https://yarnpkg.com/getting-started/install), [Node Corepack notice](https://nodejs.org/download/release/v25.8.0/docs/api/corepack.html)
-- Explain `package.json`, `packageManager`, `yarn.lock`, `.yarnrc.yml`, PnP versus `nodeLinker: node-modules`, workspaces, editor SDKs, dependency commands, immutable installs, upgrades, and migration cleanup. [Yarn version pinning](https://yarnpkg.com/cli/set/version)
-- Provide tracked/ignored file matrices for ordinary PnP and Zero-Install repositories. [Official ignore guidance](https://yarnpkg.com/getting-started/qa), [cache strategies](https://yarnpkg.com/features/caching)
-- Add deterministic Docker and Compose examples using manifest-first layers, Corepack, BuildKit cache mounts, `yarn install --immutable`, and the required PnP/runtime artifacts.
-- Add a GitHub Actions example using current `actions/checkout@v6`, `actions/setup-node@v6`, explicit Corepack setup, and an immutable install. [setup-node guidance](https://github.com/actions/setup-node)
-- Document the enabled-by-default commit guard, tracked opt-out, forbidden local override, and recovery from accidental old-Yarn lockfile rewrites.
-
-## Test Plan
-
-- Test shared default/enabled/disabled settings, malformed values, and rejection of any local `pre_commit` declaration.
-- Parse both schemas, verify their references resolve, verify the shared Yarn setting shape, and verify the local schema explicitly rejects it.
-- Test schema injection/preservation through settings sync without leaking neutral policy metadata into generated Claude, Codex, or Copilot files.
-- Test no-Node silent behavior and valid Yarn 4 single-project, workspace, nested-project, PnP, local-release, and Zero-Install layouts.
-- Test failures for Yarn v1/v2/v3 locks, missing or invalid package-manager pins, legacy files, competing locks, uncovered manifests, and tracked/staged `node_modules`.
-- Test that ignored `node_modules` warns but succeeds.
-- Run focused hook/settings-sync tests, the full `scripts/°base` unittest suite, settings-sync check, and both pre-commit definitions.
+- Add `jsonschema` as a test dependency and update the scripts lockfile.
+- Add Draft 2020-12 schema tests that automatically:
+  - Resolve the shared, local, and MCP schema references.
+  - Validate the repository’s real `settings.json`.
+  - Accept shared `pre_commit["yarn@4"]` and unrelated local `pre_commit` keys.
+  - Reject local `pre_commit["yarn@4"]`, invalid `enabled` values, and malformed policy objects.
+- Add settings-sync tests for schema injection/preservation, local-policy rejection, and preventing neutral policy metadata from leaking into generated tool-native settings.
+- Add temporary-repository hook tests covering:
+  - No-Node silence and tracked enable/disable behavior.
+  - Valid Yarn 4 single-project, workspace, nested, PnP, local-release, and Zero-Install layouts.
+  - Yarn v1/v2/v3 locks, missing or invalid pins, legacy artifacts, competing locks, uncovered manifests, and tracked/staged `node_modules`.
+  - Non-blocking warnings for ignored `node_modules`.
+- Include all new tests in the existing unittest discovery suite and verify the pre-commit registrations through automated subprocess tests; no manual acceptance checks are required.
