@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/luckydonald/base/ai/tool-settings/settings-local.schema.json",
+  "title": "Machine-local AI tool settings",
+  "allOf": [
+    {
+      "$ref": "./settings.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "const": "./settings-local.schema.json"
+        },
+        "pre_commit": {
+          "type": "object",
+          "properties": {
+            "yarn@4": false
+          },
+          "additionalProperties": true
+        }
+      }
+    }
+  ]
+}

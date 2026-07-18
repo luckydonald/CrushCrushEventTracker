@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/luckydonald/base/ai/tool-settings/settings.schema.json",
+  "title": "Shared AI tool settings",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pre_commit": {
+      "$ref": "#/$defs/pre_commit"
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        }
+      }
+    },
+    "permissions": {
+      "type": "object"
+    },
+    "plugins": {
+      "type": "object"
+    },
+    "mcp": {
+      "$ref": "./mcp.schema.json"
+    },
+    "download_link": {
+      "type": "object",
+      "properties": {
+        "ide": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "pre_commit": {
+      "type": "object",
+      "properties": {
+        "yarn@4": {
+          "$ref": "#/$defs/yarn_4"
+        }
+      },
+      "additionalProperties": true
+    },
+    "yarn_4": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

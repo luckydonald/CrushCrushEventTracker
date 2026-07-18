@@ -39,12 +39,14 @@ python3 scripts/°base/ai/settings/sync.py --check
 | `ai/skills/*/SKILL.md` | Canonical skill source; `sync.py` distributes wrappers |
 | `ai/tool-settings/settings.json` | Tracked, tool-neutral settings (Claude + Codex share this) |
 | `ai/tool-settings/settings.local.json` | Machine-local settings overlay (gitignored) |
+| `ai/tool-settings/settings.schema.json` | JSON Schema for tracked neutral settings |
+| `ai/tool-settings/settings-local.schema.json` | JSON Schema for machine-local neutral settings; forbids shared-only policy keys |
 | `.claude/settings.json` | Generated from `ai/tool-settings/`; do not edit directly |
 | `.claude/hooks/permission-check.py` | PermissionRequest hook — enforces git commit policy |
 | `.codex/rules/generated.rules` | Generated Codex command allowlist (Starlark `prefix_rule`s); do not edit — hand edits are picked up and folded back on the next sync, but get overwritten in the process |
 | `.codex/config.toml` | Generated project-local Codex config — `[plugins."<id>"].enabled` plus a marked `[mcp_servers.*]` block (see below); other content is preserved if you add it |
 | `.mcp.json` | Generated project-scoped Claude MCP server config; do not edit directly — hand-added servers are picked up and folded back into `ai/tool-settings/settings.json` on the next sync (reconstructed into `tools`/`cmd` where the command matches a known tool snippet, otherwise stored as a flat `cmd`) |
-| `ai/tool-settings/mcp.schema.json` | JSON Schema for the `mcp` key below |
+| `ai/tool-settings/mcp.schema.json` | JSON Schema composed into the root settings schemas for the `mcp` key below |
 | `ai/.env` | Gitignored, project-local secrets (e.g. for MCP servers); see `ai/.env.example` |
 | `scripts/°base/ai/settings/°settings_lib/` | The actual sync implementation; `sync.py` is a thin shim over it (mirrors `ai/references/°dllink_lib/`) |
 
@@ -108,10 +110,11 @@ Hooks:
 
 - `reject_co_authored_by.py` — blocks `Co-Authored-By:` in commit messages (stage: commit-msg)
 - `require_memory_delete_marker.py` — requires an explicit marker when memory files are deleted (stage: commit-msg)
+- `require_yarn_4.py` — enforces Yarn 4 project state when Node/package-manager files exist (stage: pre-commit)
 
 ### Plan mode
 
-Before implementing an approved plan, ask once per session (via `AskUserQuestion`, choices `yes`/`no`) whether to enable the `commit-with-lplp-style` skill for the implementation. Skip asking again for the rest of the session — once answered (either way), respect that answer for every later plan in the same session too, unless the user changes their mind.
+While still in Plan Mode, before presenting or leaving the approved plan, ask once per session through the user-question dialog (`AskUserQuestion`, choices `yes`/`no`) whether to enable the `commit-with-lplp-style` skill for the implementation. Do not defer this to implementation mode or replace the dialog with a normal assistant message. Skip the question and assume `yes` when the repository's GitHub origin belongs to `luckydonald/*` or `littlepipslittleparty/*`. Otherwise, skip asking again for the rest of the session after the first answer and respect that answer for every later plan unless the user changes their mind.
 
 ### Commit format
 

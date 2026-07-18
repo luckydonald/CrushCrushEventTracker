@@ -13,7 +13,7 @@ CURRENT_VERSION = 2
 # here (so `_normalize_plugins` can read it and `_shared_extras` won't treat
 # it as opaque user metadata to preserve verbatim), even though nothing ever
 # writes it back out at this level again.
-_CORE_SHARED_KEYS = {"version", "hooks", "permissions", "plugins", "enabledPlugins", "mcp"}
+_CORE_SHARED_KEYS = {"$schema", "version", "hooks", "permissions", "plugins", "enabledPlugins", "mcp"}
 
 
 def _hook_id(event: str, entry: dict[str, Any]) -> str:

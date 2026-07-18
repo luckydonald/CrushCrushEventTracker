@@ -17,9 +17,13 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 def _reorder_enabled_first(d: dict[str, Any]) -> list[tuple[str, Any]]:
     items = list(d.items())
-    if "enabled" not in d:
-        return items
-    return [("enabled", d["enabled"])] + [(k, v) for k, v in items if k != "enabled"]
+    if "enabled" in d:
+        return [("enabled", d["enabled"])] + [(k, v) for k, v in items if k != "enabled"]
+    # end if
+    if "$schema" in d:
+        return [("$schema", d["$schema"])] + [(k, v) for k, v in items if k != "$schema"]
+    # end if
+    return items
 
 
 def _compact_json(value: Any) -> str:

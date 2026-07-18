@@ -198,6 +198,15 @@ def _load_layer(
     copilot_path: Path | None = None,
 ) -> dict[str, Any]:
     shared_source = _read_json(shared_path)
+    if shared_path.name == "settings.local.json":
+        pre_commit = shared_source.get("pre_commit")
+        if isinstance(pre_commit, dict) and "yarn@4" in pre_commit:
+            raise ValueError(
+                "ai/tool-settings/settings.local.json may contain other pre_commit settings, "
+                "but pre_commit.yarn@4 is shared repository policy and must be configured in settings.json."
+            )
+        # end if
+    # end if
     shared = deepcopy(shared_source)
     if shared:
         shared = _merge({}, shared)
@@ -247,6 +256,11 @@ def _load_layer(
         shared = _merge_mcp_native_additions(shared, combined_mcp_native, paths._git_root())
 
     shared.update(_shared_extras(shared_source))
+    if shared_path.name == "settings.local.json":
+        shared["$schema"] = "./settings-local.schema.json"
+    else:
+        shared["$schema"] = "./settings.schema.json"
+    # end if
     return shared
 
 

@@ -934,6 +934,59 @@ class CliLoadLayerTests(unittest.TestCase):
             self.assertEqual(shared["download_link"], {"ide": "pycharm"})
             self.assertNotIn("download_link", hooks.render_claude(shared))
 
+    def test_load_layer_injects_shared_schema(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.json"
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text('{"version": 2}', encoding="utf-8")
+
+            shared = cli._load_layer(
+                shared_path,
+                root / ".claude" / "settings.json",
+                root / ".codex" / "hooks.json",
+            )
+
+            self.assertEqual(shared["$schema"], "./settings.schema.json")
+            self.assertNotIn("$schema", hooks.render_claude(shared))
+
+    def test_load_layer_injects_local_schema_and_allows_other_pre_commit_settings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.local.json"
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"pre_commit": {"other": {"enabled": false}}}',
+                encoding="utf-8",
+            )
+
+            shared = cli._load_layer(
+                shared_path,
+                root / ".claude" / "settings.local.json",
+                root / ".codex" / "hooks.local.json",
+            )
+
+            self.assertEqual(shared["$schema"], "./settings-local.schema.json")
+            self.assertEqual(shared["pre_commit"], {"other": {"enabled": False}})
+            self.assertNotIn("pre_commit", hooks.render_codex_hooks(shared))
+
+    def test_load_layer_rejects_local_yarn_policy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared_path = root / "ai" / "tool-settings" / "settings.local.json"
+            shared_path.parent.mkdir(parents=True)
+            shared_path.write_text(
+                '{"pre_commit": {"yarn@4": {"enabled": false}}}',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "shared repository policy"):
+                cli._load_layer(
+                    shared_path,
+                    root / ".claude" / "settings.local.json",
+                    root / ".codex" / "hooks.local.json",
+                )
+
     def test_load_layer_does_not_leak_legacy_enabled_plugins_as_extra_key(self):
         # Regression test: "enabledPlugins" (the deprecated v1 name for
         # "plugins") must not survive as an opaque extra key alongside the

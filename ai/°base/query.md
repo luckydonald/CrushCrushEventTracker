@@ -4323,3 +4323,9 @@ Adapt the json schema as well, so it's direcly detected in the IDE.
 › Having `pre_commit` key in local is fine, just `yarn_4` is not. Also call that key `yarn@4`.
 The tests shall be automated, not manual.
 
+> › Implement the [Plan](./plans/047_yarn-4-guidance-schemas-and-commit-guard.md).
+
+› yes (fix: this should be a user question dialog, not a normal ai agent text)
+
+› Then fix the guidence for asking for enabling to be explicitly inside the /plan mode. Also you can assume `yes` for a `luckydonald/*` and `littlepipslittleparty/*` repository.
+

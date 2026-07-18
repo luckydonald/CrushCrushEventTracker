@@ -6,9 +6,11 @@ under `.claude/` and `.codex/`.
 
 Core keys:
 
+- `$schema`: IDE-visible JSON Schema for this settings layer
 - `version`: settings format version
 - `hooks`: hook definitions shared across tools
 - `permissions`: allow/deny command lists for Claude-style configuration
+- `pre_commit.yarn@4.enabled`: shared, enabled-by-default Yarn 4 repository policy
 
 Downloader settings:
 
@@ -19,3 +21,18 @@ such as `pycharm`, `rustrover`, `codium`, or `code`.
 
 `settings.local.json` is the ignored machine-local overlay for per-machine overrides. Keep shared defaults in
 `settings.json` and machine-specific preferences in `settings.local.json`.
+
+The Yarn 4 commit policy is deliberately repository-wide. Other `pre_commit` settings may be added to
+`settings.local.json`, but `pre_commit.yarn@4` must only appear in tracked `settings.json`; putting it in the
+local overlay is an error. The settings sync adds `./settings-local.schema.json` to local settings so IDEs flag
+that mistake immediately. Legacy Node projects can opt out with tracked configuration:
+
+```json
+{
+  "pre_commit": {
+    "yarn@4": {
+      "enabled": false
+    }
+  }
+}
+```
