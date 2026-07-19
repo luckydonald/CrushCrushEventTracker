@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreCompact hook: save the user's manual `/compact <custom prompt>` argument.
+"""Save compact prompts before compaction and results after compaction.
 
 Usage: hook.py [ai_tool_name]
 """
@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import compact_result  # noqa: E402
 from _lib import (  # noqa: E402
     append_and_commit,
     base_ai_commit_subject,
@@ -20,27 +21,31 @@ from _lib import (  # noqa: E402
     resolve_log_path,
 )
 
-# Field name unconfirmed against first-party docs; check all plausible spellings.
-_INSTRUCTION_KEYS = ("custom_instructions", "custom_instruction", "customInstructions", "instructions")
+INSTRUCTION_KEYS = ("custom_instructions", "custom_instruction", "customInstructions", "instructions")
 
 
-def _custom_instructions(payload: dict) -> str:
-    for key in _INSTRUCTION_KEYS:
+def custom_instructions(payload: dict[str, object]) -> str:
+    for key in INSTRUCTION_KEYS:
         value = payload.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
+        # end if
+    # end for
     return ""
+# end def
 
 
-def _next_compacted_number(compacted_dir: Path) -> int:
+def next_compacted_number(compacted_dir: Path) -> int:
     if not compacted_dir.exists():
         return 1
+    # end if
     nums = [
         int(m.group(1))
         for f in compacted_dir.glob("*.md")
         if (m := re.fullmatch(r"(\d+)\.md", f.name))
     ]
     return max(nums, default=0) + 1
+# end def
 
 
 def main() -> int:
@@ -48,17 +53,24 @@ def main() -> int:
     payload = read_payload()
     if is_cross_tool_duplicate(ai_tool):
         return 0
+    # end if
     dump_debug_payload(payload, "save-compact-prompt")
 
+    if payload.get("hook_event_name") == "PostCompact":
+        compact_result.capture_postcompact(payload)
+        return 0
+    # end if
     if payload.get("trigger") != "manual":
         return 0
-    text = _custom_instructions(payload)
+    # end if
+    text = custom_instructions(payload)
     if not text:
         return 0
+    # end if
 
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
     compacted_dir = log_path.parent / "output" / "compacted"
-    num = _next_compacted_number(compacted_dir)
+    num = next_compacted_number(compacted_dir)
     dir_name = f"{num:03d}"
     compacted_dir.mkdir(parents=True, exist_ok=True)
     compacted_file = compacted_dir / f"{dir_name}.md"
@@ -82,7 +94,9 @@ def main() -> int:
         default_commit_msg=f"ai: link compact {dir_name} prompt",
     )
     return 0
+# end def
 
 
 if __name__ == "__main__":
     sys.exit(main())
+# end if

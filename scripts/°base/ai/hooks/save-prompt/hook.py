@@ -23,6 +23,7 @@ from typing import NamedTuple
 from xml.etree import ElementTree as ET
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import compact_result  # noqa: E402
 from _lib import (  # noqa: E402
     append_and_commit,
     base_ai_commit_subject,
@@ -807,6 +808,7 @@ def _parse_compact_autoloads(prompt: str) -> str:
 def _handle_compact_prompt(
     prefix: str,
     prompt: str,
+    payload: dict[str, object],
     log_path: Path,
     commit_template_relpath: str,
     default_commit_msg: str,
@@ -816,22 +818,16 @@ def _handle_compact_prompt(
     if not stripped.startswith("/compact") or "⎿" not in stripped:
         return False
 
-    compact_dir = log_path.parent / "output" / "compact"
-    # Sequential numbering for compact dirs (plain NNN, no task-id suffix)
-    if not compact_dir.exists():
-        num = 1
-    else:
-        nums = [
-            int(m.group(1))
-            for d in compact_dir.iterdir()
-            if d.is_dir() and (m := re.match(r"^(\d+)$", d.name))
-        ]
-        num = max(nums, default=0) + 1
-    dir_name = f"{num:03d}"
-    result_dir = compact_dir / dir_name
-    result_dir.mkdir(parents=True, exist_ok=True)
-
     autoloads_text = _parse_compact_autoloads(prompt)
+    result_dir = compact_result.reserve_artifact_directory(
+        log_path,
+        payload,
+        "autoloads.md",
+        autoloads_text,
+    )
+    if result_dir is None:
+        return True
+    dir_name = result_dir.name
     autoloads_file = result_dir / "autoloads.md"
     autoloads_file.write_text(autoloads_text, encoding="utf-8")
 
@@ -1015,7 +1011,7 @@ def main() -> int:
             return 0
 
     if _handle_compact_prompt(
-        prefix, prompt, log_path,
+        prefix, prompt, payload, log_path,
         commit_template_relpath="ai/commit-templates/prompt",
         default_commit_msg="ai: updated prompt",
     ):

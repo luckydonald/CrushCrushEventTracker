@@ -18,7 +18,9 @@ Fires on:
     deletion request (see `_sync_all` below and
     `ai/°base/plans/007_prevent-accidental-memory-deletion.md`).
   - SessionStart: bulk-sync every `*.md` under the source memory dir as a
-    catch-up.
+    catch-up, then capture the compact summary from the transcript on older
+    Claude versions whose post-compaction payload arrived only through this
+    event.
 
 Linking strategy mirrors `scripts/°base/memories/hardlink_memories.sh` but for
 single files: hardlink first, fall back to symlink when hardlinks aren't
@@ -36,6 +38,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import compact_result  # noqa: E402
 from _lib import (  # noqa: E402
     _chdir_to_git_root,
     _is_inside_base_repo,
@@ -459,6 +462,7 @@ def main() -> int:
     changed = _sync_all(src_dir, dst_dir, dst_dir_rel)
     _commit(dst_dir_rel, changed)
     _check_memory_index_consistency(dst_dir)
+    compact_result.capture_session_start(payload)
     return 0
 
 

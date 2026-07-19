@@ -4429,3 +4429,5 @@ Possibly the folder name be `NNN.prompt_id`.
 > </details>
 >
 
+> › Implement the [Plan](./plans/048_capture-manual-and-automatic-compact-results.md).
+

@@ -1716,6 +1716,273 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertTrue((compact_dir / "001").is_dir(), "first compact → 001")
             self.assertTrue((compact_dir / "002").is_dir(), "second compact → 002")
 
+    def test_postcompact_manual_writes_prompt_id_result_and_marked_query_entry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            prompt_id = "ed11c17f-abf7-40a0-839a-64dd37b4976b"
+            summary = "Exact compact summary.\n\nKeep this whitespace.\n"
+
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {
+                    "hook_event_name": "PostCompact",
+                    "trigger": "manual",
+                    "compact_summary": summary,
+                    "prompt_id": prompt_id,
+                },
+                "claude",
+            )
+
+            result = (
+                repo / "ai" / "°base" / "output" / "compact"
+                / f"001.{prompt_id}" / "result.md"
+            )
+            self.assertEqual(result.read_text(encoding="utf-8"), summary)
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("❯ Conversation compacted <kbd>manual</kbd>:\n", query)
+            self.assertIn(f"output/compact/001.{prompt_id}/result.md", query)
+        # end with
+    # end def
+
+    def test_postcompact_auto_routes_to_consumer_and_marks_trigger(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "consumer"
+            init_repo(repo, "https://github.com/luckydonald/example.git")
+            prompt_id = "4ce3a7b9-3c0e-4a75-a5c7-e01a40f15aae"
+
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {
+                    "hook_event_name": "PostCompact",
+                    "trigger": "auto",
+                    "compact_summary": "Automatic compact summary",
+                    "prompt_id": prompt_id,
+                },
+                "claude",
+            )
+
+            result = repo / "ai" / "output" / "compact" / f"001.{prompt_id}" / "result.md"
+            self.assertEqual(result.read_text(encoding="utf-8"), "Automatic compact summary")
+            query = (repo / "ai" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("❯ Conversation compacted <kbd>auto</kbd>:\n", query)
+            self.assertFalse((repo / "ai" / "°base").exists())
+        # end with
+    # end def
+
+    def test_postcompact_deduplicates_same_result_but_keeps_distinct_same_prompt_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            prompt_id = "0885277c-7e0b-42cd-8de8-b57be1a84c72"
+            first_payload = {
+                "hook_event_name": "PostCompact",
+                "trigger": "auto",
+                "compact_summary": "first summary",
+                "prompt_id": prompt_id,
+            }
+
+            run_hook(repo, COMPACT_PROMPT_HOOK, first_payload, "claude")
+            run_hook(repo, COMPACT_PROMPT_HOOK, first_payload, "claude")
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {**first_payload, "compact_summary": "second summary"},
+                "claude",
+            )
+
+            compact_root = repo / "ai" / "°base" / "output" / "compact"
+            self.assertEqual(
+                sorted(path.name for path in compact_root.iterdir()),
+                [f"001.{prompt_id}", f"002.{prompt_id}"],
+            )
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertEqual(query.count("Conversation compacted <kbd>auto</kbd>"), 2)
+        # end with
+    # end def
+
+    def test_postcompact_without_prompt_id_uses_numeric_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {
+                    "hook_event_name": "PostCompact",
+                    "trigger": "manual",
+                    "compact_summary": "older payload",
+                },
+                "claude",
+            )
+
+            result = repo / "ai" / "°base" / "output" / "compact" / "001" / "result.md"
+            self.assertEqual(result.read_text(encoding="utf-8"), "older payload")
+        # end with
+    # end def
+
+    def test_compact_autoload_reuses_prompt_id_result_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            prompt_id = "51a1531e-7495-4677-a4cd-a0184d462662"
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {
+                    "hook_event_name": "PostCompact",
+                    "trigger": "manual",
+                    "compact_summary": "summary",
+                    "prompt_id": prompt_id,
+                },
+                "claude",
+            )
+
+            run_hook(
+                repo,
+                PROMPT_HOOK,
+                {
+                    "prompt": "/compact\n  ⎿  Compacted\n  ⎿  Read notes.md (5 lines)\n",
+                    "prompt_id": prompt_id,
+                },
+                "claude",
+            )
+
+            result_directory = (
+                repo / "ai" / "°base" / "output" / "compact" / f"001.{prompt_id}"
+            )
+            self.assertTrue((result_directory / "result.md").is_file())
+            self.assertTrue((result_directory / "autoloads.md").is_file())
+            self.assertEqual(len(list(result_directory.parent.iterdir())), 1)
+        # end with
+    # end def
+
+    def test_memory_session_start_compact_captures_latest_transcript_summary(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            prompt_id = "8fe56710-dc43-4622-aa10-42dc1d5a9978"
+            transcript = Path(tmp) / "transcript.jsonl"
+            entries = [
+                {
+                    "type": "system",
+                    "subtype": "compact_boundary",
+                    "uuid": "boundary-manual",
+                    "compactMetadata": {"trigger": "manual"},
+                },
+                {
+                    "type": "user",
+                    "parentUuid": "boundary-manual",
+                    "isCompactSummary": True,
+                    "message": {"role": "user", "content": "older summary"},
+                },
+                {"type": "user", "message": {"role": "user", "content": "ordinary turn"}},
+                {
+                    "type": "system",
+                    "subtype": "compact_boundary",
+                    "uuid": "boundary-auto",
+                    "compactMetadata": {"trigger": "auto"},
+                },
+                {
+                    "type": "user",
+                    "parentUuid": "boundary-auto",
+                    "isCompactSummary": True,
+                    "message": {"role": "user", "content": "latest automatic summary"},
+                },
+            ]
+            transcript.write_text(
+                "".join(json.dumps(entry) + "\n" for entry in entries),
+                encoding="utf-8",
+            )
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "SessionStart",
+                    "source": "compact",
+                    "transcript_path": str(transcript),
+                    "prompt_id": prompt_id,
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            result = (
+                repo / "ai" / "°base" / "output" / "compact"
+                / f"001.{prompt_id}" / "result.md"
+            )
+            self.assertEqual(result.read_text(encoding="utf-8"), "latest automatic summary")
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertIn("Conversation compacted <kbd>auto</kbd>", query)
+        # end with
+    # end def
+
+    def test_postcompact_and_session_start_fallback_store_one_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "base"
+            home = Path(tmp) / "home"
+            init_repo(repo, "https://github.com/luckydonald/base.git")
+            prompt_id = "9857e585-a9e0-4868-8731-09d106b5fc07"
+            summary = "same summary from both lifecycle events"
+            run_hook(
+                repo,
+                COMPACT_PROMPT_HOOK,
+                {
+                    "hook_event_name": "PostCompact",
+                    "trigger": "manual",
+                    "compact_summary": summary,
+                    "prompt_id": prompt_id,
+                },
+                "claude",
+            )
+            transcript = Path(tmp) / "transcript.jsonl"
+            transcript.write_text(
+                json.dumps(
+                    {
+                        "type": "system",
+                        "subtype": "compact_boundary",
+                        "uuid": "boundary",
+                        "compactMetadata": {"trigger": "manual"},
+                    }
+                )
+                + "\n"
+                + json.dumps(
+                    {
+                        "type": "user",
+                        "parentUuid": "boundary",
+                        "isCompactSummary": True,
+                        "message": {"role": "user", "content": summary},
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            run_hook(
+                repo,
+                MEMORY_HOOK,
+                {
+                    "hook_event_name": "SessionStart",
+                    "source": "compact",
+                    "transcript_path": str(transcript),
+                    "prompt_id": prompt_id,
+                },
+                extra_env={"HOME": str(home)},
+            )
+
+            result_files = list(
+                (repo / "ai" / "°base" / "output" / "compact").glob("*/result.md")
+            )
+            self.assertEqual(len(result_files), 1)
+            query = (repo / "ai" / "°base" / "query.md").read_text(encoding="utf-8")
+            self.assertEqual(query.count("Conversation compacted <kbd>manual</kbd>"), 1)
+        # end with
+    # end def
+
     def test_precompact_manual_with_instructions_writes_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "base"
