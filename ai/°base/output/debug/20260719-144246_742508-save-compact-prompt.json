@@ -1,0 +1,9 @@
+{
+  "session_id": "c903d647-174d-46f2-8c61-8cf39dc278f1",
+  "transcript_path": "/home/user/.claude/projects/-home-user-git-luckydonald-ai-usage/c903d647-174d-46f2-8c61-8cf39dc278f1.jsonl",
+  "cwd": "/home/user/git/luckydonald/ai-usage",
+  "prompt_id": "ed11c17f-abf7-40a0-839a-64dd37b4976b",
+  "hook_event_name": "PreCompact",
+  "trigger": "manual",
+  "custom_instructions": null
+}
