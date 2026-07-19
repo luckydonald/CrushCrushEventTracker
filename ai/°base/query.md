@@ -4334,3 +4334,98 @@ Here's the debug output of one of such claude events, which should allow you to 
 @ai/°base/output/debug/20260719-144246_742508-save-compact-prompt.json
 @ai/°base/output/debug/20260719-144722_782032-record-memory.json
 
+› I want it to include auto-compact, too, marked as such.
+For the hooks, you can prefer the locally downloaded @ai/references/https/code.claude.com/docs/en/hooks.md if needed.
+Possibly the folder name be `NNN.prompt_id`.
+
+› Question answered.
+> <details><summary>
+>
+>> 1. How should compact-result directories use the hook’s `prompt_id`?
+>> 2. Where should an automatically generated compact result be marked as automatic?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Folder name** (1/2) <kbd>Single Select</kbd><br>
+>> How should compact-result directories use the hook’s `prompt_id`?
+> - [x] 1\. NNN.prompt_id (Recommended)
+>   - _Use the full UUID, falling back to plain NNN only for older payloads without a prompt ID._
+> - [ ] 2\. NNN only
+>   - _Keep the current numeric directory convention and use the prompt ID only internally for deduplication._
+> - [ ] 3\. Short prompt ID
+>   - _Use NNN plus a shortened UUID prefix for more compact paths, with a small collision risk._
+> - [ ] 4\. _Type something._
+>
+>> **Auto marker** (2/2) <kbd>Single Select</kbd><br>
+>> Where should an automatically generated compact result be marked as automatic?
+> - [ ] 1\. Query badge (Recommended)
+>   - _Keep result.md verbatim and add an `<kbd>auto</kbd>` badge to its Conversation compacted entry._
+> - [ ] 2\. Result heading
+>   - _Prepend an automatic-compaction heading to result.md, so the stored summary is no longer byte-for-byte exact._
+> - [x] 3\. Badge + metadata
+>   - _Keep result.md exact, add the query badge, and write a metadata sidecar containing trigger and IDs._
+>   - > Badge + metadata, but in the `prompt.md` file.
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Should the existing saved `/compact <instructions>` artifact move into the same `NNN.<prompt_id>` directory as its result?
+>> 2. How should `prompt.md` represent trigger metadata and manual instructions?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Prompt layout** (1/2) <kbd>Single Select</kbd><br>
+>> Should the existing saved `/compact <instructions>` artifact move into the same `NNN.<prompt_id>` directory as its result?
+> - [ ] 1\. Unify directory (Recommended)
+>   - _Replace output/compacted/NNN.md with output/compact/NNN.prompt_id/{prompt.md,result.md}; prompt.md records trigger metadata and any custom instructions._
+> - [ ] 2\. Keep both
+>   - _Retain output/compacted/NNN.md and additionally create prompt.md beside result.md, duplicating manual instructions._
+> - [ ] 3\. Metadata only
+>   - _Keep manual instructions in output/compacted and use the new prompt.md only for trigger and ID metadata._
+> - [x] 4\. _Type something:_
+>   - > Oops, I meant the `ai[/base]/query.md`.
+>
+>> **Prompt format** (2/2) <kbd>Single Select</kbd><br>
+>> How should `prompt.md` represent trigger metadata and manual instructions?
+> - [ ] 1\. Markdown fields (Recommended)
+>   - _Write labeled Markdown fields for trigger, prompt ID, and session ID, then a Custom instructions section when non-empty._
+> - [ ] 2\. YAML front matter
+>   - _Store trigger and IDs as YAML front matter followed by the raw custom instructions body._
+> - [x] 3\. Minimal trigger
+>   - _Write only `manual` or `auto`, followed by custom instructions when present._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which metadata should each `query.md` compaction entry show alongside its result link?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Query entry** (1/1) <kbd>Single Select</kbd><br>
+>> Which metadata should each `query.md` compaction entry show alongside its result link?
+> - [ ] 1\. Trigger + prompt ID (Recommended)
+>   - _Show `<kbd>auto</kbd>` or `<kbd>manual</kbd>` plus the full prompt UUID; session ID stays out of the log._
+> - [ ] 2\. Trigger only
+>   - _Show the manual/auto badge; the prompt UUID remains visible only in the directory path._
+> - [ ] 3\. All IDs
+>   - _Show trigger, prompt ID, and session ID in every query entry._
+> - [x] 4\. _Type something:_
+>   - > Trigger, message. The id will be in the local-relative link to that markdown file with the prompt result.
+>
+> </details>
+>
+
