@@ -4431,3 +4431,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 > › Implement the [Plan](./plans/048_capture-manual-and-automatic-compact-results.md).
 
+› do the same for codex.
+
+› Download it to ~/git/openai/codex/
+
+› I did place it there for you.
+
+› repeat the summary.
+
