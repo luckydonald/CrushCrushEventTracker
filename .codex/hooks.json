@@ -51,6 +51,11 @@
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-memory/hook.py\"",
             "statusMessage": "Syncing memory hardlinks"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'",
+            "statusMessage": "Committing Codex memory"
           }
         ]
       }
@@ -71,6 +76,15 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-memory/hook.py\""
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'"
           }
         ]
       },
@@ -99,6 +113,10 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-plan/hook.py\" 'codex'"
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'"
           }
         ]
       }

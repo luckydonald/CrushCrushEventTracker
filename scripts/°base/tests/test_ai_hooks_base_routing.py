@@ -20,6 +20,7 @@ def _encode_project_path(p: Path) -> str:
 PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-prompt" / "hook.py"
 PLAN_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-plan" / "hook.py"
 MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-memory" / "hook.py"
+CODEX_MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-codex-memory" / "hook.py"
 COMPACT_PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-compact-prompt" / "hook.py"
 
 
@@ -1251,6 +1252,46 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertTrue(dst.exists(), "memory file was not synced to repo")
             self.assertEqual(dst.read_text(encoding="utf-8"), "useful tip\n")
             self.assertEqual(last_subject(repo), "ai: record memory tip")
+
+    def test_codex_memory_hook_commits_and_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            codex_home = Path(tmp) / "codex"
+            memory_repo = codex_home / "memories"
+            init_repo(project, "https://github.com/user/project.git")
+            memory_repo.mkdir(parents=True)
+            run_git(memory_repo, "init")
+            run_git(memory_repo, "config", "user.email", "tester@example.com")
+            run_git(memory_repo, "config", "user.name", "Test User")
+            (memory_repo / "MEMORY.md").write_text("# Memories\n", encoding="utf-8")
+            run_git(memory_repo, "add", "MEMORY.md")
+            run_git(memory_repo, "commit", "-m", "init memory")
+
+            note = memory_repo / "extensions" / "ad_hoc" / "note.md"
+            note.parent.mkdir(parents=True)
+            note.write_text("remember this\n", encoding="utf-8")
+
+            run_hook(
+                project,
+                CODEX_MEMORY_HOOK,
+                {"hook_event_name": "PostToolUse", "tool_name": "apply_patch"},
+                "codex",
+                extra_env={"CODEX_HOME": str(codex_home)},
+            )
+
+            self.assertEqual(last_subject(memory_repo), "ai: record codex memory")
+            self.assertEqual(
+                run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
+                1,
+            )
+            run_hook(
+                project,
+                CODEX_MEMORY_HOOK,
+                {"hook_event_name": "Stop"},
+                "codex",
+                extra_env={"CODEX_HOME": str(codex_home)},
+            )
+            self.assertEqual(run_git(memory_repo, "log", "-1", "--pretty=%s").stdout.strip(), "ai: record codex memory")
 
     def _seed_memory_pair(self, repo: Path, home: Path, name: str) -> Path:
         """Seed a repo-tracked mirror file plus a matching external source

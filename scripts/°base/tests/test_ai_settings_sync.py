@@ -61,6 +61,32 @@ class HooksTests(unittest.TestCase):
         self.assertIn("'codex'", command)
         self.assertNotIn("'claude'", command)
 
+    def test_render_codex_rewrites_codex_memory_tool_arg(self):
+        shared = {
+            "hooks": {
+                "Stop": [
+                    {
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 scripts/°base/ai/hooks/record-codex-memory/hook.py 'claude'",
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+
+        codex = hooks.render_codex_hooks(shared)
+        claude = hooks.render_claude(shared)
+        codex_command = codex["hooks"]["Stop"][0]["hooks"][0]["command"]
+        claude_command = claude["hooks"]["Stop"][0]["hooks"][0]["command"]
+
+        self.assertIn("'codex'", codex_command)
+        self.assertNotIn("'claude'", codex_command)
+        self.assertIn("'claude'", claude_command)
+        self.assertNotIn("'codex'", claude_command)
+
     def test_render_codex_rewrites_plan_tool_arg(self):
         shared = {
             "hooks": {

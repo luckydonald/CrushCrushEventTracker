@@ -4482,3 +4482,32 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › but is blindly running `git rm` good? shouldn't we guard that with a check fo exactly that case?
 
+› document your learnings
+
+› The crated memory was not auto-commited by the memory ai hook it seems, please fix.
+
+› Question answered.
+> <details><summary>
+>
+>> 1. How should the hook auto-commit changes in the global Codex memory repository?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Codex memory** (1/1) <kbd>Single Select</kbd><br>
+>> How should the hook auto-commit changes in the global Codex memory repository?
+> - [ ] 1\. Stop + SessionStart (Recommended)
+>   - _Reconcile and commit only when a Codex turn starts/ends, catching direct edits such as apply_patch without needing a file-write event._
+> - [ ] 2\. PostToolUse only
+>   - _Commit immediately after supported write/edit tools, but direct filesystem edits that do not emit a hook payload can be missed._
+> - [ ] 3\. Dedicated file watcher
+>   - _Commit nearly immediately via a background watcher, but adds a persistent process and more operational complexity._
+> - [x] 4\. _Type something:_
+>   - > Stop + SessionStart + PostToolUse: I want to make sure I'm catching them for sure.
+>
+> </details>
+>
+
+> › Implement the [Plan](./plans/050_auto-commit-codex-global-memory.md).
+
