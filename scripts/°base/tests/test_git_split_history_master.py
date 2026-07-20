@@ -70,6 +70,23 @@ class HistoryMasterTests(unittest.TestCase):
         self.assertTrue((self.repo_root / "scratch.log").exists())
         self.assertTrue((self.repo_root / "assets" / "foo.html").exists())
 
+    def test_generated_conflict_path_guard_is_narrow(self) -> None:
+        self.assertTrue(
+            history_master._is_generated_conflict_path(
+                "CLAUDE.md~47a72835c1f3b2e1d4c5a6978877665544332211",
+                ["CLAUDE.md"],
+                self.repo_root,
+            )
+        )
+        self.assertFalse(
+            history_master._is_generated_conflict_path("missing.txt", [], self.repo_root)
+        )
+        self.assertFalse(
+            history_master._is_generated_conflict_path(
+                "CLAUDE.md~short", ["CLAUDE.md"], self.repo_root
+            )
+        )
+
     def test_replay_keeps_target_content_for_already_replayed_conflict(self) -> None:
         (self.repo_root / "CLAUDE.md").write_text("old content\n")
         git(["add", "CLAUDE.md"], self.repo_root)
@@ -82,8 +99,29 @@ class HistoryMasterTests(unittest.TestCase):
 
         result = history_master.replay_commit(replay_sha, onto, self.repo_root)
 
-        self.assertEqual(result, onto)
+        self.assertNotEqual(result, onto)
         self.assertEqual((self.repo_root / "CLAUDE.md").read_text(), "newer target content\n")
+        self.assertIn("add guidance", git_ops.commit_message(result, self.repo_root))
+
+    def test_replay_keeps_newer_instruction_file_on_add_conflict(self) -> None:
+        make_commit(self.repo_root, "base.txt", "base commit")
+        git(["checkout", "-b", "incoming"], self.repo_root)
+        (self.repo_root / "CLAUDE.md").write_text("older instructions\n")
+        git(["add", "CLAUDE.md"], self.repo_root)
+        git(["commit", "-m", "add older instructions"], self.repo_root)
+        replay_sha = git(["rev-parse", "HEAD"], self.repo_root)
+
+        git(["checkout", "master"], self.repo_root)
+        (self.repo_root / "CLAUDE.md").write_text("newer instructions\n")
+        git(["add", "CLAUDE.md"], self.repo_root)
+        git(["commit", "-m", "add newer instructions"], self.repo_root)
+        onto = git(["rev-parse", "HEAD"], self.repo_root)
+
+        result = history_master.replay_commit(replay_sha, onto, self.repo_root)
+
+        self.assertNotEqual(result, onto)
+        self.assertEqual((self.repo_root / "CLAUDE.md").read_text(), "newer instructions\n")
+        self.assertIn("add older instructions", git_ops.commit_message(result, self.repo_root))
 
     def test_replay_keeps_missing_nonconflicting_files_from_ancestor_commit(self) -> None:
         (self.repo_root / "CLAUDE.md").write_text("old content\n")

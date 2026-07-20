@@ -4474,3 +4474,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 > › Implement the [Plan](./plans/049_resolve-replay-conflicts-for-commits-already-present-upstrea.md).
 
+› IT still seems to be not work cleanly.
+
+› It is pushed, but you can sync the repo with here directly, if that helps.
+
+› Wait a second, is `--skip` correct here for empty commits? shouldn't it be `--allow-empty` to keep the history refernces (X-…) in tact?
+
+› but is blindly running `git rm` good? shouldn't we guard that with a check fo exactly that case?
+

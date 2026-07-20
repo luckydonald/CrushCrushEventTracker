@@ -284,7 +284,7 @@ def cherry_pick(sha: str, cwd: Path) -> subprocess.CompletedProcess:
     rather than `check=True`, since a conflict is an expected, handleable outcome.
     """
     return subprocess.run(
-        ["git", "cherry-pick", sha],
+        ["git", "-c", "core.hooksPath=/dev/null", "cherry-pick", sha],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -295,7 +295,7 @@ def cherry_pick_continue(cwd: Path) -> subprocess.CompletedProcess:
     env = os.environ.copy()
     env["GIT_EDITOR"] = "true"
     return subprocess.run(
-        ["git", "cherry-pick", "--continue"],
+        ["git", "-c", "core.hooksPath=/dev/null", "cherry-pick", "--continue"],
         cwd=cwd,
         capture_output=True,
         text=True,

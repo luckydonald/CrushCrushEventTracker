@@ -38,6 +38,7 @@ BASE_REMOTE_REF = "refs/remotes/base/base"
 # base/base fold conflicts on them -- see _fold_base(). Top-level, exact
 # match only.
 FIRST_FOLD_AUTO_RESOLVE_PATHS = ("README.md", ".gitignore")
+REPLAY_DOCUMENTATION_NAMES = ("CLAUDE.md", "AGENTS.md")
 
 # Fixed name (not `logging.getLogger(__name__)`) so cli.py can attach handlers
 # to exactly this logger without needing to know this module's dotted path
@@ -129,8 +130,8 @@ def _delete_ref(ref: str, cwd: Path) -> None:
 
 
 def _conflicted_paths(cwd: Path) -> list[str]:
-    result = _git(["diff", "--name-only", "--diff-filter=U"], cwd, check=True)
-    return [line for line in result.stdout.splitlines() if line]
+    result = _git(["diff", "--name-only", "--diff-filter=U", "-z"], cwd, check=True)
+    return [path for path in result.stdout.split("\0") if path]
 
 
 def _checkout_scratch(onto: str, cwd: Path) -> None:
@@ -176,13 +177,25 @@ def _cleanup_scratch(cwd: Path) -> None:
     """
     tip = _head_sha(cwd)
     _git(["checkout", "--detach", tip], cwd, check=True)
+    # Conflict resolution can leave an unstaged working-tree copy even after
+    # the resulting commit was created (notably when Git materializes a
+    # rename/add collision).  The scratch checkout contains no user changes:
+    # normalize it to the committed tip before returning to the caller's
+    # branch, otherwise restoring that branch is incorrectly reported as a
+    # dirty-worktree error.
+    _git(["reset", "--hard", tip], cwd, check=True)
     _delete_ref(SCRATCH_REF, cwd)
 
 
 def _finish_merge_commit(cwd: Path) -> str:
     env_editor_true = ["-c", "core.editor=true"]
-    _git([*env_editor_true, "commit", "--no-edit"], cwd, check=True)
+    _git(["-c", "core.hooksPath=/dev/null", *env_editor_true, "commit", "--no-edit"], cwd, check=True)
     return _head_sha(cwd)
+
+
+def _commit(args: list[str], cwd: Path) -> None:
+    """Create an internal history commit without running repository hooks."""
+    _git(["-c", "core.hooksPath=/dev/null", "commit", *args], cwd, check=True)
 
 
 def _prompt_yes_no(prompt: str) -> bool:
@@ -346,6 +359,61 @@ def _resolve_already_replayed_conflict(sha: str, onto: str, cwd: Path) -> bool:
     return not _conflicted_paths(cwd)
 
 
+def _resolve_documentation_conflict(conflicted: list[str], cwd: Path) -> bool:
+    """Keep current instruction files when an older addition collides.
+
+    Git may represent an add/rename collision as the normal filename plus a
+    generated conflict-name path. Only resolve a conflict when every
+    conflicted path belongs to one of the repository instruction files;
+    ordinary source conflicts must remain manual.
+    """
+    if not conflicted:
+        return False
+    # end if
+    documentation_paths = {
+        path
+        for path in conflicted
+        if path in REPLAY_DOCUMENTATION_NAMES
+        or any(path.startswith(f"{name}~") for name in REPLAY_DOCUMENTATION_NAMES)
+    }
+    if documentation_paths != set(conflicted):
+        return False
+    # end if
+    for path in conflicted:
+        if path in REPLAY_DOCUMENTATION_NAMES:
+            _git(["checkout", "--ours", "--", path], cwd, check=True)
+            _git(["add", "--", path], cwd, check=True)
+        else:
+            _git(["rm", "--", path], cwd, check=True)
+        # end if
+    # end for
+    return not _conflicted_paths(cwd)
+
+
+def _is_generated_conflict_path(path: str, conflicted: list[str], cwd: Path) -> bool:
+    """Recognize Git's synthetic path for an add/rename collision.
+
+    Git uses ``NAME~<40-hex-oid>`` for the side of an add/rename conflict
+    that has no ordinary path in the merge tree.  Keep this check deliberately
+    narrow so a missing historical source file can never be deleted merely
+    because ``git show`` failed.
+    """
+    if "~" not in path:
+        return False
+    # end if
+    original_path, suffix = path.rsplit("~", 1)
+    if len(suffix) != 40 or not all(
+        character in "0123456789abcdefABCDEF" for character in suffix
+    ):
+        return False
+    # Require evidence of the normal path on the target side. This is the
+    # safety check that distinguishes Git's synthetic conflict entry from an
+    # unrelated historical path that simply went missing.
+    if original_path not in conflicted and not (cwd / original_path).exists():
+        return False
+    return True
+
+
 def replay_commit(sha: str, onto: str, cwd: Path) -> str:
     """Cherry-pick an ordinary commit onto `onto`. Message (and any
     `X-Base-Split-*` trailers on it) is preserved verbatim by cherry-pick.
@@ -359,12 +427,21 @@ def replay_commit(sha: str, onto: str, cwd: Path) -> str:
             # manually instead of treating "nothing to commit" as a real
             # conflict. The commit message git already staged for us (from
             # the cherry-pick sequencer) is reused verbatim by --no-edit.
-            _git(["commit", "--allow-empty", "--no-edit"], cwd, check=True)
+            _commit(["--allow-empty", "--no-edit"], cwd)
+        elif _resolve_documentation_conflict(_conflicted_paths(cwd), cwd):
+            continued = _log_completed(git_ops.cherry_pick_continue(cwd), label="cherry-pick --continue")
+            if continued.returncode != 0:
+                if _is_empty_cherry_pick(continued, cwd):
+                    _commit(["--allow-empty", "--no-edit"], cwd)
+                else:
+                    raise CherryPickConflict(sha, onto, continued.stdout, continued.stderr)
+                # end if
+            # end if
         elif _resolve_already_replayed_conflict(sha, onto, cwd):
             continued = _log_completed(git_ops.cherry_pick_continue(cwd), label="cherry-pick --continue")
             if continued.returncode != 0:
                 if _is_empty_cherry_pick(continued, cwd):
-                    _git(["cherry-pick", "--skip"], cwd, check=True)
+                    _commit(["--allow-empty", "--no-edit"], cwd)
                 else:
                     raise CherryPickConflict(sha, onto, continued.stdout, continued.stderr)
                 # end if
@@ -426,7 +503,20 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
         for path in conflicted:
             if path == gitattributes_safety.GITATTRIBUTES_PATH and gitattributes_resolved:
                 continue
-            content = git_ops.show_path_at(old_merge_sha, path, cwd)
+            try:
+                content = git_ops.show_path_at(old_merge_sha, path, cwd)
+            except subprocess.CalledProcessError:
+                if not _is_generated_conflict_path(path, conflicted, cwd):
+                    raise HistoryMasterError(
+                        f"original merge {old_merge_sha} has no blob for conflicted path {path!r}"
+                    )
+                # Git can expose this generated conflict-name path after an
+                # add/rename collision even though it never existed in the
+                # original merge tree. The original merge resolved it by
+                # omission, so remove only this synthetic incoming path.
+                _git(["rm", "--", path], cwd, check=True)
+                continue
+            # end try
             target = cwd / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
@@ -447,7 +537,7 @@ def recreate_base_merge(old_merge_sha: str, onto: str, cwd: Path) -> str:
         },
         cwd,
     )
-    _git(["commit", "--amend", "-m", new_message], cwd, check=True)
+    _commit(["--amend", "-m", new_message], cwd)
     new_sha = _head_sha(cwd)
     _cleanup_scratch(cwd)
     return new_sha
@@ -482,7 +572,7 @@ def _complete_base_fold(base_sha: str, cwd: Path) -> str:
         {MERGE_KIND_TRAILER: "base-merge", MERGE_SHA_TRAILER: base_sha},
         cwd,
     )
-    _git(["commit", "--amend", "-m", new_message], cwd, check=True)
+    _commit(["--amend", "-m", new_message], cwd)
     new_sha = _head_sha(cwd)
     _cleanup_scratch(cwd)
     return new_sha
@@ -818,11 +908,17 @@ def _do_continue(repo_root: Path, history_ref: str) -> dict:
     if pending is not None:
         step = pending["step"]
         if pending["kind"] == "cherry-pick":
+            _resolve_documentation_conflict(_conflicted_paths(cwd), cwd)
+            _resolve_already_replayed_conflict(step["sha"], tip, cwd)
             logger.debug("$ git cherry-pick --continue")
             result = _log_completed(git_ops.cherry_pick_continue(cwd))
             if result.returncode != 0:
-                _write_state(repo_root, state)
-                return {"status": "conflict", "pending": pending, "detail": result.stderr or result.stdout}
+                if _is_empty_cherry_pick(result, cwd):
+                    _commit(["--allow-empty", "--no-edit"], cwd)
+                else:
+                    _write_state(repo_root, state)
+                    return {"status": "conflict", "pending": pending, "detail": result.stderr or result.stdout}
+                # end if
             tip = _head_sha(cwd)
             _cleanup_scratch(cwd)
         elif pending["kind"] == "merge":
