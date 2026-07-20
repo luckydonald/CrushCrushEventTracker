@@ -4439,3 +4439,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › repeat the summary.
 
+› Explain me that issue in `SkillsTests.test_sync_skills_imports_new_claude_skill_over_shared_source`.
+
+› Implement the correct tests then
+

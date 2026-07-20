@@ -1474,7 +1474,7 @@ class SkillsTests(unittest.TestCase):
             for name, value in previous.items():
                 setattr(paths, name, value)
 
-    def test_sync_skills_imports_new_claude_skill_over_shared_source(self):
+    def test_sync_skills_preserves_shared_source_over_newer_claude_skill(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shared = root / "ai" / "skills" / "demo" / "SKILL.md"
@@ -1504,10 +1504,36 @@ class SkillsTests(unittest.TestCase):
                 skills._sync_skills(True)
 
             shared_text = shared.read_text(encoding="utf-8")
-            self.assertIn("New Claude skill.", shared_text)
-            self.assertIn("New body.", shared_text)
+            self.assertIn("Old shared source.", shared_text)
+            self.assertIn("Old body.", shared_text)
+            self.assertNotIn("New Claude skill.", shared_text)
+            self.assertNotIn("New body.", shared_text)
             # `_sync_skills` symlinks the whole skill directory (not each file
             # individually) so multi-file skills mirror completely.
+            self.assertTrue(claude_skill.parent.is_symlink())
+            self.assertEqual(claude_skill.resolve(), shared.resolve())
+
+    def test_sync_skills_imports_claude_skill_when_shared_source_is_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shared = root / "ai" / "skills" / "demo" / "SKILL.md"
+            claude_skill = root / ".claude" / "skills" / "demo" / "SKILL.md"
+            claude_skill.parent.mkdir(parents=True)
+            claude_skill.write_text(
+                "---\n"
+                "name: demo\n"
+                "description: Claude skill.\n"
+                "---\n\n"
+                "Claude body.\n",
+                encoding="utf-8",
+            )
+
+            with self.patched_skill_paths(root):
+                skills._sync_skills(True)
+
+            shared_text = shared.read_text(encoding="utf-8")
+            self.assertIn("Claude skill.", shared_text)
+            self.assertIn("Claude body.", shared_text)
             self.assertTrue(claude_skill.parent.is_symlink())
             self.assertEqual(claude_skill.resolve(), shared.resolve())
 
