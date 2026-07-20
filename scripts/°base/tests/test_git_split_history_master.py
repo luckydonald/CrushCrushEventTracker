@@ -70,6 +70,40 @@ class HistoryMasterTests(unittest.TestCase):
         self.assertTrue((self.repo_root / "scratch.log").exists())
         self.assertTrue((self.repo_root / "assets" / "foo.html").exists())
 
+    def test_replay_keeps_target_content_for_already_replayed_conflict(self) -> None:
+        (self.repo_root / "CLAUDE.md").write_text("old content\n")
+        git(["add", "CLAUDE.md"], self.repo_root)
+        git(["commit", "-m", "add guidance"], self.repo_root)
+        replay_sha = git(["rev-parse", "HEAD"], self.repo_root)
+
+        (self.repo_root / "CLAUDE.md").write_text("newer target content\n")
+        git(["commit", "-am", "update guidance"], self.repo_root)
+        onto = git(["rev-parse", "HEAD"], self.repo_root)
+
+        result = history_master.replay_commit(replay_sha, onto, self.repo_root)
+
+        self.assertEqual(result, onto)
+        self.assertEqual((self.repo_root / "CLAUDE.md").read_text(), "newer target content\n")
+
+    def test_replay_keeps_missing_nonconflicting_files_from_ancestor_commit(self) -> None:
+        (self.repo_root / "CLAUDE.md").write_text("old content\n")
+        (self.repo_root / "new-guidance.txt").write_text("keep this file\n")
+        git(["add", "CLAUDE.md", "new-guidance.txt"], self.repo_root)
+        git(["commit", "-m", "add guidance files"], self.repo_root)
+        replay_sha = git(["rev-parse", "HEAD"], self.repo_root)
+
+        (self.repo_root / "CLAUDE.md").write_text("newer target content\n")
+        git(["commit", "-am", "update guidance"], self.repo_root)
+        git(["rm", "new-guidance.txt"], self.repo_root)
+        git(["commit", "-m", "remove guidance file"], self.repo_root)
+        onto = git(["rev-parse", "HEAD"], self.repo_root)
+
+        result = history_master.replay_commit(replay_sha, onto, self.repo_root)
+
+        self.assertNotEqual(result, onto)
+        self.assertEqual((self.repo_root / "CLAUDE.md").read_text(), "newer target content\n")
+        self.assertEqual((self.repo_root / "new-guidance.txt").read_text(), "keep this file\n")
+
     def test_idempotent_rerun_is_a_no_op(self) -> None:
         history_master.update_history_master(repo_root=self.repo_root, main_branch="master")
         history_tip_after_first = git(["rev-parse", "ai/history/master"], self.repo_root)

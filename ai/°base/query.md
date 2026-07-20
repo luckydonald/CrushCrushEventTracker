@@ -4443,3 +4443,34 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Implement the correct tests then
 
+› /plan Alright, pulled in the newest `base/base`. Please test again with `/path/to/<redacted>/frontend/`.
+
+› Question answered.
+> <details><summary>
+>
+>> 1. How should I run the frontend test from this detached master tip?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Test mode** (1/1) <kbd>Single Select</kbd><br>
+>> How should I run the frontend test from this detached master tip?
+> - [ ] 1\. Restore master, then run (Recommended)
+>   - _Attach the existing `master` ref at the current commit, then run `cat get-base.py | python3 -`; preserves all files._
+> - [ ] 2\. Run explicit update
+>   - _Keep detached HEAD and run `update-history-master --yes` explicitly, bypassing auto branch detection._
+> - [ ] 3\. Only diagnose
+>   - _Do not mutate refs; report that auto mode cannot run while detached._
+> - [x] 4\. _Type something:_
+>   - > I checked out `ai/history/master`, which was the state to test.
+>
+> </details>
+>
+
+> › Implement the [Plan](./plans/049_test-get-base-py-on-ai-history-master.md).
+
+› Solve that conflict or the script or both. (btw do not leak that redacted path into the planning document)
+
+> › Implement the [Plan](./plans/049_resolve-replay-conflicts-for-commits-already-present-upstrea.md).
+

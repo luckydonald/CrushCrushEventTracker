@@ -323,6 +323,29 @@ def _is_empty_cherry_pick(result: subprocess.CompletedProcess, cwd: Path) -> boo
     return "previous cherry-pick is now empty" in combined
 
 
+def _resolve_already_replayed_conflict(sha: str, onto: str, cwd: Path) -> bool:
+    """Keep the target side when an already-replayed commit conflicts.
+
+    History-master can contain a commit that is already reachable from the
+    target tip after branch merges or rewrites. Replaying that commit again
+    may still produce add/add or edit/edit conflicts because the target later
+    evolved the same path. The target version is authoritative in this case;
+    non-conflicting files from the cherry-pick remain staged and are kept.
+    """
+    if not git_ops.is_ancestor(sha, onto, cwd):
+        return False
+    # end if
+    conflicted = _conflicted_paths(cwd)
+    if not conflicted:
+        return False
+    # end if
+    for path in conflicted:
+        _git(["checkout", "--ours", "--", path], cwd, check=True)
+        _git(["add", "--", path], cwd, check=True)
+    # end for
+    return not _conflicted_paths(cwd)
+
+
 def replay_commit(sha: str, onto: str, cwd: Path) -> str:
     """Cherry-pick an ordinary commit onto `onto`. Message (and any
     `X-Base-Split-*` trailers on it) is preserved verbatim by cherry-pick.
@@ -337,6 +360,15 @@ def replay_commit(sha: str, onto: str, cwd: Path) -> str:
             # conflict. The commit message git already staged for us (from
             # the cherry-pick sequencer) is reused verbatim by --no-edit.
             _git(["commit", "--allow-empty", "--no-edit"], cwd, check=True)
+        elif _resolve_already_replayed_conflict(sha, onto, cwd):
+            continued = _log_completed(git_ops.cherry_pick_continue(cwd), label="cherry-pick --continue")
+            if continued.returncode != 0:
+                if _is_empty_cherry_pick(continued, cwd):
+                    _git(["cherry-pick", "--skip"], cwd, check=True)
+                else:
+                    raise CherryPickConflict(sha, onto, continued.stdout, continued.stderr)
+                # end if
+            # end if
         else:
             raise CherryPickConflict(sha, onto, result.stdout, result.stderr)
     new_sha = _head_sha(cwd)
