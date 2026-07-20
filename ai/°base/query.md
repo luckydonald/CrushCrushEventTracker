@@ -4511,3 +4511,13 @@ Possibly the folder name be `NNN.prompt_id`.
 
 > › Implement the [Plan](./plans/050_auto-commit-codex-global-memory.md).
 
+› As this is now a session start, I expect the file to be commited here.
+
+› Ignore the fact that .codex is under version control - that's just my personal backup. The goal is to sync that file into this very repository.
+
+› No; it is not the only source of truth! It must sync properly, just like the claude one does.
+
+› I mean it's a bit more difficult as the codex memory seems to be only global for all projects, so I guess we need to listen to explicit add/update/delete commands/hooks to make sure we're getting it right?
+
+› Uh oh, `• Running 24 PostToolUse hooks`, which end up in `• PostToolUse hook (failed)` with `error: hook timed out after 600s`. Something wrong with the script?
+

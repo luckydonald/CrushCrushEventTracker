@@ -161,3 +161,9 @@ Additionally, we need:
    2. block code or code-containing commits to be pushed if the branch name is not **history** format.
 
 - [ ] Done
+
+---
+
+- [ ] I mean it's a bit more difficult as the codex memory seems to be only global for all projects, so I guess we need to listen to explicit add/update/delete commands/hooks to make sure we're getting it right?
+
+- [ ] Uh oh, `• Running 19 PostToolUse hooks`, which end up in `• PostToolUse hook (failed)` with `error: hook timed out after 600s`.

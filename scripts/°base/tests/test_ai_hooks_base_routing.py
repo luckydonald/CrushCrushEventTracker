@@ -1280,6 +1280,9 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             )
 
             self.assertEqual(last_subject(memory_repo), "ai: record codex memory")
+            mirror = project / "ai" / "memory" / "codex" / "extensions" / "ad_hoc" / "note.md"
+            self.assertTrue(mirror.exists())
+            self.assertEqual(last_subject(project), "ai: sync codex memory")
             self.assertEqual(
                 run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
                 1,
