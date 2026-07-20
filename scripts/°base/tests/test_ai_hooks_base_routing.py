@@ -1284,6 +1284,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
                 1,
             )
+            note.unlink()
             run_hook(
                 project,
                 CODEX_MEMORY_HOOK,
@@ -1292,6 +1293,11 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 extra_env={"CODEX_HOME": str(codex_home)},
             )
             self.assertEqual(run_git(memory_repo, "log", "-1", "--pretty=%s").stdout.strip(), "ai: record codex memory")
+            self.assertFalse(note.exists())
+            self.assertEqual(
+                run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
+                2,
+            )
 
     def _seed_memory_pair(self, repo: Path, home: Path, name: str) -> Path:
         """Seed a repo-tracked mirror file plus a matching external source
