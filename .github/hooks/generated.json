@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-compact-prompt/hook.py\" 'claude'"
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-compact-prompt/hook.py\" 'copilot'"
           }
         ]
       }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-compact-prompt/hook.py\" 'claude'"
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/save-compact-prompt/hook.py\" 'copilot'"
           }
         ]
       }

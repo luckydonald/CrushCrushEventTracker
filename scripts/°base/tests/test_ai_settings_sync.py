@@ -87,6 +87,33 @@ class HooksTests(unittest.TestCase):
         self.assertIn("'claude'", claude_command)
         self.assertNotIn("'codex'", claude_command)
 
+    def test_render_codex_rewrites_compact_tool_arg(self):
+        shared = {
+            "hooks": {
+                "PostCompact": [
+                    {
+                        "matcher": "manual|auto",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 scripts/°base/ai/hooks/save-compact-prompt/hook.py 'claude'",
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+
+        codex = hooks.render_codex_hooks(shared)
+        claude = hooks.render_claude(shared)
+        codex_command = codex["hooks"]["PostCompact"][0]["hooks"][0]["command"]
+        claude_command = claude["hooks"]["PostCompact"][0]["hooks"][0]["command"]
+
+        self.assertIn("'codex'", codex_command)
+        self.assertNotIn("'claude'", codex_command)
+        self.assertIn("'claude'", claude_command)
+        self.assertNotIn("'codex'", claude_command)
+
     def test_render_codex_rewrites_plan_tool_arg(self):
         shared = {
             "hooks": {

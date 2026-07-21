@@ -187,6 +187,7 @@ def _replace_tool_arg(command: str, tool: str) -> str:
         "save-prompt/hook.py" in command
         or "save-decision/hook.py" in command
         or "save-plan/hook.py" in command
+        or "save-compact-prompt/hook.py" in command
         or "record-codex-memory/hook.py" in command
     ):
         command = command.replace("'claude'", f"'{tool}'")
@@ -244,6 +245,7 @@ def _neutralize_command(command: str) -> str:
         "save-prompt/hook.py" in command
         or "save-decision/hook.py" in command
         or "save-plan/hook.py" in command
+        or "save-compact-prompt/hook.py" in command
         or "record-codex-memory/hook.py" in command
     ):
         command = command.replace("'codex'", "'claude'")

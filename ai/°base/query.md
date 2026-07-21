@@ -4521,3 +4521,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Uh oh, `• Running 24 PostToolUse hooks`, which end up in `• PostToolUse hook (failed)` with `error: hook timed out after 600s`. Something wrong with the script?
 
+› I want to test the compact feature specifically.
+
+› Hi
+
+› Like calude I'd also like you, codex, to save the sumary after running  `/compact`.
+
+› This must be done via `ai/settings/`
+
