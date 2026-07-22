@@ -4711,3 +4711,11 @@ Possibly the folder name be `NNN.prompt_id`.
 > </details>
 >
 
+› Plan updates:
+- _per-file hardlink-first, symlink-fallback strategy_ this should be extracted to a helper file, if not yet.
+- _Keep `source-map.json` in `base_synced` to record native `extensions/ad_hoc/*.md` ownership and ignored files._ Is that a file we create or codex creates? It should also exist in our version control, either way. (is it just ignore lists? the thought is about running it on a different computer, to make sure there are no conflicts - or that conflicts are trivial (save, understandable) to solve (i.e. with a computer id/hostname?)
+- _run scripts/°base/ai/memory/import-codex.py <note> from the correct repository_ - which may not be ours. If it is ours, the AI shall be allowed to do it automatically (which needs to be in the print/echo for the AI)
+- The tests shall be automated - but save to run (i.e. doing it's stuff in /tmp/, not live data)
+
+> › Implement the [Plan](./plans/051_scoped-two-way-codex-memory-sync.md).
+
