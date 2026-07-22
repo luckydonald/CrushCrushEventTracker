@@ -105,6 +105,7 @@ Hooks:
 | `save-decision/hook.py` | `AskUserQuestion` post | `ai/°base/query.md` |
 | `save-plan/hook.py` | `Write`, `ExitPlanMode`, `Stop` | `ai/°base/plans/NNN_*.md` |
 | `record-memory/hook.py` | `Write`, `Edit`, `Bash`, `SessionStart` | syncs memory hardlinks |
+| `record-codex-memory/hook.py` | Codex write tools, `SessionStart`, `Stop` | syncs scoped Codex memory into the shared project memory tree |
 
 ### Pre-commit hooks
 

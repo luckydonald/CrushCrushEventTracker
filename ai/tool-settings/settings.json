@@ -94,7 +94,7 @@
         ]
       },
       {
-        "matcher": ".*",
+        "matcher": "Write|Edit|Bash|shell|unified_exec|apply_patch",
         "hooks": [
           {
             "type": "command",

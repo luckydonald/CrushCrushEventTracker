@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import re
 import subprocess
 import sys
@@ -39,6 +40,17 @@ def _usage() -> str:
     return "Usage: python3 scripts/°base/ai/memory/delete.py <filename-or-path>"
 
 
+def _codex_hook() -> object:
+    hook = Path(__file__).resolve().parents[1] / "hooks" / "record-codex-memory" / "hook.py"
+    specification = importlib.util.spec_from_file_location("record_codex_memory", hook)
+    if specification is None or specification.loader is None:
+        raise RuntimeError(f"cannot load {hook}")
+    # end if
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     if len(args) != 1:
@@ -63,6 +75,18 @@ def main(argv: list[str] | None = None) -> int:
     if not memory_lib.delete_memory(name, src_dir=src_dir, dst_dir=dst_dir, dst_dir_rel=dst_dir_rel):
         print(f"Failed to commit deletion of {dst_rel}", file=sys.stderr)
         return 1
+
+    try:
+        hook = _codex_hook()
+        repository = hook.codex_memory_repo()
+        if repository is not None:
+            changed = hook.delete_scoped_memory(repository, subproject, name)
+            hook.commit_project_memory(subproject, changed)
+        # end if
+    except (OSError, RuntimeError) as exc:
+        print(f"Deleted repo/Claude memory but could not remove Codex mirror: {exc}", file=sys.stderr)
+        return 1
+    # end try
 
     commit = _git_text("rev-parse", "--short", "HEAD")
     print(f"Deleted memory {name} in {commit}")

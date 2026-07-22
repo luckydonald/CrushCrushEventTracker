@@ -1254,7 +1254,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             self.assertEqual(last_subject(repo), "ai: record memory tip")
 
     def test_codex_memory_hook_commits_and_is_idempotent(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
             project = Path(tmp) / "project"
             codex_home = Path(tmp) / "codex"
             memory_repo = codex_home / "memories"
@@ -1280,14 +1280,22 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
             )
 
             self.assertEqual(last_subject(memory_repo), "ai: record codex memory")
-            mirror = project / "ai" / "memory" / "codex" / "extensions" / "ad_hoc" / "note.md"
+            mirror = project / "ai" / "memory" / "note.md"
             self.assertTrue(mirror.exists())
             self.assertEqual(last_subject(project), "ai: sync codex memory")
+            index = project / "ai" / "memory" / "MEMORY.md"
+            self.assertIn("[note](note.md) — TODO: summarize this file.", index.read_text())
+            encoded = _encode_project_path(project.resolve())
+            resource = memory_repo / "extensions" / "base_synced" / "resources" / encoded
+            self.assertEqual(
+                json.loads((resource / "scope.json").read_text(encoding="utf-8")),
+                {"cwd": str(project.resolve())},
+            )
+            self.assertTrue((project / "ai" / "memory" / ".codex-sync.json").is_file())
             self.assertEqual(
                 run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
                 1,
             )
-            note.unlink()
             run_hook(
                 project,
                 CODEX_MEMORY_HOOK,
@@ -1296,11 +1304,40 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 extra_env={"CODEX_HOME": str(codex_home)},
             )
             self.assertEqual(run_git(memory_repo, "log", "-1", "--pretty=%s").stdout.strip(), "ai: record codex memory")
-            self.assertFalse(note.exists())
+            self.assertTrue(note.exists())
             self.assertEqual(
                 run_git(memory_repo, "log", "--oneline").stdout.count("ai: record codex memory"),
-                2,
+                1,
             )
+
+    def test_codex_memory_boundary_reports_unassigned_note(self):
+        with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
+            project = Path(tmp) / "project"
+            codex_home = Path(tmp) / "codex"
+            memory_repo = codex_home / "memories"
+            init_repo(project, "https://github.com/user/project.git")
+            memory_repo.mkdir(parents=True)
+            run_git(memory_repo, "init")
+            run_git(memory_repo, "config", "user.email", "tester@example.com")
+            run_git(memory_repo, "config", "user.name", "Test User")
+            (memory_repo / "MEMORY.md").write_text("# Memories\n", encoding="utf-8")
+            note = memory_repo / "extensions" / "ad_hoc" / "later.md"
+            note.parent.mkdir(parents=True)
+            note.write_text("# Later\n", encoding="utf-8")
+            run_git(memory_repo, "add", ".")
+            run_git(memory_repo, "commit", "-m", "seed")
+
+            result = run_hook(
+                project,
+                CODEX_MEMORY_HOOK,
+                {"hook_event_name": "Stop"},
+                "codex",
+                extra_env={"CODEX_HOME": str(codex_home)},
+            )
+
+            self.assertIn("unassigned native note", result.stdout)
+            self.assertIn("import-codex.py later.md", result.stdout)
+            self.assertFalse((project / "ai" / "memory" / "later.md").exists())
 
     def _seed_memory_pair(self, repo: Path, home: Path, name: str) -> Path:
         """Seed a repo-tracked mirror file plus a matching external source

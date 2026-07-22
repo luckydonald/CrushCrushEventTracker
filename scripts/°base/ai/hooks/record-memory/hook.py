@@ -66,40 +66,6 @@ def _memory_dirs(subproject: Path) -> tuple[Path, Path]:
     return src, subproject / rel
 
 
-def _same_inode(a: Path, b: Path) -> bool:
-    try:
-        return a.stat().st_ino == b.stat().st_ino and a.stat().st_dev == b.stat().st_dev
-    except OSError:
-        return False
-
-
-def _sync_file(src: Path, dst: Path) -> bool:
-    """Make ``dst`` a hardlink (or symlink fallback) of ``src``.
-    Returns True if something changed; False if already in sync."""
-    if not src.is_file():
-        return False
-
-    if dst.is_symlink():
-        try:
-            if dst.resolve() == src.resolve():
-                return False
-        except OSError:
-            pass
-    elif dst.exists() and _same_inode(dst, src):
-        return False
-
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.is_symlink() or dst.exists():
-        dst.unlink()
-
-    try:
-        os.link(src, dst)
-    except OSError:
-        # Cross-filesystem or other hardlink restriction → symlink fallback.
-        os.symlink(src, dst)
-    return True
-
-
 _SHELL_OPERATORS = {"&&", "||", ";"}
 
 
@@ -200,17 +166,17 @@ def _sync_all(src_dir: Path, dst_dir: Path, dst_dir_rel: str) -> list[str]:
                 if _is_marked_deleted(dst_dir_rel, src.name):
                     _unlink_file(src)
                     continue
-                if _sync_file(src, dst):
+                if memory_lib.link_file(src, dst):
                     changed.append(src.name)
                 continue
-            if not _same_inode(dst, src):
-                _sync_file(dst, src)
+            if not memory_lib.same_inode(dst, src):
+                memory_lib.link_file(dst, src)
 
     if dst_dir.is_dir():
         for dst in sorted(dst_dir.glob("*.md")):
             if dst.name in src_names:
                 continue
-            _sync_file(dst, src_dir / dst.name)
+            memory_lib.link_file(dst, src_dir / dst.name)
     return changed
 
 
@@ -382,7 +348,7 @@ def _uninstall_legacy(legacy: Path, src_dir: Path) -> bool | None:
     # Directory hardlink: same inode as source. We CANNOT remove this from
     # here. `os.rmdir` only works on empty dirs; `shutil.rmtree` would follow
     # the shared inode and delete the source contents. Hand off to the user.
-    if legacy.is_dir() and _same_inode(legacy, src_dir):
+    if legacy.is_dir() and memory_lib.same_inode(legacy, src_dir):
         return None
 
     return False
@@ -450,7 +416,7 @@ def main() -> int:
             rel = src_file.relative_to(src_dir.resolve())
         except (OSError, ValueError):
             return 0
-        if _sync_file(src_file, dst_dir / rel):
+        if memory_lib.link_file(src_file, dst_dir / rel):
             _commit(dst_dir_rel, [str(rel)])
         _check_memory_index_consistency(dst_dir)
         return 0
