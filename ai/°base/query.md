@@ -4529,3 +4529,185 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › This must be done via `ai/settings/`
 
+› Have a look at commit `04031d4aea018778b52b98c619f45383463befff62b494c272f979c7eb9a8f68` (seems to be rebased as `7d1218a9975fa6e8151f683b182b6eb33294596e`) in `../../openai/codex`, which should be most insightful of how codex is storing memory files - so we can bring it's sync to the repo's memory update system (claude's is very good, take that as reference for your codex implementation.)
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Codex’s native workspace is global, while the current hook mirrors every `extensions/ad_hoc/*.md` into whichever repo runs it. Which project-scope contract should the replacement use?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Codex scope** (1/1) <kbd>Single Select</kbd><br>
+>> Codex’s native workspace is global, while the current hook mirrors every `extensions/ad_hoc/*.md` into whichever repo runs it. Which project-scope contract should the replacement use?
+> - [x] 1\. Scoped import (Recommended)
+>   - _Store only notes explicitly attributed to the current repo in a Codex extension resource with `scope.json`, then mirror those into that repo._
+>   - > Is that the way how codex does it for the migrated claude ones?
+> - [ ] 2\. Keep global mirror
+>   - _Continue mirroring all global ad-hoc notes into every repo that opens a Codex session._
+> - [ ] 3\. One-way export
+>   - _Export scoped Codex notes into the repo, but never let repo-side edits update the global Codex workspace._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Upstream keeps imported project resources as source material and tells Codex consolidation never to edit them. For this repo integration, should scoped notes follow that upstream one-way rule or be a true Claude-style two-way mirror?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Write direction** (1/1) <kbd>Single Select</kbd><br>
+>> Upstream keeps imported project resources as source material and tells Codex consolidation never to edit them. For this repo integration, should scoped notes follow that upstream one-way rule or be a true Claude-style two-way mirror?
+> - [x] 1\. Two-way, repo wins (Recommended)
+>   - _Use a scoped mapping and Claude’s conflict rule: an existing tracked repo copy restores the Codex-side copy on divergence; only new scoped Codex notes are imported._
+>   - > Two way. Is that sub-folder free text? I.e. could we add our non-local notes to `extensions/base_synced/`? That way we could quite easily see which ones codex would be modifying, and which one came from a different computer/ai agent.
+> - [ ] 2\. Codex to repo only
+>   - _Export newly scoped Codex notes to the repo; repo edits never change Codex’s memory workspace._
+> - [ ] 3\. Repo to Codex only
+>   - _Import repo memory into Codex for consolidation, following upstream migration semantics exactly._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which repository memory tree should the new scoped `base_synced` resource mirror?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Mirror boundary** (1/1) <kbd>Single Select</kbd><br>
+>> Which repository memory tree should the new scoped `base_synced` resource mirror?
+> - [ ] 1\. Whole project memory (Recommended)
+>   - _Synchronize `ai/°base/memory/` (or `ai/memory/`) including its `MEMORY.md` registry, so Claude and Codex share one scoped project record._
+> - [ ] 2\. Codex-only subtree
+>   - _Synchronize only `ai/.../memory/codex/`; existing Claude memory stays outside Codex’s scoped resources._
+> - [ ] 3\. Ad-hoc notes only
+>   - _Keep the current narrow note export, but move it from global `ad_hoc` into `base_synced`._
+> - [x] 4\. _Type something:_
+>   - > On repo side, I don'T really like the `ai[/°base]/memory/codex/**` layout, it should be the same as claude, and ideally merge them properly into `MEMORY.md`, too.
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. When a newly attributed Codex note enters the shared project memory directory, how should its `MEMORY.md` entry be maintained?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Registry merge** (1/1) <kbd>Single Select</kbd><br>
+>> When a newly attributed Codex note enters the shared project memory directory, how should its `MEMORY.md` entry be maintained?
+> - [x] 1\. Auto-link, then curate (Recommended)
+>   - _The hook adds a deterministic filename link immediately; Codex consolidation later improves the title/summary and global routing._
+>   - > You say "link", as in symlink. I'm not sure if that's the right way; I believe the claude one copies the file? What do you mean with consolidation/curation? Please reword the problem.
+> - [ ] 2\. Curator only
+>   - _The hook copies the note but only warns; a Codex/Claude memory pass must add the index entry._
+> - [ ] 3\. Full automatic summary
+>   - _The hook derives a title and summary from the note text, accepting heuristic and untrusted-content risks._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. For a new Codex note synced into `ai/.../memory/`, should the hook automatically add a basic Markdown index entry to that directory’s `MEMORY.md`?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Memory index** (1/1) <kbd>Single Select</kbd><br>
+>> For a new Codex note synced into `ai/.../memory/`, should the hook automatically add a basic Markdown index entry to that directory’s `MEMORY.md`?
+> - [x] 1\. Add basic entry (Recommended)
+>   - _Keep every new file discoverable immediately with a filename-based Markdown entry; later AI work may improve the wording._
+>   - > Having a "todo: summarize this file" kind of text makes sense. The filename is in there for the label, just strip the common prefix of `feedback_` (prepare a list for those) In case of codex, the first line of the markdown, `# <title>` might be a better source though, as it for example does not contain the date.
+> - [ ] 2\. Warn only
+>   - _Preserve `MEMORY.md` for manual/AI editing and print an actionable warning until an index entry is added._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Where should the initial unsummarized entries live in `MEMORY.md`?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Pending notes** (1/1) <kbd>Single Select</kbd><br>
+>> Where should the initial unsummarized entries live in `MEMORY.md`?
+> - [ ] 1\. Dedicated list (Recommended)
+>   - _Add a `## Needs summary` section containing links plus `TODO: summarize this file`; move entries out only after a curator adds a real summary._
+> - [x] 2\. Normal index
+>   - _Place each new link in its eventual topic section with a `TODO: summarize this file` suffix._
+>   - > Yeah, but that should rather be the text after `- […](…) — `.
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. When should the two-way Codex/project reconciliation run?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Sync timing** (1/1) <kbd>Single Select</kbd><br>
+>> When should the two-way Codex/project reconciliation run?
+> - [ ] 1\. Session boundaries (Recommended)
+>   - _Run at SessionStart and Stop only; this avoids per-tool timeout pressure and still catches every persisted change on the next boundary._
+> - [x] 2\. Writes plus boundaries
+>   - _Also run after write-like tools for faster mirroring, accepting more hook invocations and contention._
+>   - > I believe the claude hooks do this, too.
+> - [ ] 3\. Explicit command only
+>   - _Provide a manual sync command; no automatic reconciliation hooks._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+› Question answered.
+> <details><summary>
+>
+>> 1. How should a newly created native Codex `extensions/ad_hoc/*.md` note enter the shared project memory?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Native notes** (1/1) <kbd>Single Select</kbd><br>
+>> How should a newly created native Codex `extensions/ad_hoc/*.md` note enter the shared project memory?
+> - [x] 1\. Attribute current repo (Recommended)
+>   - _When a note first changes during this repo’s write/boundary hook, link it into this repo’s scoped `base_synced` resource and shared memory index._
+>   - > For the tool use that totally makes sense; and you can probably already add this json file thingo if missing, while at it. For files just suddenly appearing, not writen directly by a tool, it's more difficult. Maybe add stdout print with instructions for the AI: Ask the ai, and if unclear, it shall ask the user, if we want to add this file to this project, or not. Include the command for that script to "manually" add it. Either the AI can run it, or if the user/ai determine it's a different project, the ai can instruct the user to execute that in the other repo where the memory is from. Do those json config files allow blacklisting ourself, so we wouldn't ask every time?
+> - [ ] 2\. Explicit import only
+>   - _Add a dedicated command that names the target project; no automatic attribution risk._
+> - [ ] 3\. Do not import ad-hoc
+>   - _Synchronize only notes already placed in `base_synced`; native Codex ad-hoc notes remain global._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
