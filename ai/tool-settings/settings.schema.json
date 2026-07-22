@@ -4,9 +4,6 @@
   "title": "Shared AI tool settings",
   "type": "object",
   "properties": {
-    "$schema": {
-      "type": "string"
-    },
     "version": {
       "type": "integer",
       "minimum": 1
