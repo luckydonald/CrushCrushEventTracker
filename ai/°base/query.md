@@ -4803,3 +4803,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ Fix the `.confuig` typo - at least here, then commit, then squash.
 
+❯ create a small python script which tags a commit hash as `bak/<commit hash>`, defaulting to the commit at `HEAD`. Into scripts/°base as usual. Also create a intellij run configuration like the existing one. The B emoji is for base, the sparkle for ai, the rest the tool.
+
