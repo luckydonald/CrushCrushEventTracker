@@ -4763,3 +4763,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ /plan What would happen if two claude instances run at the same time and cancel questions and then ask the question out of order (i.e. A asks question, B asks Question, B answers, A answers). How can we connect those to each other properly?
 
+❯ Clean up that confusing plan where you corrected yourself to be easier to understand.
+
