@@ -590,13 +590,18 @@ def main() -> int:
     if is_cross_tool_duplicate(args.tool_name):
         return 0
 
+    session_id = payload.get("session_id", "")
+
     event = payload.get("hook_event_name", "PostToolUse")
     if event == "Stop":
         # Catch-all reconciliation point: pick up any AskUserQuestion call
         # the user canceled ("chat about this") instead of answering, since
         # no PostToolUse/PostToolUseFailure/PermissionDenied hook fires for
         # that case (see write_pending_decision's docstring in _lib.py).
-        sweep_pending_decisions()
+        # Scoped to this session (plus stale orphans) so a concurrent
+        # session's still-live question is never misclassified -- see
+        # sweep_pending_decisions's docstring in _lib.py.
+        sweep_pending_decisions(session_id)
         return 0
 
     dump_debug_payload(payload, "save-decision")
@@ -610,10 +615,12 @@ def main() -> int:
         # PostToolUse deletes this marker if the question is actually
         # answered; otherwise the Stop sweep above commits it as-is.
         if questions:
-            write_pending_decision(tool_use_id, _render_block(questions, tool=tool, status="canceled"))
+            write_pending_decision(
+                session_id, tool_use_id, _render_block(questions, tool=tool, status="canceled")
+            )
         return 0
 
-    delete_pending_decision(tool_use_id)
+    delete_pending_decision(session_id, tool_use_id)
     if not questions:
         return 0
 

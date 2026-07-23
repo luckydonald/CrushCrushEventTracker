@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 # Sibling-module import (this package can't be imported as a real package
@@ -68,40 +69,83 @@ def _pending_decisions_dir() -> Path:
     return d
 
 
-def write_pending_decision(tool_use_id: str, rendered_block: str) -> None:
+PENDING_DECISION_STALE_SECONDS = 30 * 60  # orphan-cleanup threshold, see sweep_pending_decisions
+
+
+def _pending_decision_path(session_id: str, tool_use_id: str) -> Path:
+    # session_id/tool_use_id are opaque harness-generated tokens (never
+    # containing path separators in practice), joined so a sweep can tell
+    # which session a marker belongs to -- see sweep_pending_decisions.
+    return _pending_decisions_dir() / f"{session_id or 'unknown'}__{tool_use_id}.md"
+
+
+def write_pending_decision(session_id: str, tool_use_id: str, rendered_block: str) -> None:
     """Persist a pre-rendered markdown block for an in-flight AskUserQuestion
-    call, keyed by ``tool_use_id``. Claude Code fires no PostToolUse,
-    PostToolUseFailure, or PermissionDenied hook when the user manually
-    declines the question (e.g. via "chat about this"), so the question would
-    otherwise be lost. Written at PreToolUse time, before the answer is known;
-    deleted by :func:`delete_pending_decision` if the call is answered
-    normally, or picked up by :func:`sweep_pending_decisions` if it isn't."""
+    call, keyed by ``session_id``+``tool_use_id``. Claude Code fires no
+    PostToolUse, PostToolUseFailure, or PermissionDenied hook when the user
+    manually declines the question (e.g. via "chat about this"), so the
+    question would otherwise be lost. Written at PreToolUse time, before the
+    answer is known; deleted by :func:`delete_pending_decision` if the call is
+    answered normally, or picked up by :func:`sweep_pending_decisions` if it
+    isn't."""
     if not tool_use_id:
         return
-    (_pending_decisions_dir() / f"{tool_use_id}.md").write_text(rendered_block, encoding="utf-8")
+    _pending_decision_path(session_id, tool_use_id).write_text(rendered_block, encoding="utf-8")
 
 
-def delete_pending_decision(tool_use_id: str) -> None:
+def delete_pending_decision(session_id: str, tool_use_id: str) -> None:
     """Remove the pending marker for a now-answered AskUserQuestion call."""
     if not tool_use_id:
         return
-    (_pending_decisions_dir() / f"{tool_use_id}.md").unlink(missing_ok=True)
+    _pending_decision_path(session_id, tool_use_id).unlink(missing_ok=True)
 
 
-def sweep_pending_decisions() -> None:
+def sweep_pending_decisions(session_id: str) -> None:
     """Append+commit any leftover pending-decision markers (AskUserQuestion
     calls the user canceled instead of answering) to query.md, then delete
-    them. Safe to call often: a no-op when the directory is empty."""
+    them. Safe to call often: a no-op when nothing needs sweeping.
+
+    Two Claude Code instances can share the same working directory (two
+    terminals in the same non-worktree checkout), each with its own
+    in-flight, not-yet-answered question. To avoid one session's Stop hook
+    misclassifying *another still-live session's* question as canceled, this
+    only sweeps: (a) markers belonging to ``session_id`` itself, and (b)
+    markers from *any* session old enough (`PENDING_DECISION_STALE_SECONDS`)
+    that the owning session almost certainly crashed/exited without ever
+    reaching its own Stop -- a live session resolves its single in-flight
+    question (answered or swept) within one turn, far under that threshold."""
     pending_dir = _pending_decisions_dir()
-    markers = sorted(pending_dir.glob("*.md"))
-    blocks: list[str] = []
-    for marker in markers:
+    own_prefix = f"{session_id or 'unknown'}__"
+    now = time.time()
+
+    to_sweep: list[Path] = []
+    for marker in sorted(pending_dir.glob("*.md")):
+        if marker.name.startswith(own_prefix):
+            to_sweep.append(marker)
+            continue
         try:
-            blocks.append(marker.read_text(encoding="utf-8"))
+            age = now - marker.stat().st_mtime
         except OSError:
             continue
-        finally:
+        if age >= PENDING_DECISION_STALE_SECONDS:
+            to_sweep.append(marker)
+
+    blocks: list[str] = []
+    for marker in to_sweep:
+        try:
+            text = marker.read_text(encoding="utf-8")
+        except OSError:
             marker.unlink(missing_ok=True)
+            continue
+        if not marker.name.startswith(own_prefix):
+            text = re.sub(
+                r"(Question canceled \(chat about this\))\.\n",
+                r"\1, stale -- orphaned session.\n",
+                text,
+                count=1,
+            )
+        blocks.append(text)
+        marker.unlink(missing_ok=True)
     if not blocks:
         return
     log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
