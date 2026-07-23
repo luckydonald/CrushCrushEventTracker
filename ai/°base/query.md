@@ -4765,3 +4765,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ Clean up that confusing plan where you corrected yourself to be easier to understand.
 
+❯ Add a small python script to the usual base folder, which would tag the `HEAD` commit with it's hash, formatted `bak/{hash}/`. Also write a jetbrains run configuration for it like the existing one.
+
