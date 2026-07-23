@@ -16,7 +16,17 @@ from pathlib import Path
 from pydantic import BaseModel, StrictBool, StrictInt, computed_field
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import append_and_commit, dump_debug_payload, is_cross_tool_duplicate, read_payload, resolve_log_path, slugify  # noqa: E402
+from _lib import (  # noqa: E402
+    append_and_commit,
+    delete_pending_decision,
+    dump_debug_payload,
+    is_cross_tool_duplicate,
+    read_payload,
+    resolve_log_path,
+    slugify,
+    sweep_pending_decisions,
+    write_pending_decision,
+)
 
 
 class Choice(BaseModel):
@@ -387,11 +397,12 @@ def _render_preview_block(preview: str, lang: str, out: list[str]) -> None:
     out.append(">     ```\n")
 
 
-def _render_block(questions: list[Question], *, tool: str = "claude") -> str:
+def _render_block(questions: list[Question], *, tool: str = "claude", status: str = "answered") -> str:
     total = len(questions)
     out: list[str] = []
     glyph = {"claude": "❯", "codex": "›", "copilot": "◆"}.get(tool, "❯")
-    out.append(f"{glyph} Question answered.\n")
+    label = "Question answered" if status == "answered" else "Question canceled (chat about this)"
+    out.append(f"{glyph} {label}.\n")
     out.append("> <details><summary>\n")
     out.append(">\n")
 
@@ -578,10 +589,31 @@ def main() -> int:
     payload = read_payload()
     if is_cross_tool_duplicate(args.tool_name):
         return 0
+
+    event = payload.get("hook_event_name", "PostToolUse")
+    if event == "Stop":
+        # Catch-all reconciliation point: pick up any AskUserQuestion call
+        # the user canceled ("chat about this") instead of answering, since
+        # no PostToolUse/PostToolUseFailure/PermissionDenied hook fires for
+        # that case (see write_pending_decision's docstring in _lib.py).
+        sweep_pending_decisions()
+        return 0
+
     dump_debug_payload(payload, "save-decision")
 
     tool = _infer_tool(payload, args.tool_name)
     questions = parse_payload(payload, ai_tool=tool)
+    tool_use_id = payload.get("tool_use_id", "")
+
+    if event == "PreToolUse":
+        # Answer isn't known yet -- pre-render as "canceled" and stash it.
+        # PostToolUse deletes this marker if the question is actually
+        # answered; otherwise the Stop sweep above commits it as-is.
+        if questions:
+            write_pending_decision(tool_use_id, _render_block(questions, tool=tool, status="canceled"))
+        return 0
+
+    delete_pending_decision(tool_use_id)
     if not questions:
         return 0
 

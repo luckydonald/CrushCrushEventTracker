@@ -37,13 +37,20 @@ def read_payload() -> dict:
         return {}
 
 
-def dump_debug_payload(payload: dict, hook_name: str) -> None:
-    """If ai[/°base]/.debug exists, write payload JSON to ai[/°base]/output/debug/."""
+def _ai_prefix_root() -> tuple[Path, str]:
+    """Return (subproject_root, ai_prefix), where ai_prefix is ``ai/°base``
+    inside the base repo itself and plain ``ai`` in a consuming repo."""
     subproject = _subproject_root()
     git_root_str = _git_text("rev-parse", "--show-toplevel")
     git_root = Path(git_root_str) if git_root_str else subproject
     is_base = _is_inside_base_repo(subproject) or _is_inside_base_repo(git_root)
     ai_prefix = "ai/°base" if is_base else "ai"
+    return subproject, ai_prefix
+
+
+def dump_debug_payload(payload: dict, hook_name: str) -> None:
+    """If ai[/°base]/.debug exists, write payload JSON to ai[/°base]/output/debug/."""
+    subproject, ai_prefix = _ai_prefix_root()
     if not (subproject / ai_prefix / ".debug").is_file():
         return
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S_%f")
@@ -51,6 +58,58 @@ def dump_debug_payload(payload: dict, hook_name: str) -> None:
     debug_dir.mkdir(parents=True, exist_ok=True)
     (debug_dir / f"{ts}-{hook_name}.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+
+
+def _pending_decisions_dir() -> Path:
+    subproject, ai_prefix = _ai_prefix_root()
+    d = subproject / ai_prefix / "output" / ".pending-decisions"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def write_pending_decision(tool_use_id: str, rendered_block: str) -> None:
+    """Persist a pre-rendered markdown block for an in-flight AskUserQuestion
+    call, keyed by ``tool_use_id``. Claude Code fires no PostToolUse,
+    PostToolUseFailure, or PermissionDenied hook when the user manually
+    declines the question (e.g. via "chat about this"), so the question would
+    otherwise be lost. Written at PreToolUse time, before the answer is known;
+    deleted by :func:`delete_pending_decision` if the call is answered
+    normally, or picked up by :func:`sweep_pending_decisions` if it isn't."""
+    if not tool_use_id:
+        return
+    (_pending_decisions_dir() / f"{tool_use_id}.md").write_text(rendered_block, encoding="utf-8")
+
+
+def delete_pending_decision(tool_use_id: str) -> None:
+    """Remove the pending marker for a now-answered AskUserQuestion call."""
+    if not tool_use_id:
+        return
+    (_pending_decisions_dir() / f"{tool_use_id}.md").unlink(missing_ok=True)
+
+
+def sweep_pending_decisions() -> None:
+    """Append+commit any leftover pending-decision markers (AskUserQuestion
+    calls the user canceled instead of answering) to query.md, then delete
+    them. Safe to call often: a no-op when the directory is empty."""
+    pending_dir = _pending_decisions_dir()
+    markers = sorted(pending_dir.glob("*.md"))
+    blocks: list[str] = []
+    for marker in markers:
+        try:
+            blocks.append(marker.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+        finally:
+            marker.unlink(missing_ok=True)
+    if not blocks:
+        return
+    log_path = resolve_log_path("ai/query.md", "ai/°base/query.md")
+    append_and_commit(
+        log_path,
+        "".join(blocks),
+        commit_template_relpath="ai/commit-templates/decision",
+        default_commit_msg="ai: save canceled decision",
     )
 
 

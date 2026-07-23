@@ -4719,3 +4719,45 @@ Possibly the folder name be `NNN.prompt_id`.
 
 > › Implement the [Plan](./plans/051_scoped-two-way-codex-memory-sync.md).
 
+❯ /plan When canceling a question in claude, this must be recorded, too. This is usually the `chat about this` option in the claude TUI.
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. How to record a canceled/"chat about this" AskUserQuestion? Claude Code fires no PostToolUse/PostToolUseFailure/PermissionDenied hook on manual denial, only PreToolUse (before) and then a normal UserPromptSubmit for whatever the user types next. Pick approach:
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Design** (1/1) <kbd>Single Select</kbd><br>
+>> How to record a canceled/"chat about this" AskUserQuestion? Claude Code fires no PostToolUse/PostToolUseFailure/PermissionDenied hook on manual denial, only PreToolUse (before) and then a normal UserPromptSubmit for whatever the user types next. Pick approach:
+> - [x] 1\. Pending-marker + sweep (recommended)
+>   - _New PreToolUse hook (same matcher) writes a pending marker keyed by tool_use_id with the parsed question(s). save-decision's existing PostToolUse stage deletes that marker when answered normally. A sweep (added to save-prompt's UserPromptSubmit and to Stop) finds markers left over from a canceled question and appends a 'Question canceled' block to query.md before continuing. Correctly captures the actual question text that was asked._
+> - [ ] 2\. Log-only, no question text
+>   - _Simpler: just have save-prompt (UserPromptSubmit) detect that the previous assistant turn issued an AskUserQuestion tool_use with no matching tool_result in the transcript, and append a bare 'Question was canceled' marker to query.md — no question/options text, since PreToolUse payload isn't otherwise captured._
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+
+❯ Question canceled (chat about this).
+> <details><summary>
+>
+>> 1. End-to-end verification probe — cancel via chat about this, please.
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Verify** (1/1) <kbd>Single Select</kbd><br>
+>> End-to-end verification probe — cancel via chat about this, please.
+> - [ ] 1\. Yes
+>   - _dummy_
+> - [ ] 2\. No
+>   - _dummy_
+> - [ ] 3\. _Type something._
+>
+> </details>
+>
+

@@ -21,6 +21,7 @@ PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-prompt" / "ho
 PLAN_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-plan" / "hook.py"
 MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-memory" / "hook.py"
 CODEX_MEMORY_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "record-codex-memory" / "hook.py"
+DECISION_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-decision" / "hook.py"
 COMPACT_PROMPT_HOOK = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-compact-prompt" / "hook.py"
 
 
