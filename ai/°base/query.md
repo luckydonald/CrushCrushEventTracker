@@ -4771,3 +4771,27 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › notice it's a symlink, oops
 
+› investigate those failed ai hooks (Stop, PostToolUse,
+
+› Question answered.
+> <details><summary>
+>
+>> 1. Which Codex-memory synchronization contract should the repair preserve?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **Sync timing** (1/1) <kbd>Single Select</kbd><br>
+>> Which Codex-memory synchronization contract should the repair preserve?
+> - [x] 1\. Boundaries + writes (Recommended)
+>   - _Keep SessionStart/Stop reconciliation and write-like PostToolUse events, but make those events cheap and safe._
+> - [ ] 2\. Boundaries only
+>   - _Run only at SessionStart and Stop, avoiding tool-time work but delaying write capture._
+> - [ ] 3\. Writes only
+>   - _Sync immediately after writes, but direct filesystem changes may wait indefinitely._
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
