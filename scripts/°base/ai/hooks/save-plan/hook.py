@@ -18,6 +18,7 @@ Session tracking (keyed by session_id in a temp-dir state file):
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -95,14 +96,24 @@ def _plan_from_edit(tool_input: dict) -> str:
 
 
 def _is_plan_file_path(file_path: str) -> bool:
-    """True for Claude's ``~/.claude/plans/*.md`` or Copilot's
+    """True for Claude's ``.../.claude/plans/*.md`` (the harness's default),
+    ``<CLAUDE_CONFIG_DIR>/plans/*.md`` when the config dir has been relocated
+    (e.g. multi-account setups like ``~/.config/claude/accounts/<name>``,
+    which moves ``plans/`` along with the rest of the config), or Copilot's
     ``~/.copilot/session-state/<session_id>/plan.md``."""
     if not file_path:
         return False
-    return bool(
-        re.search(r"/\.claude/plans/[^/]+\.md$", file_path)
-        or re.search(r"/\.copilot/session-state/[^/]+/plan\.md$", file_path)
-    )
+    if re.search(r"/\.claude/plans/[^/]+\.md$", file_path):
+        return True
+    if re.search(r"/\.copilot/session-state/[^/]+/plan\.md$", file_path):
+        return True
+    config_dir = os.environ.get("CLAUDE_CONFIG_DIR")
+    if config_dir:
+        plans_dir = Path(config_dir).expanduser() / "plans"
+        path = Path(file_path)
+        if path.parent == plans_dir and path.suffix == ".md":
+            return True
+    return False
 
 
 def _plan_from_copilot_session(payload: dict) -> str:

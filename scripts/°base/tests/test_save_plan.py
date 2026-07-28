@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[3]
 _HOOK_PATH = ROOT / "scripts" / "°base" / "ai" / "hooks" / "save-plan" / "hook.py"
@@ -58,6 +60,38 @@ class PlanFromEditPathFilterTests(unittest.TestCase):
     def test_empty_file_path_returns_empty(self):
         self.assertEqual(_hook._plan_from_edit({}), "")
         self.assertEqual(_hook._plan_from_edit({"file_path": ""}), "")
+
+
+class RelocatedConfigDirPlanPathTests(unittest.TestCase):
+    """CLAUDE_CONFIG_DIR relocates the whole config dir (multi-account
+    setups), moving plans/ out from under ~/.claude/plans/ -- the plain
+    regex must not be the only way in, see plan 20260728 fix."""
+
+    def test_matches_plan_under_relocated_config_dir(self):
+        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": "/home/x/.config/claude/accounts/private/"}):
+            self.assertTrue(
+                _hook._is_plan_file_path(
+                    "/home/x/.config/claude/accounts/private/plans/nifty-spinning-pearl.md"
+                )
+            )
+
+    def test_rejects_other_files_under_relocated_config_dir(self):
+        with mock.patch.dict(os.environ, {"CLAUDE_CONFIG_DIR": "/home/x/.config/claude/accounts/private/"}):
+            self.assertFalse(
+                _hook._is_plan_file_path(
+                    "/home/x/.config/claude/accounts/private/plans/sub/plan.md"
+                )
+            )
+            self.assertFalse(
+                _hook._is_plan_file_path(
+                    "/home/x/.config/claude/accounts/private/settings.json"
+                )
+            )
+
+    def test_ignores_config_dir_when_unset(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("CLAUDE_CONFIG_DIR", None)
+            self.assertFalse(_hook._is_plan_file_path("/home/x/some/plans/plan.md"))
 
 
 class PlanFromEditContentTests(unittest.TestCase):

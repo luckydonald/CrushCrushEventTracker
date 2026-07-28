@@ -4799,3 +4799,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 > › Implement the [Plan](./plans/054_repair-codex-hook-failures-and-bound-memory-sync-cost.md). <kbd>cleared</kbd>
 
+❯ Fix `/home/user/git/luckydonald/xhamsterlocal/ai/output/debug/20260728-203219_245072-save-plan.json` not creating a plan commit (I commited those manually instead.)
+
+❯ Fix the `.confuig` typo - at least here, then commit, then squash.
+
