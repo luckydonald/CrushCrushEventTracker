@@ -4767,3 +4767,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ Add a small python script to the usual base folder, which would tag the `HEAD` commit with it's hash, formatted `bak/{hash}/`. Also write a jetbrains run configuration for it like the existing one.
 
+› In scripts/tag_backup.py, after successfully tagging, if interactive or `--remove-old-tags/--remove-tags/--remove-old/--rm-old/--rm-tags/--rm` flag is set to force it, clean up (remove) tags of the parent history, i.e. those commits which are already accessible via the newly created tag. In interactive mode ask (Y/n) for each of those. The `--no-…` variants surpress this behaviour, no tags will be deleted or asked for. Specifying remove and no remove is an error. The result is that --no-rm or non-interactive is not running the extra code, i.e. is as fast as before.
+
+› notice it's a symlink, oops
+
