@@ -90,8 +90,12 @@ def policy_enabled(paths: list[PurePosixPath], repo: Path) -> bool:
     if SHARED_SETTINGS in paths:
         shared = parse_json_object(index_text(SHARED_SETTINGS), SHARED_SETTINGS.as_posix())
         enabled = yarn_setting(shared, SHARED_SETTINGS.as_posix(), local=False)
+        print(f"debug: last commited {SHARED_SETTINGS} has 'yarn@4': {enabled}", file=sys.stderr)
+    else:
+        print(f"debug: {SHARED_SETTINGS} is not git tracked, ignoring value, not checking.", file=sys.stderr)
     # end if
 
+    # now make sure the `settings.local.json` has no `'yarn@4': false` as we only accept the git-tracked one.
     local_path = repo / LOCAL_SETTINGS
     if local_path.is_file():
         local = parse_json_object(local_path.read_text(encoding="utf-8"), LOCAL_SETTINGS.as_posix())
