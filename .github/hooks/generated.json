@@ -51,7 +51,8 @@
           },
           {
             "type": "command",
-            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'"
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'",
+            "timeoutSec": 30
           }
         ]
       }
@@ -91,7 +92,8 @@
         "hooks": [
           {
             "type": "command",
-            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'"
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'",
+            "timeoutSec": 30
           }
         ]
       },
@@ -123,7 +125,8 @@
           },
           {
             "type": "command",
-            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'"
+            "bash": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'copilot'",
+            "timeoutSec": 30
           },
           {
             "type": "command",

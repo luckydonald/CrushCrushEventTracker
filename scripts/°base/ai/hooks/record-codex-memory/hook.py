@@ -345,15 +345,28 @@ def commit_project_memory(root: Path, paths: list[str]) -> bool:
 # end def
 
 
-def print_unassigned(root: Path, notes: list[Path]) -> None:
+def unassigned_messages(root: Path, notes: list[Path]) -> list[str]:
+    messages = []
     for note in notes:
         command = f"python3 scripts/°base/ai/memory/import-codex.py {note.name}"
-        print(
+        messages.append(
             f"record-codex-memory: unassigned native note {AD_HOC_DIR / note.name}. "
             f"If {root} owns it, Codex may run `{command}` now; otherwise ask the user "
             "which repository owns it and run that command there. To stop asking on this "
             f"machine: `{command} --ignore`.")
     # end for
+    return messages
+# end def
+
+
+def emit_messages(tool: str, messages: list[str]) -> None:
+    if tool == "codex":
+        print(json.dumps({"systemMessage": "\n".join(messages)}))
+    else:
+        for message in messages:
+            print(message)
+        # end for
+    # end if
 # end def
 
 
@@ -402,7 +415,8 @@ def delete_scoped_memory(repository: Path, root: Path, name: str) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
-    if args and args[0] != "codex":
+    tool = args[0] if args else "codex"
+    if tool not in {"claude", "codex"}:
         return 0
     # end if
     repository = codex_memory_repo()
@@ -422,17 +436,19 @@ def main(argv: list[str] | None = None) -> int:
             # end try
             metadata, changed = synchronize_shared_memory(repository, root)
             notes = unassigned_notes(repository, metadata)
+            messages = []
             if event == "PostToolUse":
                 for note in notes:
                     changed.extend(import_native_note(repository, root, note.name))
                 # end for
             else:
-                print_unassigned(root, notes)
+                messages.extend(unassigned_messages(root, notes))
             # end if
             commit_pending(repository, "ai: record codex memory")
             if commit_project_memory(root, sorted(set(changed))):
-                print("record-codex-memory: synced Codex memory into the project")
+                messages.append("record-codex-memory: synced Codex memory into the project")
             # end if
+            emit_messages(tool, messages)
         # end with
     except (OSError, RuntimeError) as exc:
         print(f"record-codex-memory: {exc}", file=sys.stderr)

@@ -267,6 +267,13 @@ def _render_hooks(shared: dict[str, Any], tool: str) -> dict[str, Any]:
             if not isinstance(entry, dict):
                 continue
             new_entry = deepcopy(entry)
+            if tool == "codex" and event == "PostToolUse" and any(
+                "record-codex-memory/hook.py" in str(hook.get("command") or "")
+                for hook in new_entry.get("hooks") or []
+                if isinstance(hook, dict)
+            ):
+                new_entry["matcher"] = "Write|Edit|apply_patch"
+            # end if
             hooks = []
             for hook in new_entry.get("hooks") or []:
                 if not isinstance(hook, dict):

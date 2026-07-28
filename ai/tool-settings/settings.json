@@ -67,6 +67,7 @@
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'claude'",
             "statusMessage": "Committing Codex memory",
+            "timeout": 30,
             "async": true
           }
         ]
@@ -111,6 +112,7 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'claude'",
+            "timeout": 30,
             "async": true
           }
         ]
@@ -147,6 +149,7 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'claude'",
+            "timeout": 30,
             "async": true
           },
           {

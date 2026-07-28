@@ -1311,7 +1311,7 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 1,
             )
 
-    def test_codex_memory_boundary_reports_unassigned_note(self):
+    def test_codex_memory_stop_reports_unassigned_note_as_json(self):
         with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
             project = Path(tmp) / "project"
             codex_home = Path(tmp) / "codex"
@@ -1336,9 +1336,38 @@ class AiHooksBaseRoutingTests(unittest.TestCase):
                 extra_env={"CODEX_HOME": str(codex_home)},
             )
 
+            output = json.loads(result.stdout)
+            self.assertIn("unassigned native note", output["systemMessage"])
+            self.assertIn("import-codex.py later.md", output["systemMessage"])
+            self.assertFalse((project / "ai" / "memory" / "later.md").exists())
+
+    def test_claude_memory_stop_reports_unassigned_note_as_plain_text(self):
+        with tempfile.TemporaryDirectory(dir="/tmp") as tmp:
+            project = Path(tmp) / "project"
+            codex_home = Path(tmp) / "codex"
+            memory_repo = codex_home / "memories"
+            init_repo(project, "https://github.com/user/project.git")
+            memory_repo.mkdir(parents=True)
+            run_git(memory_repo, "init")
+            run_git(memory_repo, "config", "user.email", "tester@example.com")
+            run_git(memory_repo, "config", "user.name", "Test User")
+            (memory_repo / "MEMORY.md").write_text("# Memories\n", encoding="utf-8")
+            note = memory_repo / "extensions" / "ad_hoc" / "later.md"
+            note.parent.mkdir(parents=True)
+            note.write_text("# Later\n", encoding="utf-8")
+            run_git(memory_repo, "add", ".")
+            run_git(memory_repo, "commit", "-m", "seed")
+
+            result = run_hook(
+                project,
+                CODEX_MEMORY_HOOK,
+                {"hook_event_name": "Stop"},
+                "claude",
+                extra_env={"CODEX_HOME": str(codex_home)},
+            )
+
             self.assertIn("unassigned native note", result.stdout)
             self.assertIn("import-codex.py later.md", result.stdout)
-            self.assertFalse((project / "ai" / "memory" / "later.md").exists())
 
     def _seed_memory_pair(self, repo: Path, home: Path, name: str) -> Path:
         """Seed a repo-tracked mirror file plus a matching external source

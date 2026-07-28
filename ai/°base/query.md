@@ -4795,3 +4795,7 @@ Possibly the folder name be `NNN.prompt_id`.
 > </details>
 >
 
+› The json output should be only for codex, not claude.
+
+> › Implement the [Plan](./plans/054_repair-codex-hook-failures-and-bound-memory-sync-cost.md). <kbd>cleared</kbd>
+

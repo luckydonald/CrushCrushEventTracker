@@ -55,7 +55,8 @@
           {
             "type": "command",
             "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'",
-            "statusMessage": "Committing Codex memory"
+            "statusMessage": "Committing Codex memory",
+            "timeout": 30
           }
         ]
       }
@@ -91,11 +92,12 @@
         ]
       },
       {
-        "matcher": "Write|Edit|Bash|shell|unified_exec|apply_patch",
+        "matcher": "Write|Edit|apply_patch",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'"
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'",
+            "timeout": 30
           }
         ]
       },
@@ -127,7 +129,8 @@
           },
           {
             "type": "command",
-            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'"
+            "command": "python3 \"$(git rev-parse --show-toplevel)/scripts/°base/ai/hooks/record-codex-memory/hook.py\" 'codex'",
+            "timeout": 30
           },
           {
             "type": "command",

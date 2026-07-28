@@ -87,6 +87,33 @@ class HooksTests(unittest.TestCase):
         self.assertIn("'claude'", claude_command)
         self.assertNotIn("'codex'", claude_command)
 
+    def test_render_codex_narrows_codex_memory_posttooluse_matcher(self):
+        shared = {
+            "hooks": {
+                "PostToolUse": [
+                    {
+                        "matcher": "Write|Edit|Bash|shell|unified_exec|apply_patch",
+                        "hooks": [
+                            {
+                                "type": "command",
+                                "command": "python3 scripts/°base/ai/hooks/record-codex-memory/hook.py 'claude'",
+                                "timeout": 30,
+                            }
+                        ],
+                    }
+                ]
+            }
+        }
+
+        codex = hooks.render_codex_hooks(shared)
+        claude = hooks.render_claude(shared)
+        codex_hook = codex["hooks"]["PostToolUse"][0]
+        claude_hook = claude["hooks"]["PostToolUse"][0]
+
+        self.assertEqual(codex_hook["matcher"], "Write|Edit|apply_patch")
+        self.assertEqual(claude_hook["matcher"], "Write|Edit|Bash|shell|unified_exec|apply_patch")
+        self.assertEqual(codex_hook["hooks"][0]["timeout"], 30)
+
     def test_render_codex_rewrites_compact_tool_arg(self):
         shared = {
             "hooks": {
