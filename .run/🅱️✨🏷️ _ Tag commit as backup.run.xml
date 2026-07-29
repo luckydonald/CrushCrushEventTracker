@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="🅱️✨⚙️🔄 | Sync AI settings &amp; permissions." type="PythonConfigurationType" factoryName="Python">
+  <configuration default="false" name="🅱️✨🏷️ | Tag commit as backup" type="PythonConfigurationType" factoryName="Python">
     <module name="base" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -25,7 +25,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="RUN_TOOL" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/°base/ai/settings/sync.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/°base/git/tag_backup.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
