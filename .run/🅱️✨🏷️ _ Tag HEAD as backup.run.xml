@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="🅱️✨🏷️ | Tag commit as backup" type="PythonConfigurationType" factoryName="Python" activateToolWindowBeforeRun="false">
+  <configuration default="false" name="🅱️✨🏷️ | Tag HEAD as backup" type="PythonConfigurationType" factoryName="Python" activateToolWindowBeforeRun="false">
     <module name="base" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -10,8 +10,8 @@
     <option name="SDK_HOME" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="IS_MODULE_SDK" value="true" />
-    <option name="ADD_CONTENT_ROOTS" value="true" />
-    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="false" />
+    <option name="ADD_SOURCE_ROOTS" value="false" />
     <option name="DEBUG_JUST_MY_CODE" value="false" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <EXTENSION ID="net.ashald.envfile">
@@ -25,8 +25,8 @@
       </ENTRIES>
     </EXTENSION>
     <option name="RUN_TOOL" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/°base/git/tag_backup.py" />
-    <option name="PARAMETERS" value="" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/°base/git/tag-backup.py" />
+    <option name="PARAMETERS" value="--remove-old-tags" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
