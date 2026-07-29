@@ -4,12 +4,19 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from pathlib import PurePosixPath
+from pathlib import Path
 from typing import Sequence
 
-AI_TOP_LEVEL_DIRS = ("ai", ".claude", ".codex", ".agents")
-AI_EXACT_PATHS = (".mcp.json", "AGENTS.md", "CLAUDE.md")
-BASE_SEGMENT_NAME = "°base"
+AI_GLOBS = (
+    "ai/**",
+    ".claude/**",
+    ".codex/**",
+    ".agents/**",
+    "**/.mcp.json",
+    "**/AGENTS.md",
+    "**/CLAUDE.md",
+    "**/°base/**",
+)
 
 # Matches this repo's real commit convention, e.g.:
 #   "ai: updated prompt"
@@ -20,16 +27,9 @@ AI_SUBJECT_RE = re.compile(r"^(\[.*\]\s*)?.*\bai:")
 
 
 def is_ai_base_path(path: str) -> bool:
-    parts = PurePosixPath(path).parts
-    if not parts:
-        return False
-    if parts[0] in AI_TOP_LEVEL_DIRS:
-        return True
-    if path in AI_EXACT_PATHS:
-        return True
-    if BASE_SEGMENT_NAME in parts:
-        return True
-    return False
+    path = Path(path)
+    return any(path.full_match(glob) for glob in AI_GLOBS)
+# end def
 
 
 @dataclass(frozen=True)

@@ -15,13 +15,13 @@ class IsAiBasePathTests(unittest.TestCase):
     def test_path_classification_matrix(self):
         paths_matrix: dict[str, dict[str, bool]] = {
             "AI top-level directories": {
-                "ai": True,
+                "ai/something.py": True,
                 "ai/query.md": True,
-                ".claude": True,
+                ".claude/foo/bar.bazt/banana": True,
                 ".claude/settings.json": True,
-                ".codex": True,
+                ".codex/1": True,
                 ".codex/config.toml": True,
-                ".agents": True,
+                ".agents/idk": True,
                 ".agents/skills/example/SKILL.md": True,
             },
             "exact AI files": {
@@ -51,9 +51,7 @@ class IsAiBasePathTests(unittest.TestCase):
         for category, paths in paths_matrix.items():
             with self.subTest(category=category):
                 for path, expected in paths.items():
-                    with self.subTest(path=path):
-                        self.assertEqual(classify.is_ai_base_path(path), expected)
-                    # end with
+                    self.assertEqual(classify.is_ai_base_path(path), expected, msg=f"Path {path=!r} should {'' if expected else 'not '}be classified as AI path.")
                 # end for
             # end with
         # end for
