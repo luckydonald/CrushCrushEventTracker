@@ -69,13 +69,27 @@ class IsAiBasePathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             ignore_file = Path(temporary_directory) / ".ai-ignore"
             ignore_file.write_text(
-                "# An ignored comment\nnotes/**\n!notes/public/**\nnotes/public/keep.md\n*.prompt\n!private.prompt\n",
+                (
+                    "# An ignored comment\n"
+                    "notes/**\n"
+                    "!notes/public/**\n"
+                    "notes/public/keep.md\n"
+                    "*.prompt\n"
+                    "!private.prompt\n"
+                ),
                 encoding="utf-8",
             )
             nested_directory = Path(temporary_directory) / "nested"
             nested_directory.mkdir()
             (nested_directory / ".ai-ignore").write_text(
-                "generated/**\n!generated/keep.py\n",
+                data=(
+                    "generated/**\n"
+                    "!generated/keep.py\n"
+                    ".ai-ignore\n"
+                    "\n"
+                    "# comment, don't match or parse {]|**\n"
+                    "missing-last-line"
+                ),
                 encoding="utf-8",
             )
             custom_paths_matrix: dict[str, bool] = {
@@ -83,6 +97,8 @@ class IsAiBasePathTests(unittest.TestCase):
                 "notes/public/readme.md": False,
                 "notes/public/keep.md": True,
                 "nested/example.prompt": True,
+                "nested/.ai-ignore": True,
+                "nested/subfolder/.ai-ignore": False,
                 "nested/generated/build.py": True,
                 "nested/generated/keep.py": False,
                 "other/generated/build.py": False,
@@ -91,7 +107,7 @@ class IsAiBasePathTests(unittest.TestCase):
             }
             for path, expected in custom_paths_matrix.items():
                 with self.subTest(category="custom .ai-ignore", path=path):
-                    self.assertEqual(classify.is_ai_base_path(path, ignore_file=ignore_file), expected)
+                    self.assertEqual(classify.is_ai_base_path(path, ignore_file=ignore_file), expected, msg=f"Path {path=!r} should {'' if expected else 'not '}be classified as AI path.")
                 # end with
             # end for
         # end with
