@@ -46,6 +46,14 @@ class IsAiBasePathTests(unittest.TestCase):
                 ".claude-thing/x.py": False,
                 "base/x.py": False,
             },
+            "mixed dirs": {
+                ".github/hooks/generated.json": True,
+                ".github/workflows/claude.yml": True,
+                ".github/workflows/claude-issue-agent.yml": True,
+                ".github/workflows/codex-issue-agent.yml": True,
+                ".github/workflows/something-else.yml": False,
+                ".github/issue_templates/README.md": False,
+            },
         }
 
         for category, paths in paths_matrix.items():
