@@ -144,7 +144,13 @@ def _split_command(repo_root: Path, worktree: Path, argv: list[str]) -> list[str
 def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
     command = _split_command(repo_root, worktree, argv)
     status(f"delegating: {shlex.join(command)}")
-    os.execvp(sys.executable, command)
+    # os.execvp(sys.executable, command)
+    file = command[1]
+    args = command[2:]
+    import importlib
+    split_py = importlib.import_module(file)
+    result = split_py.main([file, *args])
+    sys.exit(result)
 
 
 def run_split(repo_root: Path, worktree: Path, argv: list[str]) -> int:

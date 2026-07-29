@@ -599,5 +599,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Merged base/base -> {new_sha}")
         return 0
 
+    def exit(self, status=0, message=None) -> None:
+        # strips `sys.exit(2)` call
+        if message:
+            self._print_message(message, sys.stderr)
+        # end if
+    # end if
+    parser.exit = exit
     parser.error(f"Unknown command: {args.command}")
+    # noinspection PyUnreachableCode
     return 2
