@@ -72,11 +72,20 @@ class IsAiBasePathTests(unittest.TestCase):
                 "# An ignored comment\nnotes/**\n!notes/public/**\nnotes/public/keep.md\n*.prompt\n!private.prompt\n",
                 encoding="utf-8",
             )
+            nested_directory = Path(temporary_directory) / "nested"
+            nested_directory.mkdir()
+            (nested_directory / ".ai-ignore").write_text(
+                "generated/**\n!generated/keep.py\n",
+                encoding="utf-8",
+            )
             custom_paths_matrix: dict[str, bool] = {
                 "notes/draft.md": True,
                 "notes/public/readme.md": False,
                 "notes/public/keep.md": True,
                 "nested/example.prompt": True,
+                "nested/generated/build.py": True,
+                "nested/generated/keep.py": False,
+                "other/generated/build.py": False,
                 "private.prompt": False,
                 "src/main.py": False,
             }

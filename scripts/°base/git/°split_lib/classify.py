@@ -32,6 +32,22 @@ def ai_ignore_rules(ignore_file: Path | None = None) -> list[str]:
 # end def
 
 
+def ai_ignore_files(path: PurePosixPath, root_ignore_file: Path | None = None) -> list[tuple[Path, PurePosixPath]]:
+    root_ignore_file = root_ignore_file or ai_ignore_path()
+    ignore_files = [(root_ignore_file, path)]
+    directory = root_ignore_file.parent
+
+    for depth, part in enumerate(path.parts[:-1], start=1):
+        directory /= part
+        ignore_file = directory / AI_IGNORE_FILENAME
+        relative_path = PurePosixPath(*path.parts[depth:])
+        ignore_files.append((ignore_file, relative_path))
+    # end for
+
+    return ignore_files
+# end def
+
+
 def path_matches_glob(path: PurePosixPath, pattern: str) -> bool:
     pattern = pattern.removeprefix("/")
     if pattern.endswith("/"):
@@ -50,12 +66,14 @@ def is_ai_base_path(path: str, *, ignore_file: Path | None = None) -> bool:
     path_parts = PurePosixPath(path)
     is_ai_path = False
 
-    for rule in ai_ignore_rules(ignore_file):
-        is_negation = rule.startswith("!")
-        pattern = rule[1:] if is_negation else rule
-        if path_matches_glob(path_parts, pattern):
-            is_ai_path = not is_negation
-        # end if
+    for current_ignore_file, relative_path in ai_ignore_files(path_parts, ignore_file):
+        for rule in ai_ignore_rules(current_ignore_file):
+            is_negation = rule.startswith("!")
+            pattern = rule[1:] if is_negation else rule
+            if path_matches_glob(relative_path, pattern):
+                is_ai_path = not is_negation
+            # end if
+        # end for
     # end for
 
     return is_ai_path

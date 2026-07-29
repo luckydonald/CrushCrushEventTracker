@@ -4817,3 +4817,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Alright, I want `.ai-ignore` support. This means, like `.gitignore` or `.dockerignore` you can paste those globs into text files. A file matched in those is considered AI. Migrate the current globs into that. Note that `!` should be supported as expected.
 
+› This should not be restricted to the repo root, but like the other two systems, it shall work in any folder.
+
