@@ -87,6 +87,15 @@ def main(argv: list[str] | None = None) -> int:
     ).stdout.strip()
     tag = f"bak/{head}"
 
+    existing = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"refs/tags/{tag}"],
+        capture_output=True,
+        text=True,
+    )
+    if existing.returncode == 0:
+        print(f"{tag} already exists (pointing at {existing})")
+        return 0
+
     result = subprocess.run(["git", "tag", tag, head])
     if result.returncode != 0:
         return result.returncode
