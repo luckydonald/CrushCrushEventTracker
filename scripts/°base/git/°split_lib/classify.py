@@ -55,8 +55,8 @@ def path_matches_glob(path: PurePosixPath, pattern: str) -> bool:
     # end if
 
     patterns = [pattern]
-    if "/" not in pattern:
-        patterns.extend((f"**/{pattern}", f"{pattern}/**", f"**/{pattern}/**"))
+    if "/" not in pattern and any(character in pattern for character in "*?["):
+        patterns.append(f"**/{pattern}")
     # end if
     return any(path.full_match(candidate) for candidate in patterns)
 # end def
