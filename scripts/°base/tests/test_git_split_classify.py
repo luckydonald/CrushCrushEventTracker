@@ -12,33 +12,53 @@ classify = importlib.import_module("°split_lib.classify")
 
 
 class IsAiBasePathTests(unittest.TestCase):
-    def test_ai_dir_is_ai_content(self):
-        self.assertTrue(classify.is_ai_base_path("ai/query.md"))
-        self.assertTrue(classify.is_ai_base_path("ai/°base/plans/001_foo.md"))
+    def test_path_classification_matrix(self):
+        paths_matrix: dict[str, dict[str, bool]] = {
+            "AI top-level directories": {
+                "ai": True,
+                "ai/query.md": True,
+                ".claude": True,
+                ".claude/settings.json": True,
+                ".codex": True,
+                ".codex/config.toml": True,
+                ".agents": True,
+                ".agents/skills/example/SKILL.md": True,
+            },
+            "exact AI files": {
+                ".mcp.json": True,
+                "AGENTS.md": True,
+                "CLAUDE.md": True,
+            },
+            "base path segment": {
+                "scripts/°base/git/split.py": True,
+                "deep/nested/°base/thing.py": True,
+            },
+            "ordinary code paths": {
+                "src/main.py": False,
+                "backend/api/routes.py": False,
+                "frontend/src/App.vue": False,
+                "scripts/deploy.py": False,
+                "assets/logo.svg": False,
+                "README.md": False,
+            },
+            "lookalike paths": {
+                "ai-notes.txt": False,
+                ".claude-thing/x.py": False,
+                "base/x.py": False,
+            },
+        }
 
-    def test_claude_dir_is_ai_content(self):
-        self.assertTrue(classify.is_ai_base_path(".claude/settings.json"))
-
-    def test_codex_dir_is_ai_content(self):
-        self.assertTrue(classify.is_ai_base_path(".codex/config.toml"))
-
-    def test_exact_paths_are_ai_content(self):
-        self.assertTrue(classify.is_ai_base_path(".mcp.json"))
-        self.assertTrue(classify.is_ai_base_path("AGENTS.md"))
-        self.assertTrue(classify.is_ai_base_path("CLAUDE.md"))
-
-    def test_base_segment_anywhere_is_ai_content(self):
-        self.assertTrue(classify.is_ai_base_path("scripts/°base/git/split.py"))
-        self.assertTrue(classify.is_ai_base_path("deep/nested/°base/thing.py"))
-
-    def test_code_paths_are_not_ai_content(self):
-        self.assertFalse(classify.is_ai_base_path("src/main.py"))
-        self.assertFalse(classify.is_ai_base_path("README.md"))
-
-    def test_similar_but_non_matching_names_are_not_ai_content(self):
-        self.assertFalse(classify.is_ai_base_path("ai-notes.txt"))
-        self.assertFalse(classify.is_ai_base_path("claude-thing/x.py"))
-        self.assertFalse(classify.is_ai_base_path("base/x.py"))  # no degree sign
+        for category, paths in paths_matrix.items():
+            with self.subTest(category=category):
+                for path, expected in paths.items():
+                    with self.subTest(path=path):
+                        self.assertEqual(classify.is_ai_base_path(path), expected)
+                    # end with
+                # end for
+            # end with
+        # end for
+    # end def
+# end class
 
 
 class AiSubjectRegexTests(unittest.TestCase):

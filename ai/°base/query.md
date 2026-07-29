@@ -4805,3 +4805,13 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ create a small python script which tags a commit hash as `bak/<commit hash>`, defaulting to the commit at `HEAD`. Into scripts/°base as usual. Also create a intellij run configuration like the existing one. The B emoji is for base, the sparkle for ai, the rest the tool.
 
+› Write unittests for `def is_ai_base_path(path: str) -> bool:`
+
+› Implement the plan.
+
+› also write a few code path examples, which should not match.
+
+› Merge all those `is_ai_base_path` tests of that file into a single test matrix: `dict[str, dict[str, bool]` with `for category, pathes in pathes_matrix: with subTEst(category=category): for path, expected in pathes[category].items(): …`
+
+› how to run that test file for `classify.py`?
+
