@@ -4815,3 +4815,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › how to run that test file for `classify.py`?
 
+› Alright, I want `.ai-ignore` support. This means, like `.gitignore` or `.dockerignore` you can paste those globs into text files. A file matched in those is considered AI. Migrate the current globs into that. Note that `!` should be supported as expected.
+

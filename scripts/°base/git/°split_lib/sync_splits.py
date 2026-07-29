@@ -246,6 +246,7 @@ def sync_branch(
     changes, tagged with `ORIGINAL_MERGE_PARENTS_TRAILER` for provenance.
     """
     cwd = repo_root
+    ignore_file = classify.ai_ignore_path(repo_root)
     unclean_ref = branches.unclean_name(base_branch)
     clean_ref = base_branch
     history_ref = branches.history_name(base_branch)
@@ -283,6 +284,7 @@ def sync_branch(
             source_sha,
             git_ops.subject_for_commit(source_sha, cwd),
             git_ops.changed_paths_for_commit(source_sha, cwd),
+            ignore_file=ignore_file,
         )
         kind = kind_for(cls)
 
@@ -294,7 +296,7 @@ def sync_branch(
             git_ops.tree_for_commit(clean_tip, cwd),
             source_sha,
             cwd,
-            keep=lambda p: not classify.is_ai_base_path(p),
+            keep=lambda p: not classify.is_ai_base_path(p, ignore_file=ignore_file),
         )
         if clean_tree == git_ops.tree_for_commit(clean_tip, cwd):
             clean_commits_skipped_noop += 1
@@ -332,6 +334,7 @@ def sync_branch(
             source_sha,
             git_ops.subject_for_commit(source_sha, cwd),
             git_ops.changed_paths_for_commit(source_sha, cwd),
+            ignore_file=ignore_file,
         )
         kind = kind_for(cls)
 
@@ -339,7 +342,7 @@ def sync_branch(
             git_ops.tree_for_commit(history_tip, cwd),
             source_sha,
             cwd,
-            keep=classify.is_ai_base_path,
+            keep=lambda p: classify.is_ai_base_path(p, ignore_file=ignore_file),
         )
 
         extra_trailers: dict[str, str] = {}

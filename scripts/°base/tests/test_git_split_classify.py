@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -23,6 +24,7 @@ class IsAiBasePathTests(unittest.TestCase):
                 ".codex/config.toml": True,
                 ".agents/idk": True,
                 ".agents/skills/example/SKILL.md": True,
+                ".ai-ignore": False,
             },
             "exact AI files": {
                 ".mcp.json": True,
@@ -63,6 +65,27 @@ class IsAiBasePathTests(unittest.TestCase):
                 # end for
             # end with
         # end for
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            ignore_file = Path(temporary_directory) / ".ai-ignore"
+            ignore_file.write_text(
+                "# An ignored comment\nnotes/**\n!notes/public/**\nnotes/public/keep.md\n*.prompt\n!private.prompt\n",
+                encoding="utf-8",
+            )
+            custom_paths_matrix: dict[str, bool] = {
+                "notes/draft.md": True,
+                "notes/public/readme.md": False,
+                "notes/public/keep.md": True,
+                "nested/example.prompt": True,
+                "private.prompt": False,
+                "src/main.py": False,
+            }
+            for path, expected in custom_paths_matrix.items():
+                with self.subTest(category="custom .ai-ignore", path=path):
+                    self.assertEqual(classify.is_ai_base_path(path, ignore_file=ignore_file), expected)
+                # end with
+            # end for
+        # end with
     # end def
 # end class
 

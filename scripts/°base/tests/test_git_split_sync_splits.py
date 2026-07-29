@@ -28,6 +28,11 @@ class SyncSplitsTestBase(unittest.TestCase):
         self.repo = Path(self._tmpdir.name)
         init_repo(self.repo, branch="master")
         make_commit(self.repo, "README.md", "initial commit")
+        make_commit(
+            self.repo,
+            ".ai-ignore",
+            (Path(__file__).resolve().parents[3] / ".ai-ignore").read_text(encoding="utf-8"),
+        )
         # Seed ai/history/master so history branches have a base to fork from.
         git(["branch", "ai/history/master"], self.repo)
 

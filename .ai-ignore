@@ -1,0 +1,13 @@
+# AI/base content separated into the history branch.
+ai/**
+.claude/**
+.codex/**
+.agents/**
+.github/hooks/**
+.github/workflows/claude.yml
+.github/workflows/claude-issue-agent.yml
+.github/workflows/codex-issue-agent.yml
+**/.mcp.json
+**/AGENTS.md
+**/CLAUDE.md
+**/°base/**

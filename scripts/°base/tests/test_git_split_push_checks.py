@@ -119,6 +119,12 @@ class EndToEndCheckPushTests(unittest.TestCase):
         git(["config", "user.email", "test@example.com"], self.repo)
         git(["config", "user.name", "Test"], self.repo)
         make_commit(self.repo, "README.md", "init")
+        make_commit(
+            self.repo,
+            ".ai-ignore",
+            (Path(__file__).resolve().parents[3] / ".ai-ignore").read_text(encoding="utf-8"),
+        )
+        self.base_sha = git(["rev-parse", "HEAD"], self.repo)
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -162,7 +168,9 @@ class EndToEndCheckPushTests(unittest.TestCase):
 
     def test_history_to_origin_with_ai_only_blocked_by_name_and_content_would_pass_content(self):
         sha = make_commit(self.repo, "ai/query.md", "ai: log prompt")
-        code, output = self._run_check("origin", "refs/heads/ai/history/feature-x", sha)
+        code, output = self._run_check(
+            "origin", "refs/heads/ai/history/feature-x", sha, remote_sha=self.base_sha
+        )
         self.assertEqual(code, 1)
         self.assertIn("must not be pushed", output)
         # content policy allows ai-only commits on history branches; only the name check fires.
