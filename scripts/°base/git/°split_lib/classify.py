@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Sequence
 
-AI_TOP_LEVEL_DIRS = ("ai", ".claude", ".codex")
+AI_TOP_LEVEL_DIRS = ("ai", ".claude", ".codex", ".agents")
 AI_EXACT_PATHS = (".mcp.json", "AGENTS.md", "CLAUDE.md")
 BASE_SEGMENT_NAME = "°base"
 
