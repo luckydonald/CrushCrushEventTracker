@@ -75,11 +75,12 @@ prefix_rule(pattern = ["git", "ls-tree"], decision = "allow")
 prefix_rule(pattern = ["git", "check-ignore"], decision = "allow")
 prefix_rule(pattern = ["git", "fetch"], decision = "allow")
 prefix_rule(pattern = ["git", "stash"], decision = "allow")
-prefix_rule(pattern = ["git", "commit", "-F", "ai/git/pending-commit.md"], decision = "allow")
-prefix_rule(pattern = ["git", "commit", "--amend", "-F", "ai/git/pending-commit.md"], decision = "allow")
 prefix_rule(pattern = ["git", "commit", "--amend", "--reset-author", "--no-edit"], decision = "allow")
 prefix_rule(pattern = ["make", "commit"], decision = "allow")
 prefix_rule(pattern = ["rm", "ai/git/pending-commit.md"], decision = "allow")
+prefix_rule(pattern = ["./scripts/tag_backup.py"], decision = "allow")
+prefix_rule(pattern = ["git", "commit", "-F", "ai/git/pending-commit.md"], decision = "allow")
+prefix_rule(pattern = ["git", "commit", "--amend", "-F", "ai/git/pending-commit.md"], decision = "allow")
 prefix_rule(pattern = ["git", "lfs", "install"], decision = "allow")
 prefix_rule(pattern = ["command", "-v", "pre-commit"], decision = "allow")
 prefix_rule(pattern = ["git", "rebase", "--continue"], decision = "allow")
@@ -107,9 +108,10 @@ prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 
-# 5 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
+# 6 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
 # {"type": "bash", "command": "echo \"exit: $?\""}
 # {"type": "bash", "command": "rm ai/git/pending-commit.md || echo 'was gone'"}
+# {"type": "bash", "command": "./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git *"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *"}
 # {"type": "bash", "command": "mv .claude/settings.local.json \".claude.settings.local.json.$(date +%Y-%m-%d).bak\""}

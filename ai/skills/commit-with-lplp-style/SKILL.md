@@ -1,6 +1,6 @@
 ---
 name: "commit-with-lplp-style"
-description: "Activates the lplp-pipbuck commit style for the current session. Commits after every completed task, amends nearby `ai:` prompt/decision auto-commits into the work commit, preserves plan commits as separate history, writes messages via ai/git/pending-commit.md, and never commits unrelated files. Use when the user opts in to this style at session start, or explicitly asks to enable it."
+description: "Activates the lplp-pipbuck commit style for the current session. Commits after every completed task as a plain new commit (never amended live), tags the prior HEAD via scripts/tag_backup.py as a safety net, then interactively rebases to fold nearby `ai:` prompt/decision auto-commits into the work commit while preserving plan-revision history, writes messages via ai/git/pending-commit.md, and never commits unrelated files. Use when the user opts in to this style at session start, or explicitly asks to enable it."
 ---
 
 # lplp Commit Style
@@ -9,10 +9,13 @@ Adopt these rules for every commit made this session:
 
 1. **Commit after every completed task.** Never leave work uncommitted.
 
-2. **Check the last 2 commits before committing:**
-   - Last message matches one of the auto-commit patterns below → **amend** it.
-   - Otherwise → create a new commit.
-   - If more than one chained past commit is an auto-commit, include those too.
+2. **Never `--amend` for regular work — always commit fresh, then fold via rebase.** The sequence for every commit is:
+   1. `./scripts/tag_backup.py` — tags the current `HEAD` (before your new commit) as `bak/<hash>`, so it stays reachable through the rebase in step 3 even if a branch pointer later gets reset.
+   2. `git commit -F ai/git/pending-commit.md` — the new commit for the work just finished (see rule 3 for the message file, rule 4 for its format).
+   3. Immediately fold any `ai:` auto-commit hook commits that are now sitting just before your new commit, using the interactive-rebase procedure under "Cleaning up stray `ai:` auto-commits" below — same auto-commit patterns and fold/keep-separate judgment calls as always applied.
+   4. **If any rebase step needs to reset a branch pointer, use `git reset --keep`, never `git reset --hard`.** `--keep` aborts instead of clobbering if the working tree has changes the reset would overwrite, so a slip here can't quietly eat uncommitted work the way `--hard` would.
+
+   Steps 1–2 run as one whitelisted command: `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`.
 
    Auto-commit patterns — fold into the preceding code commit **by default**:
    - `ai: updated prompt` — user prompt saved to `ai/query.md`
@@ -40,13 +43,10 @@ Adopt these rules for every commit made this session:
 
    The plan's summary line should read as basically the same line as the `ai: Run:` commit that eventually implements it, just in **current/imperative tense instead of past tense** — e.g. plan says `ai: Plan: Fix \`get-base.py\` auto mode failing on a fresh repo...`, the implementation says `ai: Run: Fixed \`get-base.py\` auto mode failing on a fresh repo...`. Don't invent a differently-worded plan summary; write the eventual Run summary first (even if only in your head) and de-conjugate it.
 
-   If a `git reset --soft HEAD~N` accidentally included commits that should stay separate, restore them with `git reset --soft <original-hash>` before committing.
-   Prefer `--amend` over `HEAD~1`.
-
 3. **Always write the message to `ai/git/pending-commit.md` first** like this:
    1. run exactly the whitelisted command `rm ai/git/pending-commit.md || echo 'was gone'`, which makes sure it's not gonna cause "stale unread file" issues.
    2. Write to `ai/git/pending-commit.md` using the preferred Built-in/MCP tool.
-   3. Pass it to the commit with `-F ai/git/pending-commit.md`. Never inline the message in the command, to avoid the need for user confirmations.
+   3. Pass it to the commit with the whitelisted `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`. Never inline the message in the command, to avoid the need for user confirmations.
 
 4. **Message format:**
    ```md
@@ -84,13 +84,13 @@ Adopt these rules for every commit made this session:
 6. Once this skill is activated, keep commiting after every completed task automatically without asking again.
    If the user responds with a simple `commit` or similar (`commit plz`, `keep commiting`, etc.), this means they want to remind you, to follow the "keep automatically committing" instruction, which you should already anyway.
 
-7. **Never rewrite already-committed history just because you noticed a gap.** If you spot a stray `ai:` auto-commit left un-folded somewhere in existing history (e.g. a leftover `ai: updated prompt` because an unexpected commit landed in between), do not rebase/`reset --soft`/amend it away on your own initiative — ask the user first (e.g. via `AskUserQuestion`) whether they want it cleaned up. Rules 1–6 above are about commits you are making *right now* to finish the current task; they are not standing permission to rewrite arbitrary prior history whenever this skill happens to be active. An explicit cleanup request from the user (e.g. "clean up the commits since last push") still authorizes the full procedure below.
+7. **Rule 2's post-commit fold is about the commit chain you just made — not a license to rewrite older history.** Folding the `ai:` auto-commits sitting immediately before the commit you just made (rule 2, step 3) is routine and needs no extra permission. But if you spot a stray un-folded `ai:` auto-commit further back in existing history (e.g. a leftover `ai: updated prompt` because an unexpected commit landed in between on some earlier task), do not reach back and rebase/`reset --soft`/amend it away on your own initiative — ask the user first (e.g. via `AskUserQuestion`) whether they want it cleaned up. An explicit cleanup request from the user (e.g. "clean up the commits since last push") still authorizes the full procedure below over whatever range they specify.
 
 8. **Land a pure code move/rename as its own commit before changing that code further.** When relocating code (e.g. splitting a function into its own module), commit the move with identical content first — so git's diff/rename detection shows it as a move, not a rewrite — then commit the actual behavioral or style change on top. Keeps both diffs small and independently reviewable instead of one large tangle of "what moved" and "what changed."
 
 ## Cleaning up stray `ai:` auto-commits
 
-Use this procedure before merging or review when the branch has stray prompt/decision commits mixed into the history.
+Run this procedure after every commit as rule 2, step 3, to fold that commit's immediately preceding `ai:` auto-commits. It also works standalone before merging or review when a branch has stray prompt/decision commits mixed further back into its history (rule 7).
 
 Handles these hook-created commits:
 
@@ -122,7 +122,7 @@ done
 **4. Write the rebase todo script**
 
 ```bash
-cat > /tmp/git-rebase-todo.sh << 'SCRIPT'
+cat > ai/git/rebase-todo.sh << 'SCRIPT'
 cat > "$1" << 'REBASE'
 pick <code-commit>
 fixup <prompt-commit>          # ai: updated prompt; backward-fold
@@ -137,7 +137,7 @@ fixup <prompt-commit>
 ...
 REBASE
 SCRIPT
-chmod +x /tmp/git-rebase-todo.sh
+chmod +x ai/git/rebase-todo.sh
 ```
 
 Put `exec git commit --amend -F ...` after all fixups for that group to rename the squashed result.
@@ -145,8 +145,10 @@ Put `exec git commit --amend -F ...` after all fixups for that group to rename t
 **5. Run**
 
 ```bash
-GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase -i origin/<upstream>
+GIT_SEQUENCE_EDITOR=ai/git/rebase-todo.sh git rebase -i origin/<upstream>
 ```
+
+`ai/git/` is gitignored, so `rebase-todo.sh` and the `rebase-msg-<sha>.md` files never leak into a commit — clean them up (`rm ai/git/rebase-todo.sh ai/git/rebase-msg-*.md`) once the rebase lands.
 
 **6. Optional — rewrite HEAD as branch summary**
 
