@@ -46,3 +46,4 @@ If any of these commands return a hit that isn't already a placeholder, the file
 
 - Not every existing `ai/errors/*` file follows this convention consistently. Don't take an existing file's sanitization level as the bar; apply the table above to whatever file is being added or cleaned right now. Don't rewrite older, already-committed error files on your own initiative just because they fall short — ask first, same as any other historical cleanup.
 - If working in the base repo, `ai/°base/errors/*` is to be used analogly.
+- Obviously you may not leak the replaced values in the commit message, either.
