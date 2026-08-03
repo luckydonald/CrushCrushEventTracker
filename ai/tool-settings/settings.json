@@ -301,6 +301,7 @@
       {"type": "bash", "command": "rm ai/git/pending-commit.md"},
       {"type": "bash", "command": "./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md"},
       {"type": "bash", "command": "./scripts/tag_backup.py"},
+      {"type": "bash", "command": "git commit -F ai/git/pending-commit.md && ./scripts/tag_backup.py"},
       {"type": "bash", "command": "git commit -F ai/git/pending-commit.md"},
       {"type": "bash", "command": "git commit --amend -F ai/git/pending-commit.md"},
       {"type": "bash", "command": "git lfs install"},

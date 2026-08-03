@@ -10,12 +10,12 @@ Adopt these rules for every commit made this session:
 1. **Commit after every completed task.** Never leave work uncommitted.
 
 2. **Never `--amend` for regular work — always commit fresh, then fold via rebase.** The sequence for every commit is:
-   1. `./scripts/tag_backup.py` — tags the current `HEAD` (before your new commit) as `bak/<hash>`, so it stays reachable through the rebase in step 3 even if a branch pointer later gets reset.
-   2. `git commit -F ai/git/pending-commit.md` — the new commit for the work just finished (see rule 3 for the message file, rule 4 for its format).
+   1. `git commit -F ai/git/pending-commit.md` — the new commit for the work just finished (see rule 3 for the message file, rule 4 for its format).
+   2. `./scripts/tag_backup.py` — tags the new `HEAD` (after your new commit) as `bak/<hash>`, so it stays reachable through the rebase in step 3 even if a branch pointer later gets reset/rebased.
    3. Immediately fold any `ai:` auto-commit hook commits that are now sitting just before your new commit, using the interactive-rebase procedure under "Cleaning up stray `ai:` auto-commits" below — same auto-commit patterns and fold/keep-separate judgment calls as always applied.
    4. **If any rebase step needs to reset a branch pointer, use `git reset --keep`, never `git reset --hard`.** `--keep` aborts instead of clobbering if the working tree has changes the reset would overwrite, so a slip here can't quietly eat uncommitted work the way `--hard` would.
 
-   Steps 1–2 run as one whitelisted command: `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`.
+   Steps 1–2 run as one whitelisted command: `git commit -F ai/git/pending-commit.md && ./scripts/tag_backup.py`.
 
    Auto-commit patterns — fold into the preceding code commit **by default**:
    - `ai: updated prompt` — user prompt saved to `ai/query.md`
@@ -46,7 +46,7 @@ Adopt these rules for every commit made this session:
 3. **Always write the message to `ai/git/pending-commit.md` first** like this:
    1. run exactly the whitelisted command `rm ai/git/pending-commit.md || echo 'was gone'`, which makes sure it's not gonna cause "stale unread file" issues.
    2. Write to `ai/git/pending-commit.md` using the preferred Built-in/MCP tool.
-   3. Pass it to the commit with the whitelisted `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`. Never inline the message in the command, to avoid the need for user confirmations.
+   3. Pass it to the commit with the whitelisted `git commit -F ai/git/pending-commit.md && ./scripts/tag_backup.py`. Never inline the message in the command, to avoid the need for user confirmations.
 
 4. **Message format:**
    ```md

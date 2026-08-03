@@ -108,10 +108,11 @@ prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 prefix_rule(pattern = ["echo", "---"], decision = "allow")
 
-# 6 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
+# 7 command permission(s) could not be translated to a Codex prefix rule and were skipped (compound/redirected/substituted commands).
 # {"type": "bash", "command": "echo \"exit: $?\""}
 # {"type": "bash", "command": "rm ai/git/pending-commit.md || echo 'was gone'"}
 # {"type": "bash", "command": "./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md"}
+# {"type": "bash", "command": "git commit -F ai/git/pending-commit.md && ./scripts/tag_backup.py"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git *"}
 # {"type": "bash", "command": "GIT_SEQUENCE_EDITOR=/tmp/git-rebase-todo.sh git rebase *"}
 # {"type": "bash", "command": "mv .claude/settings.local.json \".claude.settings.local.json.$(date +%Y-%m-%d).bak\""}

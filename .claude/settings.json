@@ -294,6 +294,7 @@
       "Bash(rm ai/git/pending-commit.md)",
       "Bash(./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md)",
       "Bash(./scripts/tag_backup.py)",
+      "Bash(git commit -F ai/git/pending-commit.md && ./scripts/tag_backup.py)",
       "Bash(git commit -F ai/git/pending-commit.md)",
       "Bash(git commit --amend -F ai/git/pending-commit.md)",
       "Bash(git lfs install)",
