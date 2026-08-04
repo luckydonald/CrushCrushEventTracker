@@ -223,12 +223,12 @@ git config --local user.name "Lucky Lucy"
 git config --local user.email "2.2026._.code@luckydonald.de"
 ```
 #### Fix previous commits
-This resets all commits specified to the current configured user (both author and commiter).
+This resets all commits specified to the current configured user (for both author and commiter).
 Also restores the dates from the original commit dates, instead of them all being "now" after the rebase.
 
 ```text
-FIRST_BAD_HASH="HEAD~1"  # 1 commit ago, or put hash
-git rebase "${FIRST_BAD_HASH}"  --exec 'GIT_COMMITTER_DATE="$(git log -n 1 --format=%aD)" git commit --amend --reset-author --no-edit --date="$(git log -n 1 --format=%aD)"'
+FIRST_BAD_HASH="HEAD~1"  # 1 commit ago, or put hash. Or `--root` for that initital initial commit.
+git rebase "${FIRST_BAD_HASH}" --rebase-merges --exec 'GIT_COMMITTER_DATE="$(git log -n 1 --format=%aD)" git commit --amend --reset-author --no-edit --allow-empty --date="$(git log -n 1 --format=%aD)"'
 ```
 <sub>Based on [Stackoverflow: How can I change the commit author for a single commit?](https://stackoverflow.com/a/79037197/3423324#how-can-i-change-the-commit-author).</sub>
 ## After Adopting The Base
