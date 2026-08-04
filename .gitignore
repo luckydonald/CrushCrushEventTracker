@@ -839,8 +839,10 @@ dist-ssr
 .idea/**/jsLibraryMappings.xml
 # ACTUALLY I DON'T LIKE THIS, IT'S SCARY!
 .idea
-# # Do not ignore the list with default words.
+# # allow the base and project (previous "user") word lists/dictionaries:
+!.idea/dictionaries/base.xml
 !.idea/dictionaries/project.xml
+!.idea/dictionaries/user.xml
 # # allow run configurations in the standard directory
 !/.idea/runConfigurations
 # # but not local ones.
