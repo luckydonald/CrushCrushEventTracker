@@ -227,7 +227,7 @@ This resets all commits specified to the current configured user (for both autho
 Also restores the dates from the original commit dates, instead of them all being "now" after the rebase.
 
 ```text
-FIRST_BAD_HASH="HEAD~1"  # 1 commit ago, or put hash. Or `--root` for that initital initial commit.
+FIRST_BAD_HASH="HEAD~1"  # 1 commit ago, or put `somehash~1`. Or `--root` for that initital initial commit.
 git rebase "${FIRST_BAD_HASH}" --rebase-merges --exec 'GIT_COMMITTER_DATE="$(git log -n 1 --format=%aD)" git commit --amend --reset-author --no-edit --allow-empty --date="$(git log -n 1 --format=%aD)"'
 ```
 <sub>Based on [Stackoverflow: How can I change the commit author for a single commit?](https://stackoverflow.com/a/79037197/3423324#how-can-i-change-the-commit-author).</sub>
