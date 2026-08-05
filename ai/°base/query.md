@@ -4858,3 +4858,29 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › *cries for the lost hour*
 
+❯ Check out @../tunnel2tunnel/, the last 3 commits. Document those into @ai/°base/errors/32.md
+
+❯ Question answered.
+> <details><summary>
+>
+>> 1. tunnel2tunnel last 3 commits look like normal 'ai: compact...' bookkeeping, no error/crash in them. What exactly goes in errors/32.md?
+>
+> (click to expand)
+>
+> </summary>
+>
+>> **32.md content** (1/1) <kbd>Single Select</kbd><br>
+>> tunnel2tunnel last 3 commits look like normal 'ai: compact...' bookkeeping, no error/crash in them. What exactly goes in errors/32.md?
+> - [ ] 1\. Document commit list+diffs as-is
+>   - _Just record what those 3 commits did (messages+diffs), no error framing_
+> - [ ] 2\. Document workflow issue
+>   - _Treat messy multi-commit compact/link pattern itself as bug worth reporting in split/compact tooling_
+> - [x] 3\. Other/clarify
+>   - _You'll clarify what error you mean_
+> - [ ] 4\. _Type something._
+>
+> </details>
+>
+
+❯ Also notice the uncommited 008 file. You don't need the whole contents of the markdown files, just the general structure of it. There's one `<analysis>…</analysis>` `<summary>…</summary>` one, which would be `summary.md`, and the other, plain markdown, which would become `resume.md`. It should only create one folder, especially the query.md diffs should be written down per commit. In the `32.md` I want you to list those commits (hash, clocktime, message, content, files added/appended). For query.md changes document exactly what got appended.
+
