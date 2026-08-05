@@ -67,15 +67,19 @@ def should_remove_tag(tag: str) -> bool:
 
 
 def remove_parent_tags(tag: str, interactive: bool) -> int:
+    print("Checking for parent commits having older backup tags…")
     for old_tag in parent_tags(tag):
+        print(f"Found old backup tag: {old_tag!r}")
         if interactive and not should_remove_tag(old_tag):
             continue
         # end if
         result = subprocess.run(["git", "tag", "--delete", old_tag])
         if result.returncode != 0:
+            print(f"Failed to delete backup tag: {old_tag!r}")
             return result.returncode
         # end if
     # end for
+    print("Tag cleanup done.")
     return 0
 # end def
 
