@@ -92,11 +92,18 @@ def main(argv: list[str] | None = None) -> int:
         capture_output=True,
         text=True,
     )
+    force = False
     if existing.returncode == 0:
-        print(f"{tag} already exists (pointing at {existing})")
-        return 0
+        print(f"Tag {tag!r} already exists (pointing at {existing.stdout.strip()})")
+        print(f"Using `--force`.")
+        force = True
+    # end if
 
-    result = subprocess.run(["git", "tag", tag, head])
+    cmd_tag = ["git", "tag", tag, head]
+    if force:
+        cmd_tag += ["--force"]
+    # end if
+    result = subprocess.run(cmd_tag)
     if result.returncode != 0:
         return result.returncode
     # end if
