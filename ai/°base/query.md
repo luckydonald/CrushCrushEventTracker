@@ -4840,3 +4840,21 @@ Possibly the folder name be `NNN.prompt_id`.
 > - [Answer (`0` chars, `0 B`)](output/agents/044.b383u155w/result.md)
 > - [Raw log (`0` chars, `0 B`)](/tmp/claude-1000/-home-user-git-luckydonald-base--claude-worktrees-splitter/a92fb26d-9f44-473d-a37b-6beebdce4759/tasks/b383u155w.output)
 
+› get open terminals
+
+› outside of sandbox.
+
+› can I recover a terminal inside pycharm which was just force-quit?
+
+› I was typing a lengthy query into claude and had not submitted yet
+
+› heck.
+
+› Check if you find a mention of `009.b8d65089-1cc7-406f-aa17-4d93574e41cc` in a `/plan` command in the `~/.claude` folder.
+
+› Just `b8d65089-1cc7-406f-aa17-4d93574e41cc`?
+
+› That must be the session then. Anything afterwards?
+
+› *cries for the lost hour*
+
