@@ -4888,3 +4888,5 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ check @ai/°base/errors/23.md documenting the commits & files running `/compact just the failing tests, I want you to fix those` in claude produced. I want you to plan how to fix it (not do it yet). If you find relevant debug json in `../tunnel2tunnel`, copy it over into this repo, and commit it as plan/error resources (in `./ai/base°/output/debug/*.json`). My goal is to instead have it produce @ai/°base/errors/23.expected.md instead in the query log, and a single folder under summary, containing `analysis.md` and `summary.md`.
 
+❯ /plan fix it, but take care of codex and non-prompt claude usage.
+
