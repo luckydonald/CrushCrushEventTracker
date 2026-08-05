@@ -4884,3 +4884,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ Also notice the uncommited 008 file. You don't need the whole contents of the markdown files, just the general structure of it. There's one `<analysis>…</analysis>` `<summary>…</summary>` one, which would be `summary.md`, and the other, plain markdown, which would become `resume.md`. It should only create one folder, especially the query.md diffs should be written down per commit. In the `32.md` I want you to list those commits (hash, clocktime, message, content, files added/appended). For query.md changes document exactly what got appended.
 
+❯ I don't want you to right now create those two files in that `32/` folder, but put the knowlede about those (& their structure) into the base `errors/32.md`.
+
+❯ check @ai/°base/errors/23.md documenting the commits & files running `/compact just the failing tests, I want you to fix those` in claude produced. I want you to plan how to fix it (not do it yet). If you find relevant debug json in `../tunnel2tunnel`, copy it over into this repo, and commit it as plan/error resources (in `./ai/base°/output/debug/*.json`). My goal is to instead have it produce @ai/°base/errors/23.expected.md instead in the query log, and a single folder under summary, containing `analysis.md` and `summary.md`.
+

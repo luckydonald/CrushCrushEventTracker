@@ -1,0 +1,10 @@
+{
+  "session_id": "58b1a36c-7cbd-417f-8cb2-99004d35681f",
+  "transcript_path": "/home/user/.claude/projects/-home-user-git-luckydonald-tunnel2tunnel/58b1a36c-7cbd-417f-8cb2-99004d35681f.jsonl",
+  "cwd": "/home/user/git/luckydonald/tunnel2tunnel",
+  "prompt_id": "b8d65089-1cc7-406f-aa17-4d93574e41cc",
+  "hook_event_name": "SessionStart",
+  "source": "compact",
+  "model": "claude-sonnet-5",
+  "session_title": "ai/todo.md"
+}
