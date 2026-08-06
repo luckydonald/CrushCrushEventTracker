@@ -14,6 +14,17 @@ Confirmed scope for Claude **and** Codex: `.claude/settings.json` / `.codex/hook
 
 "Non-prompt" usage = `trigger == "auto"` compaction (no user-typed instructions) and the legacy `SessionStart(source=compact)` fallback. `PreCompact` already hard-drops non-`manual` triggers before reaching `custom_instructions()` (`save-compact-prompt/hook.py:63-65`) — correct, keep it; `PostCompact` already handles both triggers. The fix must degrade cleanly to "no quoted instructions line" when there's nothing to quote.
 
+## Pre-flight: 4 live repro cases (do this before finalizing design)
+
+Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any new observations) before touching code — each may reveal payload-shape or ordering quirks the plan above doesn't yet cover:
+
+- [ ] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
+- [ ] Claude `/compact <args>`
+- [ ] Codex `/compact` (no args)
+- [ ] Codex `/compact <args>`
+
+For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 4 are checked.
+
 ## Design
 
 ### 1. Centralize + harden the commit primitive (`_lib.py`)

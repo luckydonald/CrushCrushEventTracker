@@ -4890,3 +4890,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ /plan fix it, but take care of codex and non-prompt claude usage.
 
+❯ Check if the Explore agent (hook-lib/Codex survey) has returned; if so, incorporate its findings into the plan design and continue toward ExitPlanMode. If not, keep waiting.
+
+❯ _"Non-prompt" usage_ is also manual /compact without any text argument.
+
+❯ _"Non-prompt" usage_ is also manual /compact without any text argument. If you like I can compact right here, right now, for you to analyze.
+
+❯ Update the plan to include that we want to test 4 cases before the final plan (and because I'm worried you'll forgot stuff when compacting):  - [ ] claude `/compact` - [ ] claude `/compact with args` - [ ] codex `/compact` - [ ] codex `/compact with args`. We can check them off once you have documented the json files produced by them (and possible plan adaptions).
+
