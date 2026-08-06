@@ -18,12 +18,21 @@ Confirmed scope for Claude **and** Codex: `.claude/settings.json` / `.codex/hook
 
 Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any new observations) before touching code — each may reveal payload-shape or ordering quirks the plan above doesn't yet cover:
 
-- [ ] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
+- [x] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
 - [ ] Claude `/compact <args>`
 - [ ] Codex `/compact` (no args)
 - [ ] Codex `/compact <args>`
 
 For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 4 are checked.
+
+### Findings — Claude `/compact` no args (this repo, prompt_id `cd1cdae4-cc3d-4a14-b66f-f1e3fa628253`)
+
+Debug json (untracked, gitignored, in `ai/°base/output/debug/`, still need force-add+commit at implementation time — not done now, plan-mode is read-only):
+- `20260806-153341_090687-save-compact-prompt.json` — `PreCompact`, `trigger: manual`, `custom_instructions: null` (JSON `null`, not `""` or missing key — `custom_instructions()`'s `isinstance(value, str)` guard already handles this correctly, returns `""`, hook early-returns before writing anything). No `output/compacted/NNN.md`, no query.md link — correct, nothing to quote for a bare `/compact`.
+- `20260806-153553_367346-save-compact-prompt.json` — `PostCompact`, same `prompt_id`, full `compact_summary` (34138 chars, `<analysis>`/`<summary>` "summary" shape). Written to `output/compact/001.cd1cdae4-.../result.md`, single commit `97aed6a`, single `query.md` block. **Bug did NOT reproduce here** — only one artifact/commit/block total.
+- `20260806-153553_335865-record-memory.json` — `SessionStart`, `source: compact`, same `prompt_id`. Ran `capture_session_start` → `compact_summary_from_transcript()`, but produced no second artifact: its reconstructed text must have matched the already-written `result.md` byte-for-byte, so `reserve_artifact_directory`'s content-equality dedup correctly no-opped instead of splitting.
+
+Conclusion: confirms the split bug is *content-source-dependent*, not deterministic on every bare `/compact` — it only manifests when `compact_summary_from_transcript()`'s reconstruction diverges from the `PostCompact` payload text (as it did in the original tunnel2tunnel case, "summary" 24091 chars vs "resume" 15941 chars). No plan-design change needed from this case; it's a clean confirmation of the no-args path's early-return behavior in `custom_instructions()`/`PreCompact`, and doesn't contradict §2's "always reuse directory" fix (which handles both the match and mismatch sub-cases uniformly).
 
 ## Design
 
