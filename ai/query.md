@@ -24,3 +24,13 @@
 ❯ Now analyze the error in that file.
 
 ❯ The issue was that it previously forked or something, however that would loose the TTY or something, which is not easy to give to an subprocess, apparently. But it's like python anyway, so importing and running it directly should work just as well?
+❯ Task Notification:
+> - Task `br2s48eiu` <kbd>completed</kbd>
+> - Tool `toolu_01P4cYdoYixW8P4yw6FJQhuz`
+> - > Background command "python3 -m unittest discover -s tests 2>&1 | tail -20" completed (exit code 0)
+> - [Query (`98` chars, `98 B`)](output/agents/001.br2s48eiu/prompt.md)
+> - [Answer (`1081` chars, `1.06 KB`)](output/agents/001.br2s48eiu/result.md)
+> - [Raw log (`1081` chars, `1.06 KB`)](/tmp/claude-1000/-home-user-git-luckydonald-base--claude-worktrees-splitter/c69e157f-e343-48ef-b9ba-f809ec580278/tasks/br2s48eiu.output)
+
+❯ Add a flag to the `curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -`, which allows us to specify a specific branch or commit to use, which will be very helpful for testing.
+

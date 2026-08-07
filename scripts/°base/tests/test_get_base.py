@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import importlib.util
 import io
+import os
 import subprocess
 import sys
 import tempfile
@@ -124,6 +125,73 @@ class GetBaseTests(unittest.TestCase):
         self.assertIn("fatal: the worktree path is already registered", message)
         self.assertNotIn("CalledProcessError", message)
     # end def
+
+    def test_extract_base_ref_default_when_absent(self):
+        ref, remaining = self.module._extract_base_ref(["bootstrap-branch", "feature"], "base")
+        self.assertEqual(ref, "base")
+        self.assertEqual(remaining, ["bootstrap-branch", "feature"])
+
+    def test_extract_base_ref_space_form_is_consumed_not_forwarded(self):
+        ref, remaining = self.module._extract_base_ref(
+            ["--base-ref", "my-branch", "bootstrap-branch", "feature"], "base",
+        )
+        self.assertEqual(ref, "my-branch")
+        self.assertEqual(remaining, ["bootstrap-branch", "feature"])
+
+    def test_extract_base_ref_equals_form_is_consumed_not_forwarded(self):
+        ref, remaining = self.module._extract_base_ref(
+            ["bootstrap-branch", "--base-ref=deadbeef", "feature"], "base",
+        )
+        self.assertEqual(ref, "deadbeef")
+        self.assertEqual(remaining, ["bootstrap-branch", "feature"])
+
+    def test_extract_base_ref_missing_value_raises(self):
+        with self.assertRaises(SystemExit):
+            self.module._extract_base_ref(["--base-ref"], "base")
+
+    def test_ensure_worktree_checks_out_custom_ref(self):
+        self._add_real_base_remote()
+        make_commit(self.base_repo, "other.txt", "on another branch", content="other\n")
+        git(["checkout", "-b", "other-branch"], self.base_repo)
+        make_commit(self.base_repo, "only-on-other.txt", "distinguishing commit", content="x\n")
+        git(["checkout", "base"], self.base_repo)
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            self.module.fetch_base(self.repo, "other-branch")
+            path = self.module.ensure_worktree(self.repo, "other-branch")
+
+        self.assertTrue((path / "only-on-other.txt").exists())
+        self.assertIn("get-base.py: fetching base/other-branch", stderr.getvalue())
+
+    def test_ensure_worktree_checks_out_specific_commit(self):
+        self._add_real_base_remote()
+        make_commit(self.base_repo, "pinned.txt", "pinned commit", content="pin\n")
+        pinned_sha = git(["rev-parse", "HEAD"], self.base_repo)
+        make_commit(self.base_repo, "after-pin.txt", "moves base forward", content="later\n")
+
+        self.module.fetch_base(self.repo, pinned_sha)
+        path = self.module.ensure_worktree(self.repo, pinned_sha)
+
+        self.assertTrue((path / "pinned.txt").exists())
+        self.assertFalse((path / "after-pin.txt").exists())
+
+    def test_main_forwards_base_ref_env_var_to_worktree(self):
+        self._add_real_base_remote()
+        make_commit(self.base_repo, "env-ref.txt", "on env-selected branch", content="e\n")
+        git(["checkout", "-b", "env-branch"], self.base_repo)
+        make_commit(self.base_repo, "only-via-env.txt", "distinguishing commit", content="e2\n")
+        git(["checkout", "base"], self.base_repo)
+
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo), \
+             mock.patch.object(self.module, "delegate"), \
+             mock.patch.dict(os.environ, {"BASE_GIT_REF": "env-branch"}):
+            self.module.main(["update-history-master", "--yes"])
+
+        worktree = self.module.worktree_path(self.repo)
+        self.assertTrue((worktree / "only-via-env.txt").exists())
 
     def test_ensure_worktree_creates_then_refreshes(self):
         self._add_real_base_remote()

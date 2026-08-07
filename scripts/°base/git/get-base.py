@@ -20,8 +20,15 @@ currently on (see `auto_argv`) -- e.g. on your main branch it runs
 `update-history-master --yes`; on a clean feature branch it runs
 `bootstrap-branch <branch>`.
 
+Pass `--base-ref <branch-or-commit>` (consumed here, not forwarded) to pin
+the `base` tooling to something other than the `base` branch -- handy for
+testing an unmerged branch or a specific commit before it lands:
+
+    curl -fSL .../get-base.py | python3 - --base-ref my-feature-branch bootstrap-branch feature
+
 Env:
     BASE_GIT_USERNAME  GitHub username/org the `base` remote points at (default: luckydonald)
+    BASE_GIT_REF       Same as `--base-ref`, for when you can't pass a flag (default: base)
 
 The remote is always named literally "base" -- not configurable -- so it's
 never confused with `origin` or some unrelated remote that happens to have
@@ -43,6 +50,10 @@ REMOTE_NAME = "base"
 REMOTE_BRANCH = "base"
 DEFAULT_USERNAME = "luckydonald"
 WORKTREE_RELATIVE_PATH = Path(".git") / "luckydonald" / "base#get-base.py"
+# Fixed local ref the fetched `--base-ref` (branch, tag, or raw commit) lands
+# under -- so checkout/worktree-add never has to guess whether the ref is a
+# remote-tracking branch name, since an arbitrary commit never gets one.
+LOCAL_TARGET_REF = "refs/get-base/target"
 
 
 def status(message: str) -> None:
@@ -84,9 +95,9 @@ def ensure_base_remote(repo_root: Path, username: str) -> None:
     _run(["remote", "add", REMOTE_NAME, url], cwd=repo_root)
 
 
-def fetch_base(repo_root: Path) -> None:
-    status(f"fetching {REMOTE_NAME}/{REMOTE_BRANCH}")
-    _run(["fetch", REMOTE_NAME, REMOTE_BRANCH], cwd=repo_root)
+def fetch_base(repo_root: Path, ref: str = REMOTE_BRANCH) -> None:
+    status(f"fetching {REMOTE_NAME}/{ref}")
+    _run(["fetch", REMOTE_NAME, f"+{ref}:{LOCAL_TARGET_REF}"], cwd=repo_root)
 
 
 def worktree_path(repo_root: Path) -> Path:
@@ -121,19 +132,18 @@ def _is_valid_worktree(path: Path) -> bool:
     return result.returncode == 0 and Path(result.stdout.strip()) == path
 
 
-def ensure_worktree(repo_root: Path) -> Path:
+def ensure_worktree(repo_root: Path, ref: str = REMOTE_BRANCH) -> Path:
     path = worktree_path(repo_root)
-    ref = f"{REMOTE_NAME}/{REMOTE_BRANCH}"
 
     if _is_valid_worktree(path):
         status(f"refreshing worktree: {path}")
-        _run(["fetch", REMOTE_NAME, REMOTE_BRANCH], cwd=path)
-        _run(["checkout", "--detach", ref], cwd=path)
+        _run(["fetch", REMOTE_NAME, f"+{ref}:{LOCAL_TARGET_REF}"], cwd=path)
+        _run(["checkout", "--detach", LOCAL_TARGET_REF], cwd=path)
         return path
 
     remove_stale_worktree(repo_root)
     status(f"creating worktree: {path}")
-    _run(["worktree", "add", "--force", "--detach", str(path), ref], cwd=repo_root)
+    _run(["worktree", "add", "--force", "--detach", str(path), LOCAL_TARGET_REF], cwd=repo_root)
     return path
 
 
@@ -243,15 +253,39 @@ Run a subcommand explicitly, e.g.:
 """
 
 
+def _extract_base_ref(argv: list[str], default: str) -> tuple[str, list[str]]:
+    """Pull `--base-ref <ref>`/`--base-ref=<ref>` out of argv -- it's consumed
+    here, not forwarded to `split.py`, whose own argparse doesn't know it."""
+    ref = default
+    remaining: list[str] = []
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg == "--base-ref":
+            if i + 1 >= len(argv):
+                raise SystemExit("get-base.py: --base-ref requires a value")
+            ref = argv[i + 1]
+            i += 2
+            continue
+        if arg.startswith("--base-ref="):
+            ref = arg.split("=", 1)[1]
+            i += 1
+            continue
+        remaining.append(arg)
+        i += 1
+    return ref, remaining
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
     username = os.environ.get("BASE_GIT_USERNAME", DEFAULT_USERNAME)
+    ref, argv = _extract_base_ref(argv, os.environ.get("BASE_GIT_REF", REMOTE_BRANCH))
 
     repo_root = find_repo_root()
     status(f"repo root: {repo_root}")
     ensure_base_remote(repo_root, username)
-    fetch_base(repo_root)
-    worktree = ensure_worktree(repo_root)
+    fetch_base(repo_root, ref)
+    worktree = ensure_worktree(repo_root, ref)
 
     if not argv:
         argv = auto_argv(repo_root, worktree)
