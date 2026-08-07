@@ -4950,3 +4950,15 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Fix those issues in both files. We'll need to converse some more to finally cause auto compaction. Claude had a setting to decrease the token where it would compact, but I couldn't find a similar setting in codex, unfortunately.
 
+❯ /sanitize-error-logs
+
+❯ /sanitize-error-logs
+
+❯ /sanitize-error-logs
+
+› How much longer until auto commit?
+
+› Ah, it says under `/status`: 43% left (153K used / 258K)
+
+› Then talk a lot more with me
+
