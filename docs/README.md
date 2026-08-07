@@ -299,7 +299,7 @@ The helper is idempotent (no-ops if the symlink already points at the right plac
 
 This base can keep a "clean" branch (no AI/base mentions, safe to publish) in sync with an `ai/UNCLEAN/{branch}` working branch (where AI and code commits mix freely) and an `ai/history/{branch}` branch (the AI-only leftovers). The tooling for this lives under `scripts/°base/git/°split_lib/`, but since it's itself classified as AI/base content, it never exists on a clean checkout — so it ships with a standalone launcher instead.
 
-The simplest way to run it, from any branch of any repo, whether or not `base` has ever been merged in:
+The simplest way to run it, from any branch of any repo, whether `base` has ever been merged in or not:
 
 ```bash
 curl -fSL https://raw.githubusercontent.com/luckydonald/base/refs/heads/base/scripts/%C2%B0base/git/get-base.py | python3 -
