@@ -4970,3 +4970,9 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › I would like, if there's no `analysis.md` to call that `result.md`. I mean, that other file can be renamed after all. Though it would be difficult to make sure it's kinda atomic? Or like try-but-fail-savely-and-then-retry?
 
+› Okay, let's play out all race condition scenarios for those up to two files.
+
+› How would that work in practice?
+
+› Aborting with an error is not ideal in an hook, as the user can't manually rerun it very well. It should rather commit anyway, and then restore the staged/unstaged stuff.
+
