@@ -1,0 +1,9 @@
+{
+  "session_id": "019fdb75-51c0-7ef2-8b85-94b2fdd31a14",
+  "turn_id": "019fdc6d-14a7-7183-8d31-993c3e334603",
+  "transcript_path": "/home/user/.codex/sessions/2026/08/07/rollout-2026-08-07T11-02-06-019fdb75-51c0-7ef2-8b85-94b2fdd31a14.jsonl",
+  "cwd": "/home/user/git/luckydonald/base",
+  "hook_event_name": "PostCompact",
+  "model": "gpt-5.6-terra",
+  "trigger": "auto"
+}
