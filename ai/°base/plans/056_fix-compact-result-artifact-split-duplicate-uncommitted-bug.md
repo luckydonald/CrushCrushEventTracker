@@ -19,7 +19,7 @@ Confirmed scope for Claude **and** Codex: `.claude/settings.json` / `.codex/hook
 Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any new observations) before touching code — each may reveal payload-shape or ordering quirks the plan above doesn't yet cover:
 
 - [x] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
-- [ ] Claude `/compact <args>`
+- [x] Claude `/compact <args>`
 - [ ] Codex `/compact` (no args)
 - [ ] Codex `/compact <args>`
 
@@ -33,6 +33,17 @@ Debug json (untracked, gitignored, in `ai/°base/output/debug/`, still need forc
 - `20260806-153553_335865-record-memory.json` — `SessionStart`, `source: compact`, same `prompt_id`. Ran `capture_session_start` → `compact_summary_from_transcript()`, but produced no second artifact: its reconstructed text must have matched the already-written `result.md` byte-for-byte, so `reserve_artifact_directory`'s content-equality dedup correctly no-opped instead of splitting.
 
 Conclusion: confirms the split bug is *content-source-dependent*, not deterministic on every bare `/compact` — it only manifests when `compact_summary_from_transcript()`'s reconstruction diverges from the `PostCompact` payload text (as it did in the original tunnel2tunnel case, "summary" 24091 chars vs "resume" 15941 chars). No plan-design change needed from this case; it's a clean confirmation of the no-args path's early-return behavior in `custom_instructions()`/`PreCompact`, and doesn't contradict §2's "always reuse directory" fix (which handles both the match and mismatch sub-cases uniformly).
+
+### Findings — Claude `/compact <args>` (this repo, prompt_id `04a0b8f8-01fb-4bec-963a-1cdba9928746`, args: "and this is the example of something with a message now.")
+
+**Bug reproduced cleanly** — no lock contention needed, split happens deterministically whenever `PostCompact` fires twice for one `prompt_id` with differing content:
+
+- `20260807-100323_345880-save-compact-prompt.json` — `PreCompact`, `trigger: manual`, `custom_instructions` populated with the typed text. Wrote `output/compacted/001.md` (raw text, no trailing newline, disconnected counter — not tied to `04a0b8f8` uuid) + `query.md` line `- [`/compact` possible prompt](./output/compacted/001.md)`, two separate commits (`589b610` prompt file, `3069d39` query link) — confirms root cause #2 as designed against.
+- `20260807-100458_146134-save-compact-prompt.json` — `PostCompact`, same `prompt_id`, `compact_summary` 25528 chars (this very compaction's `<analysis>`/`<summary>` text). Written to new dir `002.04a0b8f8-.../result.md` (20091 bytes), commit `b837cd5`, own `query.md` block.
+- A second `SessionStart`(`source: compact`)-driven capture for the *same* `prompt_id` produced **another new directory** `003.04a0b8f8-.../result.md` (25709 bytes, different content than `002`), commit `75b963a`, its own third `query.md` block. Confirms `reserve_artifact_directory`'s content-equality dedup falling through to `next_compact_number()` exactly as root cause #1 describes — this time both commits succeeded individually (no returncode-swallow needed to produce the bug), so **the split is not solely a lock-contention symptom — it reproduces even when every commit succeeds**, purely from "two different content blobs, same `prompt_id`, dedup requires byte-identity."
+- Net result: 3 disconnected `query.md` blocks for one `/compact <args>` invocation (`possible prompt` line + `002` block + `003` block), matching the original tunnel2tunnel shape almost exactly.
+
+Conclusion: no Design change needed — this is the textbook case §2/§3/§4 already target. Confirms priority: §2 (always-reuse-directory) and §4 (upsert single query.md block) are the two fixes that matter most; the lock-contention retry in §1 is a secondary hardening, not the primary trigger.
 
 ## Design
 

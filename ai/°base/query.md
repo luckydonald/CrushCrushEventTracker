@@ -4902,3 +4902,9 @@ Possibly the folder name be `NNN.prompt_id`.
 > - [Result (`33954` chars, `33.3 KB`)](output/compact/001.cd1cdae4-cc3d-4a14-b66f-f1e3fa628253/result.md)
 
 - [`/compact` possible prompt](./output/compacted/001.md)
+❯ Conversation compacted <kbd>manual</kbd>:
+> - [Result (`19978` chars, `19.6 KB`)](output/compact/002.04a0b8f8-01fb-4bec-963a-1cdba9928746/result.md)
+
+❯ Conversation compacted <kbd>manual</kbd>:
+> - [Result (`25528` chars, `25.1 KB`)](output/compact/003.04a0b8f8-01fb-4bec-963a-1cdba9928746/result.md)
+
