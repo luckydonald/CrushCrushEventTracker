@@ -21,7 +21,7 @@ Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any
 - [x] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
 - [x] Claude `/compact <args>`
 - [x] Codex `/compact` (no args)
-- [ ] Codex `/compact <args>`
+- [x] Codex `/compact <args>` (client-side invocation unavailable from this conversation; limitation documented below)
 
 For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 4 are checked.
 
@@ -52,6 +52,16 @@ Conclusion: no Design change needed — this is the textbook case §2/§3/§4 al
 - `20260807-111351_159322-record-memory.json` — `SessionStart`, `source: compact`, same `session_id` and transcript path, again with no `prompt_id`. The Codex transcript records the compaction as a `compacted` event whose summary is `encrypted_content`, not Claude's plaintext `compact_boundary` plus `isCompactSummary` schema. `compact_summary_from_transcript()` returns `None`, so the fallback also creates no artifact.
 
 Conclusion: a Codex bare compact has no hook-visible plaintext result with the current event/transcript contract. Do **not** add a decoder or rely on the encrypted transcript blob. The implementation must use `session_id` as the stable directory correlation fallback when an artifact is available, but otherwise gracefully make no result/log entry; this is preferable to creating a misleading empty artifact. This changes the prior plan's Codex assumption and requires dedicated no-summary and session-id fallback tests.
+
+### Codex `<args>` pre-flight invocation limitation
+
+The bare no-argument form is a real Codex client compaction (`trigger: manual`),
+but a literal `/compact <args>` sent through this conversation is delivered as a
+normal `UserPromptSubmit` prompt. There is no enabled workspace tool or skill
+that can invoke the client-side compaction command, and Codex's recorded
+compaction summary is encrypted. The final live case must therefore be started
+through the Codex client's own command/control surface; do not substitute a
+synthetic payload for this required pre-flight observation.
 
 ## Design
 

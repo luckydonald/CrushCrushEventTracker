@@ -4912,3 +4912,13 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › commit plan changes and relevant debug json files, then I'll run the compact with args, and you do the same a last time.
 
+› /compact and now the variant with some text input. Whoop.
+
+› /compact test
+
+› /compact there is no args version? Can you use a tool/skill to start compation?
+
+› Alright, add that to the plan markdown then.
+
+› To the project one as well, it shall be in sync with ai/°base/errors/23.md , also check off the checkbox, and finally commit
+
