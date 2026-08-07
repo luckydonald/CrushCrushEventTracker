@@ -8,9 +8,12 @@ See test_git_split_e2e_smoke_matrix.py for the shallow-but-wide 54-combo
 matrix; this file is the narrow-but-deep complement (one scenario, inspected
 thoroughly, per repo variant).
 
-Note: like the smoke matrix, this fetches `base/base` from THIS repo's own
+Like the smoke matrix, this normally fetches `base/base` from THIS repo's own
 real, currently committed `base` branch -- so it only exercises whatever's
 actually been committed there, not local uncommitted changes to °split_lib.
+Each variant additionally runs once with `--base-ref HEAD` (this repo's
+current checked-out commit, not just what's landed on `base`), so a fix made
+here shows up in this suite before it's merged into `base`.
 """
 
 from __future__ import annotations
@@ -36,16 +39,26 @@ sync_splits = importlib.import_module("°split_lib.sync_splits")
 
 
 class DeepFlowTests(unittest.TestCase):
+    # get-base.py's own default (REMOTE_BRANCH) is "base" -- "HEAD" instead
+    # pins the fetch to this repo's current checked-out commit via
+    # get-base.py's `--base-ref` flag, so local fixes are exercised too.
+    BASE_REFS = ("base", "HEAD")
+
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
-        tmp_root = Path(self._tmp.name)
-        self.repo_root = tmp_root / "repo"
-        self.repo_root.mkdir()
         self.this_repo_root = fixtures.resolve_this_repo_root()
-        self.empty_remote = fixtures.make_empty_init_remote(tmp_root)
+        self.empty_remote = fixtures.make_empty_init_remote(Path(self._tmp.name))
 
-    def _run_deep_flow(self, repo_builder) -> None:
+    def _run_for_every_base_ref(self, repo_builder) -> None:
+        for base_ref in self.BASE_REFS:
+            with self.subTest(base_ref=base_ref):
+                with tempfile.TemporaryDirectory() as tmp:
+                    self.repo_root = Path(tmp) / "repo"
+                    self.repo_root.mkdir()
+                    self._run_deep_flow(repo_builder, base_ref)
+
+    def _run_deep_flow(self, repo_builder, base_ref: str) -> None:
         manifest = repo_builder(self.repo_root, self.empty_remote)
 
         known_base_merge_shas = {r.commit for r in manifest if r.merge and r.merge.branch == "base/base"}
@@ -58,7 +71,9 @@ class DeepFlowTests(unittest.TestCase):
 
         # Step 6: run the tool (auto mode -> sync-splits feature/test-eins).
         fixtures.ensure_base_remote(self.repo_root, self.this_repo_root)
-        result = fixtures.run_fake_curl(self.repo_root, this_repo_root=self.this_repo_root)
+        result = fixtures.run_fake_curl(
+            self.repo_root, "--base-ref", base_ref, this_repo_root=self.this_repo_root
+        )
         self.assertEqual(result.returncode, 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
 
         # Step 7: assert feature/test-eins.
@@ -76,11 +91,16 @@ class DeepFlowTests(unittest.TestCase):
         # must run first (rebase-branches-to-master never touches
         # ai/history/{main} itself).
         result = fixtures.run_fake_curl(
-            self.repo_root, "update-history-master", "--yes", this_repo_root=self.this_repo_root
+            self.repo_root, "--base-ref", base_ref, "update-history-master", "--yes", this_repo_root=self.this_repo_root
         )
         self.assertEqual(result.returncode, 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
         result = fixtures.run_fake_curl(
-            self.repo_root, "rebase-branches-to-master", "feature/test-eins", this_repo_root=self.this_repo_root
+            self.repo_root,
+            "--base-ref",
+            base_ref,
+            "rebase-branches-to-master",
+            "feature/test-eins",
+            this_repo_root=self.this_repo_root,
         )
         self.assertEqual(result.returncode, 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}")
 
@@ -173,22 +193,22 @@ class DeepFlowTests(unittest.TestCase):
         self.assertTrue(git_ops.is_ancestor(history_feature_tip, unclean_tip, self.repo_root))
 
     def test_deep_flow_repo_variant_1(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_1_random_commits)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_1_random_commits)
 
     def test_deep_flow_repo_variant_2(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_2_empty_init_then_random)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_2_empty_init_then_random)
 
     def test_deep_flow_repo_variant_3(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_3_readme_gitignore_conflict_setup)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_3_readme_gitignore_conflict_setup)
 
     def test_deep_flow_repo_variant_4(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_4_based_on_real_base_tip)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_4_based_on_real_base_tip)
 
     def test_deep_flow_repo_variant_5(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_5_empty_and_base_merge)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_5_empty_and_base_merge)
 
     def test_deep_flow_repo_variant_6(self) -> None:
-        self._run_deep_flow(fixtures.build_repo_variant_6_double_base_merge)
+        self._run_for_every_base_ref(fixtures.build_repo_variant_6_double_base_merge)
 
 
 if __name__ == "__main__":

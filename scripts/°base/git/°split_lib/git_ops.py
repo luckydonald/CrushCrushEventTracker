@@ -382,3 +382,38 @@ def show_path_at(sha: str, path: str, cwd: Path) -> bytes:
         check=True,
     )
     return result.stdout
+
+
+def show_path_at_or_none(ref: str, path: str, cwd: Path) -> bytes | None:
+    """Like `show_path_at`, but `None` if `ref` or `path` at `ref` doesn't exist."""
+    result = subprocess.run(
+        ["git", "show", f"{ref}:{path}"],
+        cwd=cwd,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        return None
+    # end if
+    return result.stdout
+
+
+def remote_url(remote_name: str, cwd: Path) -> str | None:
+    """Configured URL for `remote_name`, or `None` if it isn't configured."""
+    result = subprocess.run(
+        ["git", "remote", "get-url", remote_name],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    # end if
+    return result.stdout.strip()
+
+
+def remote_add(remote_name: str, url: str, cwd: Path) -> None:
+    subprocess.run(["git", "remote", "add", remote_name, url], cwd=cwd, check=True)
+
+
+def fetch(remote_name: str, ref: str, cwd: Path) -> None:
+    subprocess.run(["git", "fetch", remote_name, ref], cwd=cwd, check=True)

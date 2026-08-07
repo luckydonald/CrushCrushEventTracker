@@ -1,0 +1,1 @@
+Background command "Run full test suite after rebase to confirm no regressions" completed (exit code 0)

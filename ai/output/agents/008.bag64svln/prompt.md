@@ -1,0 +1,1 @@
+Background command "Re-run full test suite before commit" completed (exit code 0)

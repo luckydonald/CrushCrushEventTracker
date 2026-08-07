@@ -51,6 +51,8 @@ class ResolveWatchedRefsTests(RecoveryTestBase):
                 "refs/base-split/history-master-fork-point/feature",
                 "refs/base-split/unclean-cursor/clean/feature",
                 "refs/base-split/unclean-cursor/history/feature",
+                "refs/base-split/forward-cursor/clean/feature",
+                "refs/base-split/forward-cursor/history/feature",
             ],
         )
 
@@ -181,6 +183,14 @@ class WriteRecoveryLogTests(RecoveryTestBase):
 
 
 class CliIntegrationTests(RecoveryTestBase):
+    def setUp(self):
+        super().setUp()
+        # `sync-splits` classifies commits via classify.resolve_ignore_file(),
+        # which falls all the way back to a live GitHub fetch when no
+        # `.ai-ignore` is reachable locally -- give it one on disk so this
+        # test stays hermetic/offline.
+        (self.repo / ".ai-ignore").write_text("ai/**\n")
+
     def test_sync_splits_writes_recovery_log_and_undo_restores_refs(self):
         self.make_unclean("feature")
         make_commit(self.repo, "src/x.py", "add x")

@@ -4832,3 +4832,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 ❯ Actually, it shall not be a alternative way, but the main & only way. Possibly the command to run for actual commits could be added as something like `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`, right? Which would also allow to whitelist those in the `settings.json`, under the delete `pending-commit.md` line. While at it, make the rebase messages/scripts not be at `/tmp/*` but `./ai/git/*`.
 
+❯ Task Notification:
+> - Task `b383u155w` <kbd>killed</kbd>
+> - Tool `toolu_01Q9dGSKdiC7szgiinZH21rt`
+> - > Background command "Run full suite after deep_flow refactor" was stopped
+> - [Query (`0` chars, `0 B`)](output/agents/044.b383u155w/prompt.md)
+> - [Answer (`0` chars, `0 B`)](output/agents/044.b383u155w/result.md)
+> - [Raw log (`0` chars, `0 B`)](/tmp/claude-1000/-home-user-git-luckydonald-base--claude-worktrees-splitter/a92fb26d-9f44-473d-a37b-6beebdce4759/tasks/b383u155w.output)
+

@@ -246,7 +246,7 @@ def sync_branch(
     changes, tagged with `ORIGINAL_MERGE_PARENTS_TRAILER` for provenance.
     """
     cwd = repo_root
-    ignore_file = classify.ai_ignore_path(repo_root)
+    ignore_file = classify.resolve_ignore_file(repo_root)
     unclean_ref = branches.unclean_name(base_branch)
     clean_ref = base_branch
     history_ref = branches.history_name(base_branch)

@@ -149,7 +149,7 @@ def _check_push(remote_name: str, remote_url: str, stdin_text: str, *, repo_root
                 sha,
                 git_ops.subject_for_commit(sha, repo_root),
                 git_ops.changed_paths_for_commit(sha, repo_root),
-                ignore_file=classify.ai_ignore_path(repo_root),
+                ignore_file=classify.resolve_ignore_file(repo_root),
             )
             for sha in shas
         ]
@@ -171,12 +171,12 @@ def _classify_for(sha: str, repo_root: Path) -> classify.CommitClassification:
         sha,
         git_ops.subject_for_commit(sha, repo_root),
         git_ops.changed_paths_for_commit(sha, repo_root),
-        ignore_file=classify.ai_ignore_path(repo_root),
+        ignore_file=classify.resolve_ignore_file(repo_root),
     )
 
 
 def _keep_predicate_for(target: str, repo_root: Path) -> Callable[[str], bool]:
-    ignore_file = classify.ai_ignore_path(repo_root)
+    ignore_file = classify.resolve_ignore_file(repo_root)
     if target == "clean":
         return lambda p: not classify.is_ai_base_path(p, ignore_file=ignore_file)
     return lambda p: classify.is_ai_base_path(p, ignore_file=ignore_file)

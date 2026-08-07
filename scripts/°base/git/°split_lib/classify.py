@@ -2,12 +2,25 @@
 
 from __future__ import annotations
 
+import functools
+import os
 import re
+import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Sequence
 
+from . import git_ops
+
 AI_IGNORE_FILENAME = ".ai-ignore"
+
+# Mirrors get-base.py's REMOTE_NAME/DEFAULT_USERNAME -- duplicated here
+# (rather than imported) since get-base.py is deliberately stdlib-only and
+# must stay importable standalone before °split_lib exists on disk.
+BASE_REMOTE_NAME = "base"
+BASE_REMOTE_BRANCH = "base"
+DEFAULT_BASE_USERNAME = "luckydonald"
 
 # Matches this repo's real commit convention, e.g.:
 #   "ai: updated prompt"
@@ -17,8 +30,73 @@ AI_IGNORE_FILENAME = ".ai-ignore"
 AI_SUBJECT_RE = re.compile(r"^(\[.*\]\s*)?.*\bai:")
 
 
+class MissingAiIgnoreError(RuntimeError):
+    """Raised when no `.ai-ignore` could be found anywhere -- on disk, via an
+    already-fetched `base` ref, or by fetching `base` from GitHub -- so
+    ai/base commit classification cannot proceed safely."""
+
+
 def ai_ignore_path(repo_root: Path | None = None) -> Path:
     return (repo_root or Path.cwd()) / AI_IGNORE_FILENAME
+# end def
+
+
+def base_remote_url(username: str | None = None) -> str:
+    username = username or os.environ.get("BASE_GIT_USERNAME", DEFAULT_BASE_USERNAME)
+    return f"https://{username}@github.com/{username}/base.git"
+# end def
+
+
+@functools.lru_cache(maxsize=None)
+def resolve_ignore_file(repo_root: Path) -> Path:
+    """Resolve the root `.ai-ignore` file, falling back -- in order, warning
+    on every fallback tier used -- to: an already-fetched `base/base`
+    remote-tracking ref, a local branch literally named `base`, then a fresh
+    fetch of the `base` remote from GitHub. Raises `MissingAiIgnoreError` if
+    none of those have it either.
+    """
+    disk_path = ai_ignore_path(repo_root)
+    if disk_path.is_file():
+        return disk_path
+    # end if
+
+    remote_tracking_ref = f"refs/remotes/{BASE_REMOTE_NAME}/{BASE_REMOTE_BRANCH}"
+    for description, ref in (
+        ("already-fetched base/base remote-tracking ref", remote_tracking_ref),
+        (f"local branch '{BASE_REMOTE_BRANCH}'", BASE_REMOTE_BRANCH),
+    ):
+        content = git_ops.show_path_at_or_none(ref, AI_IGNORE_FILENAME, repo_root)
+        if content is not None:
+            return _warn_and_materialize(description, ref, content)
+        # end if
+    # end for
+
+    if git_ops.remote_url(BASE_REMOTE_NAME, repo_root) is None:
+        git_ops.remote_add(BASE_REMOTE_NAME, base_remote_url(), repo_root)
+    # end if
+    git_ops.fetch(BASE_REMOTE_NAME, BASE_REMOTE_BRANCH, repo_root)
+    content = git_ops.show_path_at_or_none(remote_tracking_ref, AI_IGNORE_FILENAME, repo_root)
+    if content is not None:
+        return _warn_and_materialize(f"freshly fetched {BASE_REMOTE_NAME} remote (GitHub)", remote_tracking_ref, content)
+    # end if
+
+    raise MissingAiIgnoreError(
+        f"No {AI_IGNORE_FILENAME} found in {repo_root} on disk, at {remote_tracking_ref}, at branch "
+        f"'{BASE_REMOTE_BRANCH}', or after fetching the '{BASE_REMOTE_NAME}' remote from GitHub. "
+        "ai/base commit classification cannot proceed safely without it."
+    )
+# end def
+
+
+def _warn_and_materialize(description: str, ref: str, content: bytes) -> Path:
+    print(f"warning: {AI_IGNORE_FILENAME} not found on disk; falling back to {description} ({ref})", file=sys.stderr)
+    handle = tempfile.NamedTemporaryFile(suffix=f"-{AI_IGNORE_FILENAME}", delete=False)
+    try:
+        handle.write(content)
+    finally:
+        handle.close()
+    # end try
+    return Path(handle.name)
 # end def
 
 

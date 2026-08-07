@@ -217,6 +217,11 @@ def _random_commits(
 
 def build_repo_variant_1_random_commits(repo_root: Path, empty_remote: Path) -> Manifest:
     init_repo(repo_root, branch="mane")
+    # `mane` itself never merges in `base` (and so never gets its own
+    # `.ai-ignore`) -- add the `base` remote so classify.py's fallback chain
+    # can still find `.ai-ignore` via the fetched `base/base` ref, matching
+    # realistic post-bootstrap state without a live network fetch.
+    add_and_fetch_real_base_branch(repo_root)
     manifest: Manifest = []
     _random_commits(repo_root, manifest, 3, prefix="v1")
     return manifest
@@ -229,6 +234,7 @@ def build_repo_variant_2_empty_init_then_random(repo_root: Path, empty_remote: P
     git(["remote", "add", "empty", str(empty_remote)], repo_root)
     git(["fetch", "empty", "init"], repo_root)
     git(["checkout", "-b", "mane", "empty/init"], repo_root)
+    add_and_fetch_real_base_branch(repo_root)
     manifest: Manifest = []
     _random_commits(repo_root, manifest, 3, prefix="v2")
     return manifest
@@ -236,6 +242,7 @@ def build_repo_variant_2_empty_init_then_random(repo_root: Path, empty_remote: P
 
 def build_repo_variant_3_readme_gitignore_conflict_setup(repo_root: Path, empty_remote: Path) -> Manifest:
     init_repo(repo_root, branch="mane")
+    add_and_fetch_real_base_branch(repo_root)
     manifest: Manifest = []
     _random_commits(repo_root, manifest, 2, prefix="v3")
     readme_sha = make_commit(repo_root, "README.md", "consumer readme", content="consumer readme\n")
