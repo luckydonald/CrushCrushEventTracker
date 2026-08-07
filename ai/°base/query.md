@@ -4939,9 +4939,14 @@ Possibly the folder name be `NNN.prompt_id`.
 ❯ We just had an auto compact, please analyze it and add it to the plan.
 
 › Well I manually commited it at least.
+
 › Claude added a turn on it's own, now we need to investigate your auto-compact run.
 
 › Unfortunately you didn't compact yet.
 
 › I mean go ahead, we need to write some tokens before we get to auto compact anyways…
+
+› Does the plan's proposed fix needs improvements or clarification?
+
+› Fix those issues in both files. We'll need to converse some more to finally cause auto compaction. Claude had a setting to decrease the token where it would compact, but I couldn't find a similar setting in codex, unfortunately.
 
