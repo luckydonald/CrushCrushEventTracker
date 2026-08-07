@@ -20,7 +20,7 @@ Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any
 
 - [x] Claude `/compact` (no args, i.e. `trigger: manual` with empty `custom_instructions` — this is *also* "non-prompt" usage, not just `trigger: auto`)
 - [x] Claude `/compact <args>`
-- [ ] Codex `/compact` (no args)
+- [x] Codex `/compact` (no args)
 - [ ] Codex `/compact <args>`
 
 For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 4 are checked.
@@ -36,14 +36,22 @@ Conclusion: confirms the split bug is *content-source-dependent*, not determinis
 
 ### Findings — Claude `/compact <args>` (this repo, prompt_id `04a0b8f8-01fb-4bec-963a-1cdba9928746`, args: "and this is the example of something with a message now.")
 
-**Bug reproduced cleanly** — no lock contention needed, split happens deterministically whenever `PostCompact` fires twice for one `prompt_id` with differing content:
+**Bug reproduced cleanly** — no lock contention needed: the two capture paths split whenever they receive differing text for one `prompt_id`.
 
 - `20260807-100323_345880-save-compact-prompt.json` — `PreCompact`, `trigger: manual`, `custom_instructions` populated with the typed text. Wrote `output/compacted/001.md` (raw text, no trailing newline, disconnected counter — not tied to `04a0b8f8` uuid) + `query.md` line `- [`/compact` possible prompt](./output/compacted/001.md)`, two separate commits (`589b610` prompt file, `3069d39` query link) — confirms root cause #2 as designed against.
-- `20260807-100458_146134-save-compact-prompt.json` — `PostCompact`, same `prompt_id`, `compact_summary` 25528 chars (this very compaction's `<analysis>`/`<summary>` text). Written to new dir `002.04a0b8f8-.../result.md` (20091 bytes), commit `b837cd5`, own `query.md` block.
-- A second `SessionStart`(`source: compact`)-driven capture for the *same* `prompt_id` produced **another new directory** `003.04a0b8f8-.../result.md` (25709 bytes, different content than `002`), commit `75b963a`, its own third `query.md` block. Confirms `reserve_artifact_directory`'s content-equality dedup falling through to `next_compact_number()` exactly as root cause #1 describes — this time both commits succeeded individually (no returncode-swallow needed to produce the bug), so **the split is not solely a lock-contention symptom — it reproduces even when every commit succeeds**, purely from "two different content blobs, same `prompt_id`, dedup requires byte-identity."
+- `20260807-100458_094663-record-memory.json` — `SessionStart`, `source: compact`, same `prompt_id`. Its transcript reconstruction is the plain resume-shape `output/compact/002.04a0b8f8-.../result.md` (19978 chars rendered; 20091 bytes), commit `b837cd5`, own `query.md` block.
+- `20260807-100458_146134-save-compact-prompt.json` — `PostCompact`, same `prompt_id`, `compact_summary` 25528 chars (this compaction's tagged `<analysis>`/`<summary>` text). It produced **another new directory**, `003.04a0b8f8-.../result.md` (25709 bytes), commit `75b963a`, its own third `query.md` block. This confirms `reserve_artifact_directory`'s content-equality dedup falling through to `next_compact_number()` exactly as root cause #1 describes — both commits succeeded individually (no returncode-swallow needed), so **the split is not solely a lock-contention symptom: two different content blobs with one `prompt_id` are sufficient.**
 - Net result: 3 disconnected `query.md` blocks for one `/compact <args>` invocation (`possible prompt` line + `002` block + `003` block), matching the original tunnel2tunnel shape almost exactly.
 
 Conclusion: no Design change needed — this is the textbook case §2/§3/§4 already target. Confirms priority: §2 (always-reuse-directory) and §4 (upsert single query.md block) are the two fixes that matter most; the lock-contention retry in §1 is a secondary hardening, not the primary trigger.
+
+### Findings — Codex `/compact` no args (this repo, session_id `019fdb75-51c0-7ef2-8b85-94b2fdd31a14`)
+
+- `20260807-111231_592676-save-compact-prompt.json` — `PreCompact`, `trigger: manual`, with `session_id`, `turn_id`, and `transcript_path`, but no `prompt_id`, no `custom_instructions`-family key, and no user text. Correctly produces no instructions artifact.
+- `20260807-111326_589211-save-compact-prompt.json` — `PostCompact`, same `session_id`/`turn_id` and `trigger`, but no `prompt_id` and no `compact_summary`. `capture_postcompact()` therefore returns `False`; no compact directory, query block, or commit is created.
+- `20260807-111351_159322-record-memory.json` — `SessionStart`, `source: compact`, same `session_id` and transcript path, again with no `prompt_id`. The Codex transcript records the compaction as a `compacted` event whose summary is `encrypted_content`, not Claude's plaintext `compact_boundary` plus `isCompactSummary` schema. `compact_summary_from_transcript()` returns `None`, so the fallback also creates no artifact.
+
+Conclusion: a Codex bare compact has no hook-visible plaintext result with the current event/transcript contract. Do **not** add a decoder or rely on the encrypted transcript blob. The implementation must use `session_id` as the stable directory correlation fallback when an artifact is available, but otherwise gracefully make no result/log entry; this is preferable to creating a misleading empty artifact. This changes the prior plan's Codex assumption and requires dedicated no-summary and session-id fallback tests.
 
 ## Design
 
@@ -58,7 +66,7 @@ Rewrite `append_and_commit` to build its content/log-file changes, then call `_c
 
 ### 2. One directory per `prompt_id`, artifact identity by source, not by content-equality (`compact_result.py`)
 
-- Change `reserve_artifact_directory` (or add a thin wrapper) so a matching `prompt_id` directory is **always** reused — drop the "fall through to a new number when content differs" branch entirely. Only skip the write when the *specific* target filename already holds byte-identical content (pure re-fire idempotency); otherwise overwrite that filename.
+- Change `reserve_artifact_directory` (or add a thin wrapper) so a matching correlation ID is **always** reused — use valid `prompt_id` when present, otherwise valid `session_id` (Codex's observed fallback). Drop the "fall through to a new number when content differs" branch entirely. Only skip the write when the *specific* target filename already holds byte-identical content (pure re-fire idempotency); otherwise overwrite that filename.
 - `capture_postcompact` always writes `analysis.md` (the direct `compact_summary` payload text). `capture_session_start` always writes `result.md` (the transcript-reconstructed text). Fixed names by source, not by arrival order.
 - This changes the semantics of `test_postcompact_deduplicates_same_result_but_keeps_distinct_same_prompt_results` and `test_postcompact_and_session_start_fallback_store_one_result` — update them to assert "same directory, two named files" (or one file when both sources genuinely produce identical text) instead of "second directory".
 
@@ -80,7 +88,7 @@ Rewrite `append_and_commit` to build its content/log-file changes, then call `_c
 - New test: `PreCompact` (instructions) → `PostCompact` (same `prompt_id`) produces exactly one `❯ Conversation compacted` block containing the quoted instructions line + the `analysis.md` link.
 - New test: a second capture for the same `prompt_id` (session-start fallback, or `autoloads.md` via a `/compact` prompt) appends its link into the *same* block rather than creating a second one.
 - New test: simulate one failing `git commit` (lock contention) via monkeypatched `subprocess.run` and assert `_commit_paths` retries and succeeds.
-- New test: run at least the `PreCompact`→`PostCompact` happy path with `run_hook(..., "codex")` to close the existing Codex-coverage gap.
+- New Codex tests: (a) observed bare `/compact` PreCompact/PostCompact/SessionStart payloads with no plaintext summary produce no artifact or query entry, and (b) a synthetic Codex payload with a usable summary but no `prompt_id` reuses its `session_id` directory. Do not assert that Codex's encrypted transcript can be reconstructed.
 - Retire/adjust any test asserting the old `output/compacted/NNN.md` + "possible prompt" line behavior.
 
 ## Verification

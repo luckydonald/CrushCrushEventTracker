@@ -1,0 +1,9 @@
+{
+  "session_id": "7bdf44f1-72dd-4870-94d9-3711bec1d5b9",
+  "transcript_path": "/home/user/.claude/projects/-home-user-git-luckydonald-base/7bdf44f1-72dd-4870-94d9-3711bec1d5b9.jsonl",
+  "cwd": "/home/user/git/luckydonald/base",
+  "prompt_id": "cd1cdae4-cc3d-4a14-b66f-f1e3fa628253",
+  "hook_event_name": "SessionStart",
+  "source": "compact",
+  "model": "claude-sonnet-5"
+}
