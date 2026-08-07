@@ -4966,3 +4966,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › commit automatically
 
+› What else can we do? We need to keep talking.
+
+› I would like, if there's no `analysis.md` to call that `result.md`. I mean, that other file can be renamed after all. Though it would be difficult to make sure it's kinda atomic? Or like try-but-fail-savely-and-then-retry?
+
