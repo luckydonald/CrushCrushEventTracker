@@ -26,6 +26,17 @@ def load_script_module():
     return module
 
 
+def _purge_split_lib_cache() -> None:
+    """Each test seeds its own `°split_lib` copy under a fresh temp worktree,
+    but `import_module("°split_lib...")` caches the package (and its
+    `__path__`) globally in `sys.modules` -- so a later test's worktree,
+    once its own temp dir is cleaned up, would resolve submodules against a
+    now-deleted stale path. Drop the cache so every test re-imports fresh."""
+    for name in list(sys.modules):
+        if name == "°split_lib" or name.startswith("°split_lib."):
+            del sys.modules[name]
+
+
 def _seed_real_split_tooling(base_repo: Path) -> None:
     """Copy the real `split.py` + full `°split_lib` package into a fake
     `base` remote's tree, so a checked-out worktree of it can actually run
@@ -42,6 +53,8 @@ def _seed_real_split_tooling(base_repo: Path) -> None:
 class GetBaseTests(unittest.TestCase):
     def setUp(self):
         self.module = load_script_module()
+        _purge_split_lib_cache()
+        self.addCleanup(_purge_split_lib_cache)
 
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
@@ -163,22 +176,24 @@ class GetBaseTests(unittest.TestCase):
         captured = {}
         stderr = io.StringIO()
 
-        def fake_execvp(executable, args):
-            captured["executable"] = executable
-            captured["args"] = args
+        def fake_exec_module(self_loader, module):
+            def fake_main(argv):
+                captured["argv"] = argv
+                return 0
+
+            module.main = fake_main
 
         with contextlib.redirect_stderr(stderr), \
-             mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
-             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+             mock.patch.object(self.module.importlib.util.spec_from_file_location("x", SPLIT_PY).loader.__class__, "exec_module", fake_exec_module), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo), \
+             self.assertRaises(SystemExit) as exit_ctx:
             self.module.main(["bootstrap-branch", "feature"])
 
-        self.assertEqual(captured["executable"], sys.executable)
-        args = captured["args"]
-        self.assertEqual(args[0], sys.executable)
-        self.assertIn("split.py", args[1])
-        self.assertIn("--repo-root", args)
-        self.assertEqual(args[args.index("--repo-root") + 1], str(self.repo))
-        self.assertEqual(args[-2:], ["bootstrap-branch", "feature"])
+        self.assertEqual(exit_ctx.exception.code, 0)
+        argv = captured["argv"]
+        self.assertIn("--repo-root", argv)
+        self.assertEqual(argv[argv.index("--repo-root") + 1], str(self.repo))
+        self.assertEqual(argv[-2:], ["bootstrap-branch", "feature"])
 
         self.assertIsNotNone(git(["remote", "get-url", "base"], self.repo))
         progress = stderr.getvalue()
@@ -195,8 +210,12 @@ class GetBaseTests(unittest.TestCase):
         status_before = git(["status", "--porcelain"], self.repo)
         head_before = git(["rev-parse", "HEAD"], self.repo)
 
-        with mock.patch.object(self.module.os, "execvp"), \
-             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+        def fake_exec_module(self_loader, module):
+            module.main = lambda argv: 0
+
+        with mock.patch.object(self.module.importlib.util.spec_from_file_location("x", SPLIT_PY).loader.__class__, "exec_module", fake_exec_module), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo), \
+             self.assertRaises(SystemExit):
             self.module.main(["update-history-master", "--yes"])
 
         self.assertEqual(git(["status", "--porcelain"], self.repo), status_before)
@@ -206,6 +225,8 @@ class GetBaseTests(unittest.TestCase):
 class AutoArgvTests(unittest.TestCase):
     def setUp(self):
         self.module = load_script_module()
+        _purge_split_lib_cache()
+        self.addCleanup(_purge_split_lib_cache)
 
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
@@ -327,6 +348,8 @@ class AutoArgvTests(unittest.TestCase):
 class MainAutoModeTests(unittest.TestCase):
     def setUp(self):
         self.module = load_script_module()
+        _purge_split_lib_cache()
+        self.addCleanup(_purge_split_lib_cache)
 
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
@@ -350,19 +373,14 @@ class MainAutoModeTests(unittest.TestCase):
     def test_empty_argv_triggers_auto_detection(self):
         git(["checkout", "-b", "feature"], self.repo)
 
-        captured = {}
         stderr = io.StringIO()
 
-        def fake_execvp(executable, args):
-            captured["args"] = args
-
         with contextlib.redirect_stderr(stderr), \
-             mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
-             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
-            code = self.module.main([])
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo), \
+             self.assertRaises(SystemExit) as exit_ctx:
+            self.module.main([])
 
-        self.assertEqual(code, 0)
-        self.assertEqual(captured["args"][-2:], ["bootstrap-branch", "feature"])
+        self.assertEqual(exit_ctx.exception.code, 0)
         progress = stderr.getvalue()
         self.assertIn("get-base.py: auto mode: current branch feature", progress)
         self.assertIn(
@@ -375,16 +393,17 @@ class MainAutoModeTests(unittest.TestCase):
     def test_nonempty_argv_bypasses_auto_detection(self):
         git(["checkout", "-b", "feature"], self.repo)
 
-        captured = {}
+        stderr = io.StringIO()
 
-        def fake_execvp(executable, args):
-            captured["args"] = args
-
-        with mock.patch.object(self.module.os, "execvp", side_effect=fake_execvp), \
-             mock.patch.object(self.module, "find_repo_root", return_value=self.repo):
+        with contextlib.redirect_stderr(stderr), \
+             mock.patch.object(self.module, "find_repo_root", return_value=self.repo), \
+             self.assertRaises(SystemExit) as exit_ctx:
             self.module.main(["update-history-master", "--yes"])
 
-        self.assertEqual(captured["args"][-2:], ["update-history-master", "--yes"])
+        self.assertEqual(exit_ctx.exception.code, 0)
+        progress = stderr.getvalue()
+        self.assertNotIn("auto mode", progress)
+        self.assertIsNotNone(git(["rev-parse", "ai/history/master"], self.repo))
 
     def test_detached_head_with_empty_argv_refuses(self):
         head_sha = git(["rev-parse", "HEAD"], self.repo)

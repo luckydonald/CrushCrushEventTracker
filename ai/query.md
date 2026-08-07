@@ -17,3 +17,10 @@
 
 ❯ I should have moved you into the `splitter` worktree now, so we don't interfer too much with the other agent already running.
 
+❯ Can't you commit it into your worktree?
+
+❯ Copy the file over here, I will remove it on mane.
+
+❯ Now analyze the error in that file.
+
+❯ The issue was that it previously forked or something, however that would loose the TTY or something, which is not easy to give to an subprocess, apparently. But it's like python anyway, so importing and running it directly should work just as well?

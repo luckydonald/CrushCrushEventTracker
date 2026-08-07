@@ -31,6 +31,7 @@ its own branch called `base`.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import os
 import shlex
 import shutil
@@ -144,12 +145,12 @@ def _split_command(repo_root: Path, worktree: Path, argv: list[str]) -> list[str
 def delegate(repo_root: Path, worktree: Path, argv: list[str]) -> None:
     command = _split_command(repo_root, worktree, argv)
     status(f"delegating: {shlex.join(command)}")
-    # os.execvp(sys.executable, command)
     file = command[1]
     args = command[2:]
-    import importlib
-    split_py = importlib.import_module(file)
-    result = split_py.main([file, *args])
+    spec = importlib.util.spec_from_file_location("°split_lib.split", file)
+    split_py = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(split_py)
+    result = split_py.main(args)
     sys.exit(result)
 
 
