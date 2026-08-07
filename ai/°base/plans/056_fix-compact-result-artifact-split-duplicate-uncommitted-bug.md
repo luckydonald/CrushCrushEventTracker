@@ -14,7 +14,7 @@ Confirmed scope for Claude **and** Codex: `.claude/settings.json` / `.codex/hook
 
 "Non-prompt" usage = `trigger == "auto"` compaction (no user-typed instructions) and the legacy `SessionStart(source=compact)` fallback. `PreCompact` already hard-drops non-`manual` triggers before reaching `custom_instructions()` (`save-compact-prompt/hook.py:63-65`) — correct, keep it; `PostCompact` already handles both triggers. The fix must degrade cleanly to "no quoted instructions line" when there's nothing to quote.
 
-## Pre-flight: 4 live repro cases (do this before finalizing design)
+## Pre-flight: 6 live repro cases (do this before finalizing design)
 
 Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any new observations) before touching code — each may reveal payload-shape or ordering quirks the plan above doesn't yet cover:
 
@@ -22,8 +22,10 @@ Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any
 - [x] Claude `/compact <args>`
 - [x] Codex `/compact` (no args)
 - [x] Codex `/compact <args>` (client-side invocation unavailable from this conversation; limitation documented below)
+- [ ] Claude automatic compact (`trigger: auto`, context window auto-compact firing without explicit `/compact`) — triggered this session by running `/autocompact` (window set to 100k tokens) and continuing to write until Claude auto-compacts; capture `PreCompact`/`PostCompact`/`SessionStart` debug json same as the manual cases.
+- [ ] Codex automatic compact (`trigger: auto`) — needs equivalent trigger in a Codex session (context window pressure); capture same debug json set.
 
-For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 4 are checked.
+For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 6 are checked (cases 1-4 already closed above; case 4 permanently accepted as unavailable — see below).
 
 ### Findings — Claude `/compact` no args (this repo, prompt_id `cd1cdae4-cc3d-4a14-b66f-f1e3fa628253`)
 
@@ -66,9 +68,10 @@ synthetic payload for this required pre-flight observation.
 **Accepted as final:** case 4 stays unresolved — no client-side surface in
 either conversation can trigger it, and confirmed via `20260807-112501_867367-save-prompt.json`
 (committed `1398c2a`) that a literal `/compact <args>` typed into Codex chat
-just becomes a normal prompt, never a compaction event. Proceeding to
-implementation on cases 1-3 only. Only remaining uncaptured variant overall is
-automatic (`trigger: auto`) compaction, out of scope for now — not blocking.
+just becomes a normal prompt, never a compaction event. Cases 5 and 6
+(automatic `trigger: auto` compaction, Claude and Codex respectively) are now
+in scope — pursue those before implementation; case 4 remains the only
+permanently-unavailable one.
 
 ## Design
 
