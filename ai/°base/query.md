@@ -4984,3 +4984,17 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › `instructions.md` is not that great, I'd prefer it in `query.md` directly. Just to make sure, we're talking about `/compact some text here` and specifically _some text here_ part?
 
+› After that pending metadata, which hook will eventually commit that?
+
+› > That gives this sequence:
+>
+> 1. PreCompact: reserve/reuse directory; commit metadata containing trigger and optional /compact suffix. No query.md block yet.
+> 2. SessionStart or PostCompact: add the first result artifact and commit it with the rendered query block.
+> 3. The later source, if distinct: promote/add the second artifact and replace that same query block.
+
+› So, point (3) is still part of the (2) hooks already running, yes?
+
+› Alright, sounds good. But we still kinda need to wait for that auto compact. So maybe just list a more concrete detailed run.
+
+› Ah, rename that duplicate `Result (…)` to `Analysis (…)` for clarity.
+
