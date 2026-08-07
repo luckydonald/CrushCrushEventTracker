@@ -15,3 +15,5 @@
 
 #### Previous user prompts:
 
+❯ I should have moved you into the `splitter` worktree now, so we don't interfer too much with the other agent already running.
+
