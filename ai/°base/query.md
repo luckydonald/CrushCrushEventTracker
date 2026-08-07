@@ -4939,3 +4939,9 @@ Possibly the folder name be `NNN.prompt_id`.
 ❯ We just had an auto compact, please analyze it and add it to the plan.
 
 › Well I manually commited it at least.
+› Claude added a turn on it's own, now we need to investigate your auto-compact run.
+
+› Unfortunately you didn't compact yet.
+
+› I mean go ahead, we need to write some tokens before we get to auto compact anyways…
+
