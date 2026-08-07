@@ -4908,3 +4908,5 @@ Possibly the folder name be `NNN.prompt_id`.
 ❯ Conversation compacted <kbd>manual</kbd>:
 > - [Result (`25528` chars, `25.1 KB`)](output/compact/003.04a0b8f8-01fb-4bec-963a-1cdba9928746/result.md)
 
+› Continue @ai/°base/output/compact/002.04a0b8f8-01fb-4bec-963a-1cdba9928746/result.md and improve the plan @ai/°base/errors/23.md with your findings
+
