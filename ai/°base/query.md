@@ -4936,3 +4936,5 @@ Possibly the folder name be `NNN.prompt_id`.
 ❯ Conversation compacted <kbd>auto</kbd>:
 > - [Result (`27532` chars, `27 KB`)](output/compact/005.3a286d24-2fee-4c23-8c4b-24cff3c19aeb/result.md)
 
+❯ We just had an auto compact, please analyze it and add it to the plan.
+

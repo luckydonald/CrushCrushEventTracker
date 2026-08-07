@@ -22,7 +22,7 @@ Reproduce and document (debug json copied to `ai/°base/output/debug/`, plus any
 - [x] Claude `/compact <args>`
 - [x] Codex `/compact` (no args)
 - [x] Codex `/compact <args>` (client-side invocation unavailable from this conversation; limitation documented below)
-- [ ] Claude automatic compact (`trigger: auto`, context window auto-compact firing without explicit `/compact`) — triggered this session by running `/autocompact` (window set to 100k tokens) and continuing to write until Claude auto-compacts; capture `PreCompact`/`PostCompact`/`SessionStart` debug json same as the manual cases.
+- [x] Claude automatic compact (`trigger: auto`, context window auto-compact firing without explicit `/compact`) — triggered this session by running `/autocompact` (window set to 100k tokens) and continuing to write until Claude auto-compacts; capture `PreCompact`/`PostCompact`/`SessionStart` debug json same as the manual cases.
 - [ ] Codex automatic compact (`trigger: auto`) — needs equivalent trigger in a Codex session (context window pressure); capture same debug json set.
 
 For each: capture the `PreCompact`/`PostCompact`/`SessionStart` debug json, note actual field names/values (especially whether Codex populates `prompt_id`, and which `custom_instructions`-family key each tool uses), and check off only once documented here and any plan section above has been amended to match. Do not proceed to implementation until all 6 are checked (cases 1-4 already closed above; case 4 permanently accepted as unavailable — see below).
@@ -72,6 +72,18 @@ just becomes a normal prompt, never a compaction event. Cases 5 and 6
 (automatic `trigger: auto` compaction, Claude and Codex respectively) are now
 in scope — pursue those before implementation; case 4 remains the only
 permanently-unavailable one.
+
+### Findings — Claude automatic compact (`trigger: auto`, this repo, prompt_id `3a286d24-2fee-4c23-8c4b-24cff3c19aeb`)
+
+Triggered via `/autocompact` (window set to 100k) then continuing to write until Claude auto-compacted.
+
+- `20260807-113932_249301-save-compact-prompt.json` — `PreCompact`, `trigger: auto`, `custom_instructions: null` (as expected — `auto` never has typed instructions). Correctly produces no instructions artifact.
+- `20260807-114116_439198-save-compact-prompt.json` — `PostCompact`, same `prompt_id`, `compact_summary` 27532 chars. Wrote `output/compact/005.3a286d24-.../result.md`.
+- `20260807-114116_416485-record-memory.json` — `SessionStart`, `source: compact`, same `prompt_id`, no `compact_summary` field (expected — Claude's `SessionStart` never carries it directly, it reconstructs from transcript). Its reconstruction wrote a **second, earlier-numbered** directory, `output/compact/004.3a286d24-.../result.md` (17028 chars) — diverges from `PostCompact`'s 27532-char text, confirming the split bug reproduces identically under `trigger: auto`, not just `manual`.
+- **New failure mode observed here, beyond cases 1-3:** `004...` was committed (`0735066 [base] ai: compact 004.3a286d24-2fee-4c23-8c4b-24cff3c19aeb result`), but `005...` was never committed — `git status` shows it as untracked (`??`) — while `query.md` (committed separately in `94d4ed1`) already links `output/compact/005.../result.md`. This is root cause #3 live: a dangling link to an uncommitted file, the exact `23.md` failure shape, caught in the wild without needing to synthesize lock contention.
+- `query.md` shows two disconnected blocks for one `prompt_id`: `❯ Conversation compacted <kbd>manual</kbd>:` (stale rendering — actually the `004` block, mislabeled; needs checking against Design §4's kbd fix) and `❯ Conversation compacted <kbd>auto</kbd>:` linking `005`. Confirms the raw `trigger` value is still rendered un-reworded (expected — code not yet changed), and that block-splitting plus mislabeled/duplicate `<kbd>` tags both occur together on a real auto-compact.
+
+Conclusion: no Design change needed — confirms §2 (always reuse directory by `prompt_id`), §3/§4 (single upserted block + commit atomicity) all apply identically to `trigger: auto` as to `manual`. Additionally provides a real (not hypothetical) case of the uncommitted-dangling-link failure mode for `_commit_paths` retry-hardening (§1) to fix, and a real duplicate/mislabeled `<kbd>` case for the §4 rewording bullet to fix.
 
 ## Design
 
