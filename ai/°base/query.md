@@ -4962,3 +4962,7 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Then talk a lot more with me
 
+› No, there shouldn't be comments in the markdown, the `output/compact/004.<id>` mentioned shall be enough to find it.
+
+› commit automatically
+
