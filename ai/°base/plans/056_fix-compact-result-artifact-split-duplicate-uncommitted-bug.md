@@ -63,6 +63,13 @@ compaction summary is encrypted. The final live case must therefore be started
 through the Codex client's own command/control surface; do not substitute a
 synthetic payload for this required pre-flight observation.
 
+**Accepted as final:** case 4 stays unresolved — no client-side surface in
+either conversation can trigger it, and confirmed via `20260807-112501_867367-save-prompt.json`
+(committed `1398c2a`) that a literal `/compact <args>` typed into Codex chat
+just becomes a normal prompt, never a compaction event. Proceeding to
+implementation on cases 1-3 only. Only remaining uncaptured variant overall is
+automatic (`trigger: auto`) compaction, out of scope for now — not blocking.
+
 ## Design
 
 ### 1. Centralize + harden the commit primitive (`_lib.py`)
@@ -88,6 +95,7 @@ Rewrite `append_and_commit` to build its content/log-file changes, then call `_c
 ### 4. Regenerate one deterministic block per compaction directory instead of appending fragments
 
 - Add `render_compact_block(directory: Path, trigger: str) -> str`: reads `instructions.md` (if present) for the quoted line, then emits a link for each of `analysis.md`, `result.md`, `autoloads.md` found in the directory, in that fixed order — this fixes both the "two blocks" bug and the "arrival-order-dependent line ordering" issue (matches `analysis.md` before `result.md` in `23.expected.md`).
+- Reword the `<kbd>{trigger}</kbd>` label in `compact_result.py:136` (currently the raw `trigger` value, `"manual"`/`"auto"`): map `manual` → `<kbd>manually</kbd>`, `auto` → `<kbd>automatic</kbd>` (adjective, not adverb, since it modifies "Conversation compacted" as a state not an action here). Update `23.expected.md`'s `<kbd>manually</kbd>` reference and any test asserting the old `<kbd>manual</kbd>` string.
 - Add `upsert_query_block(log_path, anchor, block_text, *, extra_commit_paths, commit_template_relpath, default_commit_msg) -> bool` in `_lib.py`: anchor is an HTML comment keyed by the directory's relative path (e.g. `<!-- compact:output/compact/008.<uuid> -->`). If found in `query.md`, replace the anchor-through-next-blank-line span in place; else append a new block with the anchor. Commits `query.md` + `extra_commit_paths` in one `_commit_paths` call (atomic — fixes root cause #3's dangling-reference failure mode: file and its link always land in the same commit or neither does).
 - `capture_summary` (both sources) and `_handle_compact_prompt` (`autoloads.md`) switch from building ad hoc block strings + calling `append_and_commit` to: write their artifact file, call `render_compact_block` + `upsert_query_block` for that directory.
 

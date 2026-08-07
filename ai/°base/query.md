@@ -4922,3 +4922,9 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › To the project one as well, it shall be in sync with ai/°base/errors/23.md , also check off the checkbox, and finally commit
 
+❯ Re-read the plan file, codex updated it with their findings.
+
+❯ According to codex the debug json (you meant that, yes?) was added at `1398c2ad4c4bfd79740814cc998f26d3a9bdbccd`.
+
+❯ Yeah, case 4 is unavailable now. We have to live with out it, there exist only 1-3. The only thing left to capture would be automatic compacts. Btw, add to the plan to reword "<kbd>manual</kbd>" as `<kbd>manually</kbd>` and the other one shall be `<kbd>automatic</kbd>`.
+
