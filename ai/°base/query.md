@@ -4976,3 +4976,11 @@ Possibly the folder name be `NNN.prompt_id`.
 
 › Aborting with an error is not ideal in an hook, as the user can't manually rerun it very well. It should rather commit anyway, and then restore the staged/unstaged stuff.
 
+› Alright, what did we need to discuss? Still only 63% there.
+
+› *do we need to discuss
+
+› Like, what is still outstanding?
+
+› `instructions.md` is not that great, I'd prefer it in `query.md` directly. Just to make sure, we're talking about `/compact some text here` and specifically _some text here_ part?
+
