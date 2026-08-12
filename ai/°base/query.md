@@ -4830,7 +4830,7 @@ Possibly the folder name be `NNN.prompt_id`.
 > 3. Interactively rebase to squash/reorder commits as makes sense (fold auto-commit hook commits per the lplp skill rules as usual).
 > 4. If any rebase step needs to reset a branch pointer, use `--keep` instead of `--hard`.
 
-❯ Actually, it shall not be a alternative way, but the main & only way. Possibly the command to run for actual commits could be added as something like `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`, right? Which would also allow to whitelist those in the `settings.json`, under the delete `pending-commit.md` line. While at it, make the rebase messages/scripts not be at `/tmp/*` but `./ai/git/*`.
+❯ Actually, it shall not be an alternative way, but the main & only way. Possibly the command to run for actual commits could be added as something like `./scripts/tag_backup.py && git commit -F ai/git/pending-commit.md`, right? Which would also allow to whitelist those in the `settings.json`, under the delete `pending-commit.md` line. While at it, make the rebase messages/scripts not be at `/tmp/*` but `./ai/git/*`.
 
 ❯ Task Notification:
 > - Task `b383u155w` <kbd>killed</kbd>
