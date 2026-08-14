@@ -102,3 +102,12 @@ I guess checking for merge commits is easier than the clean base, but possibly n
 > </details>
 >
 
+❯ 
+- Correct my spec with the missing descoveries
+- Remove now unneeded stuff like `akamai_ssl.py`, _swappable via config.py_ stuff. Let's keep it simple.
+- it needs a simple `crawl` subcommand, combining the others for simplicity.
+- The crawl shall be automated by github worker, commiting the result as PR (reuse existing branch if exists, so add a second+ commit on top of it)
+- The crawl (and the related separate subcommands) have a `--add-to-git` flag which when present adds written files to the git index (`git add`).
+- Enable the LPLP commit skill for the actual implementation, commit **before** running tests, as the fixes you didn't see at first shall be a separate commit for now. Also fold in unpushed ai commits to the matching implementation.
+
+

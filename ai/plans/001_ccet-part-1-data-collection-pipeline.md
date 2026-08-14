@@ -6,13 +6,13 @@
 
 This repo is built on the `luckydonald/base` template — everything under `°base`-prefixed paths is generic reusable tooling, not app code. There is currently **no application code anywhere in the repo** (no `src/`, no root `pyproject.toml`, no `data/`). A prior attempt to fetch the guide page via the generic `scripts/download_ref.py` tool failed (it uses plain `urllib.request`, no SSL handling) and left only a 0-byte placeholder at `ai/references/https/steamcommunity.com/sharedfiles/filedetails/_.md`. **The real DOM structure of `#profileBlock > .guide` is unknown** — the spec's selectors (`.bb_h2`, `.bb_table`) and column assumptions are a starting hypothesis to verify against the live page, not a confirmed schema.
 
-User decisions: new code lives in a standalone `src/ccet_crawler/` package with its own root `pyproject.toml` (`uv`-managed), separate from `scripts/°base/`. Tests mirror the package structure under `tests/ccet_crawler/**` (not a flat `tests/`). HTTP client: try `requests` with a custom SSL adapter first for the Akamai CDN TLS quirk; may fall back to `httpx` — this choice should stay swappable, not hardcoded into parsing logic. Requirement variants are discriminated by a lowercase-snake-case `StrEnum` (`kind: RequirementKind`), not a bare `Literal[...]` string.
+User decisions: new code lives in a standalone `src/ccet_crawler/` package with its own root `pyproject.toml` (`uv`-managed), separate from `scripts/°base/`. Tests mirror the package structure under `tests/ccet_crawler/**` (not a flat `tests/`). Requirement variants are discriminated by a lowercase-snake-case `StrEnum` (`kind: RequirementKind`), not a bare `Literal[...]` string. Fetching is kept simple — plain `requests`, no client abstraction (see Learnings: no Akamai/SSL workaround is actually needed). A `crawl` subcommand combines fetch+parse+write for normal use. Every subcommand accepts `--add-to-git` to `git add` the files it wrote. The crawl is also run by a scheduled GitHub Actions workflow that commits results and opens/updates a PR.
 
 ## Learnings from the live fetch spike (already done)
 
 The guide page was fetched for real and saved to `data/crawl/guide/raw.html` (636 KB) + `data/crawl/guide/rawish.md` (a rough `markdownify` pass, for human skimming only — not the curated `data/guide/README.md`). Concrete findings that change/confirm the design below:
 
-- **No SSL/Akamai workaround was needed** in this environment — plain `urllib.request` and `requests` both got a 200 with just a normal browser `User-Agent` header. Build `fetch/client.py` with a plain `requests.Session` first (no custom `SSLContext`); keep `akamai_ssl.py` as an opt-in swap behind the same `HttpClient` Protocol, only implemented if a real deployment/CI environment actually fails the handshake. Don't build speculative TLS-patching code against a problem that isn't reproducing.
+- **No SSL/Akamai workaround was needed** — plain `urllib.request` and `requests` both got a 200 with just a normal browser `User-Agent` header. The spec's "patch SSL to connect through the Akamai CDN" concern doesn't reproduce; dropped the `HttpClient` Protocol/adapter abstraction entirely in favor of a single plain `requests.get(...)` call in `fetch/client.py`. If a real deployment (e.g. the GitHub Actions runner IP range) ever does get blocked, add the workaround then, against the actual failure — not speculatively.
 - **Requirement tables are div-based, not real `<table>` elements**: `.bb_table` → `.bb_table_tr` → `.bb_table_td` (all `<div>`s). Parser must `select('.bb_table_tr')` / `.bb_table_td`, not `tr`/`td`.
 - **Every requirement row has exactly 4 `.bb_table_td` cells** (confirmed across 1,404 real rows, 100% consistent): column 0 is the level label, columns 1–3 are requirements classified by content pattern, not position — confirms the plan's "parse each cell independently" approach. All 9 level labels appear verbatim in every table seen (no renames in current data) — still keep the raw-label + optional-resolved-enum fallback for future events.
 - **New requirement kind needed**: bare money cells like `$15`, `$1,000`, `$150,000,000` (73 occurrences) — these are not `amount item ($price)` purchases, just a flat cash amount. Add `MoneyRequirement` (`kind: RequirementKind.money`, `amount: int`) alongside the other variants in `models/requirements.py`.
@@ -33,12 +33,11 @@ Code style (`ai/skills/code-style/references/py.md`, must follow exactly):
 ```
 pyproject.toml                     # root-level, uv-managed, src-layout
 src/ccet_crawler/
-  cli.py                # argparse subcommands: fetch / parse / write / all
+  cli.py                # argparse subcommands: fetch / parse / write / crawl (= fetch+parse+write), each with --add-to-git
+  git_add.py              # thin `git add <path>` helper shared by every subcommand's --add-to-git
   config.py              # URLs, data/ paths, GIRL level order, fixed date-activity prices
   fetch/
-    client.py            # HttpClient Protocol + FetchedPage — parsing layer depends only on this
-    akamai_ssl.py         # requests.Session + custom HTTPAdapter/SSLContext for the Akamai TLS quirk
-    httpx_client.py       # fallback HttpClient impl using httpx, swappable via config.py
+    client.py            # fetch_guide_page(url) -> FetchedPage, plain requests.get, no abstraction layer
   html/
     guide_page.py         # split raw HTML into ordered sections on heading boundaries
     section_classify.py   # classify each section: Girl Reqs / Alt. Reqs / Hobby & Job Info
@@ -66,7 +65,6 @@ tests/ccet_crawler/                 # mirrors src/ccet_crawler/ 1:1
   models/test_*.py
   assemble/test_sanity_checks.py, assemble/test_duplicate_tables.py
   write/test_markdown_guide.py, write/test_image_store.py, write/test_event_json.py
-  fetch/test_client_contract.py      # HttpClient Protocol vs stub, no live network
 ```
 
 Requirement variants (`models/requirements.py`), discriminated by a `kind: RequirementKind` field where `RequirementKind` is a lowercase-snake-case `StrEnum` (`job_level`, `work_at_job`, `hobby_level`, `purchase`, `money`, `date_activity`, `girls_at_level`, `gild_jobs`, `gild_hobbies`): `JobLevelRequirement`, `WorkAtJobRequirement`, `HobbyLevelRequirement`, `PurchaseRequirement`, `MoneyRequirement` (bare cash amount, no item — real data has ~73 of these, e.g. `$15`, `$150,000,000`), `DateActivityRequirement`, `GirlsAtLevelRequirement`, `GildJobsRequirement`, `GildHobbiesRequirement`. `config.py` holds the fixed date-activity price table (Moonlight Stroll $500, Movie Theater $25,000, Sightseeing $5,000, Beach $2,500) used to fill/validate `DateActivityRequirement.price_per_date`.
@@ -75,7 +73,7 @@ Requirement variants (`models/requirements.py`), discriminated by a `kind: Requi
 
 ## Fetch strategy
 
-`fetch/client.py` defines a minimal `HttpClient` Protocol so `html/`/`models/`/`write/` never import `requests` or `httpx` directly. Since the live-fetch spike showed a plain `requests.Session` with a normal browser `User-Agent` already gets a 200 (no Akamai/TLS blocking observed), the default implementation is a plain `requests`-based client — no custom `SSLContext` needed for now. `akamai_ssl.py` stays as a documented, not-yet-needed extension point behind the same Protocol (custom `HTTPAdapter`/`SSLContext`, e.g. lowered cipher security level) in case a different network environment (CI, a different IP range) does hit the CDN block; `httpx_client.py` is the other swappable alternative. Either swap is a single constant change in `config.py` — no other module changes.
+Kept deliberately simple per the live-fetch spike: `fetch/client.py` is one function, `fetch_guide_page(url: str) -> FetchedPage`, using `requests.get(url, headers={"User-Agent": ...}, timeout=...)`. No client abstraction, no Protocol, no pluggable backends — there's nothing to swap since the plain request already works. If a future environment (e.g. the GitHub Actions runner) turns out to be blocked, handle it then by editing this one function.
 
 ## Parsing strategy — discover DOM first
 
@@ -94,11 +92,11 @@ Requirement variants (`models/requirements.py`), discriminated by a `kind: Requi
 
 ## CLI
 
-`argparse` subcommands in `cli.py`: `fetch`, `parse --input <path>` (dumps structured sections for inspection), `write --input <path>`, `all`. `[project.scripts] ccet-crawler = "ccet_crawler.cli:main"` for `uv run ccet-crawler ...`.
+`argparse` subcommands in `cli.py`: `fetch`, `parse --input <path>` (dumps structured sections for inspection), `write --input <path>`, and `crawl` (fetch + parse + write in sequence — the normal entry point for both local use and the GitHub workflow). Every subcommand accepts `--add-to-git`: after writing its file(s), it calls a shared `git_add.py` helper (`subprocess.run(["git", "add", str(path)])`) for each path it wrote, so the workflow doesn't need its own `git add -A` and can't accidentally stage unrelated files. `[project.scripts] ccet-crawler = "ccet_crawler.cli:main"` for `uv run ccet-crawler ...`.
 
 ## pyproject.toml (new, root-level)
 
-Dependencies: `requests`, `beautifulsoup4`, `pydantic>=2`, `markdownify`. Optional extra: `httpx` (fallback client only, not a hard dependency). No `pillow` (plain `hashlib` suffices), no `lxml` initially (add later only if the real page's HTML needs it — plausible for Steam Community pages, flag as likely follow-up). `[tool.uv] package = true`. Test runner: stdlib `unittest`, no `pytest`.
+Dependencies: `requests`, `beautifulsoup4`, `pydantic>=2`, `markdownify`. No `httpx` (not needed — see Fetch strategy), no `pillow` (plain `hashlib` suffices), no `lxml` initially (add later only if the real page's HTML needs it — plausible for Steam Community pages, flag as likely follow-up). `[tool.uv] package = true`. Test runner: stdlib `unittest`, no `pytest`.
 
 ## Testing
 
@@ -106,29 +104,51 @@ Buildable now, no live HTML needed: `models/*` validation, `PayDetail.time_block
 
 `guide_page.py`/`section_classify.py`/`hobby_job_info.py` tests are built against `tests/ccet_crawler/fixtures/guide_page_sample.html` (trimmed from the already-fetched `data/crawl/guide/raw.html`, see implementation order step 4).
 
-`fetch/client.py`'s plain-`requests` default is not conventionally unit-tested beyond its `HttpClient` Protocol contract against a stub, in `tests/ccet_crawler/fetch/test_client_contract.py`; `akamai_ssl.py`/`httpx_client.py` stay unimplemented until actually needed (see Learnings).
+`fetch/client.py` (a single `requests.get` call) is inherently a live-network concern and isn't unit-tested; it's exercised directly by the `fetch`/`crawl` subcommands against the real URL (see Verification). `git_add.py`'s helper is trivially tested by mocking `subprocess.run`.
 
 ## Implementation order
 
 0. ~~Fetch spike~~ — done. `data/crawl/guide/raw.html` + `rawish.md` are saved; real selectors/structure confirmed (see Learnings above).
-1. `fetch/client.py` (plain `requests`-based `HttpClient`) + `cli.py fetch` subcommand, wired to (re)produce `data/crawl/guide/raw.html`/`rawish.md` the same way the spike did.
+1. `fetch/client.py` (single `fetch_guide_page` function) + `git_add.py` helper + `cli.py fetch --add-to-git` subcommand, wired to (re)produce `data/crawl/guide/raw.html`/`rawish.md` the same way the spike did.
 2. `models/` (spec- and learnings-driven, including `MoneyRequirement` and the confirmed 9-level enum — no dependency on further HTML work).
 3. `html/requirement_cell.py` + tests, against both the spec's literal examples and real patterns confirmed above (`Lv N Job (Track)`, `Work at Track`, `N Hobby`, `N Item ($Price)`, `$Amount`, `N (Moonlight Stroll|Movie Theater|Sightseeing|Beach)`, `N Girls at Level`, `Gild any N (Jobs|Hobbies)`).
 4. Build `tests/ccet_crawler/fixtures/guide_page_sample.html` by trimming `data/crawl/guide/raw.html` down to one full event (recommend the small `Spooky Event 2022 (Cassia)` pair — 2 girls — for Girl Reqs + Hobby & Job Info; a second trimmed fixture from `Outer Space Event 2025 (Loola)` to cover the Alt. Reqs duplicate-table case).
 5. `html/guide_page.py`, `section_classify.py`, `girl_table.py`, `hobby_job_info.py`, `images.py` against those fixtures.
 6. `assemble/` (`duplicate_tables.py`, `sanity_checks.py`).
 7. `write/` (`slug.py`, `image_store.py`, `markdown_guide.py`, `event_json.py`).
-8. Wire `cli.py parse`/`write`/`all`, run end-to-end against the real saved `raw.html`, spot-check `data/guide/README.md` and sample `data/events/2025/*.json` files.
+8. Wire `cli.py parse`/`write`/`crawl`, each with `--add-to-git`; run end-to-end against the real saved `raw.html`, spot-check `data/guide/README.md` and sample `data/events/2025/*.json` files.
+9. `.github/workflows/crawl.yml` — scheduled workflow (see below).
+
+## GitHub Actions automation
+
+`.github/workflows/crawl.yml`, styled after the existing `codex-issue-agent.yml` (bot git identity, `gh` CLI via `GH_TOKEN: ${{ github.token }}`, `permissions: contents: write, pull-requests: write`):
+
+- Trigger: `schedule` (e.g. weekly cron) + `workflow_dispatch` for manual runs.
+- Fixed branch name `data-crawl/guide-update` (not per-run unique) so repeated runs land on the same PR instead of opening a new one each time.
+- Steps:
+  1. Checkout the default branch.
+  2. Check whether `data-crawl/guide-update` already exists on `origin` (`git ls-remote --exit-code --heads origin data-crawl/guide-update`). If it exists, `git switch` to it (tracking `origin/data-crawl/guide-update`) so the new commit lands on top of prior crawl commits; otherwise create it fresh off the default branch.
+  3. `uv run --project . ccet-crawler crawl --add-to-git`.
+  4. If `git diff --cached --quiet` reports staged changes, commit (bot identity, message like `"Update guide crawl data"`) and push the branch. If nothing is staged, stop — no PR/commit needed for an unchanged crawl.
+  5. Check for an existing open PR from that branch (`gh pr list --head data-crawl/guide-update --state open`). If none exists, `gh pr create` (mirroring the codex workflow's pattern); if one exists, the push in step 4 already updated it — nothing more to do.
+
+## Implementation workflow (for building this)
+
+- Enable the `commit-with-lplp-style` skill for the implementation work itself.
+- Commit after each completed step from Implementation order above, **before** running its tests — so if a first-pass mistake only surfaces once tests run, the fix lands as its own follow-up commit rather than being folded silently into the first one.
+- Fold any unpushed `ai:` prompt/decision auto-commits into the matching implementation commit (per the skill's normal behavior), rather than leaving them as separate noise commits.
 
 ## Verification
 
-- `uv run --project . python -m unittest discover -s tests/ccet_crawler` — all non-live tests pass.
-- `uv run ccet-crawler fetch` succeeds against the live Steam URL, reproducing `data/crawl/guide/raw.html` and `data/crawl/guide/rawish.md` (already confirmed working during the spike).
-- `uv run ccet-crawler all` produces `data/guide/README.md` with working relative image links, and at least one plausible `data/events/2025/*.json` file that round-trips through the `Event`/`CharacterRequirementTable` models.
+- `uv run --project . python -m unittest discover -s tests/ccet_crawler` — all tests pass.
+- `uv run ccet-crawler fetch --add-to-git` succeeds against the live Steam URL, reproducing `data/crawl/guide/raw.html` and `data/crawl/guide/rawish.md` (already confirmed working during the spike), and stages them (`git status` shows them staged).
+- `uv run ccet-crawler crawl` produces `data/guide/README.md` with working relative image links, and at least one plausible `data/events/2025/*.json` file that round-trips through the `Event`/`CharacterRequirementTable` models.
 - Spot-check that `Event.warnings` is empty (or explicable) for at least one fully-parsed event, confirming the sanity check logic is sound.
+- Dry-run the branch-reuse logic in `crawl.yml` locally (or via `act`/manual `workflow_dispatch`) at least once to confirm it correctly finds/reuses an existing `data-crawl/guide-update` branch instead of duplicating PRs.
 
 ### Key reference files
 - `ai/plans/init.md` — authoritative spec
 - `ai/skills/code-style/references/py.md` — style rules
 - `scripts/°base/pyproject.toml` — structural precedent for the new root `pyproject.toml`
 - `data/crawl/guide/raw.html` / `data/crawl/guide/rawish.md` — the real fetched guide page, already saved; use directly to build `tests/ccet_crawler/fixtures/guide_page_sample.html` and to verify selectors while implementing `html/`
+- `.github/workflows/codex-issue-agent.yml` — style precedent for the new `crawl.yml` (bot git identity, `gh pr create`/`gh pr list` usage, `GH_TOKEN` wiring)
