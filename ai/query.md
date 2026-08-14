@@ -15,3 +15,10 @@
 
 #### Previous user prompts:
 
+❯ No, the logic shall be:
+1. if `empty/init`: rebase (move) mane to `base/base`,
+2. (else -> not initial) if we (old version of) `base/base` + our commits: rebase mane ontop `base/base`.
+3. (else) Technically this means this branch must previously have the `base/base` merged: merge again with `base/base` (+autoshelve)
+
+I guess checking for merge commits is easier than the clean base, but possibly not the tip of it, but only like commits ontop (rebase onto), so maybe the if should be flipped.
+
