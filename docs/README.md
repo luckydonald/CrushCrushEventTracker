@@ -211,7 +211,27 @@ git fetch empty init
 git fetch base base
 git lfs install
 git merge --allow-unrelated-histories --no-verify empty/init
-git merge --no-ff --no-verify base/base
+if [ "$(git rev-parse HEAD)" = "$(git rev-parse empty/init)" ]; then
+  echo "HEAD is at the empty/init tip: fast forwarding…"
+  git rebase --onto base/base mane
+else
+  BASE_TIP="$(git rev-parse base/base)"
+  # A commit that lists $BASE_TIP as one of *two or more* parents means
+  # base/base was joined via a merge commit, not replayed via rebase.
+  MERGED_BEFORE="$(git rev-list HEAD --parents | awk -v base="$BASE_TIP" '
+      { for (i = 2; i <= NF; i++) if ($i == base && NF > 2) { print; exit } }
+  ')"
+
+  if [ -z "$MERGED_BEFORE" ]; then
+      echo "Commits sit on an old base/base + our own on top: rebasing onto base/base…"                                                                                                                       
+      git rebase --onto base/base mane
+  else
+      echo "base/base was previously merged in: merging again…"
+      git stash --include-untracked
+      git merge --no-ff --no-verify base/base
+      git stash pop
+  fi
+fi
 pre-commit install
 [ "$(git config user.name)" = "Lucky Lucy" ] || printf '\033[31mERROR: git user.name is "%s" is not "Lucky Lucy" — fix it if you are me, and I forgot.\033[0m\nhttps://github.com/luckydonald/base/blob/base/README.md#fix-user\n' "$(git config user.name)"
 ```
