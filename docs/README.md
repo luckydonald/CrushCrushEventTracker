@@ -213,7 +213,7 @@ git lfs install
 git merge --allow-unrelated-histories --no-verify empty/init
 if [ "$(git rev-parse HEAD)" = "$(git rev-parse empty/init)" ]; then
   echo "HEAD is at the empty/init tip: fast forwarding…"
-  git rebase --onto base/base mane
+  git rebase --autostash --onto base/base mane
 else
   BASE_TIP="$(git rev-parse base/base)"
   # A commit that lists $BASE_TIP as one of *two or more* parents means
@@ -224,7 +224,7 @@ else
 
   if [ -z "$MERGED_BEFORE" ]; then
       echo "Commits sit on an old base/base + our own on top: rebasing onto base/base…"                                                                                                                       
-      git rebase --onto base/base mane
+      git rebase --autostash --onto base/base mane
   else
       echo "base/base was previously merged in: merging again…"
       git stash --include-untracked
