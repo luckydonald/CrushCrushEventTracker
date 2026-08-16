@@ -1,0 +1,77 @@
+name: Guide Crawl
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  CRAWL_BRANCH: data-crawl/guide-update
+
+jobs:
+  crawl:
+    name: Crawl the CrushCrush guide and update data/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out default branch
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.14"
+
+      - name: Reuse or create the crawl branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin "$CRAWL_BRANCH"; then
+            git fetch origin "$CRAWL_BRANCH"
+            git switch -c "$CRAWL_BRANCH" --track "origin/$CRAWL_BRANCH"
+          else
+            git switch -c "$CRAWL_BRANCH"
+          fi
+
+      - name: Run the crawl
+        run: uv run --project . ccet-crawler crawl --add-to-git
+
+      - name: Commit and push if there are staged changes
+        id: commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git commit -m "Update guide crawl data"
+          git push --set-upstream origin "$CRAWL_BRANCH"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open a pull request if none is open yet
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          existing_pr="$(gh pr list --head "$CRAWL_BRANCH" --state open --json number --jq '.[0].number')"
+          if [ -n "$existing_pr" ]; then
+            echo "Existing open PR #$existing_pr already tracks $CRAWL_BRANCH; push already updated it."
+            exit 0
+          fi
+
+          gh pr create \
+            --base "$BASE_REF" \
+            --head "$CRAWL_BRANCH" \
+            --title "Update guide crawl data" \
+            --body "Automated update of \`data/guide/\` and \`data/events/\` from the Steam Community guide page."
