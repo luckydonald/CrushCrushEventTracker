@@ -16,6 +16,7 @@ class RequirementKind(StrEnum):
     GIRLS_AT_LEVEL = "girls_at_level"
     GILD_JOBS = "gild_jobs"
     GILD_HOBBIES = "gild_hobbies"
+    ALL_HOBBIES_LEVEL = "all_hobbies_level"
 # end class
 
 
@@ -81,6 +82,12 @@ class GildHobbiesRequirement(BaseModel):
 # end class
 
 
+class AllHobbiesLevelRequirement(BaseModel):
+    kind: Literal[RequirementKind.ALL_HOBBIES_LEVEL] = RequirementKind.ALL_HOBBIES_LEVEL
+    level: int
+# end class
+
+
 Requirement = Annotated[
     Union[
         JobLevelRequirement,
@@ -92,6 +99,7 @@ Requirement = Annotated[
         GirlsAtLevelRequirement,
         GildJobsRequirement,
         GildHobbiesRequirement,
+        AllHobbiesLevelRequirement,
     ],
     Field(discriminator="kind"),
 ]
