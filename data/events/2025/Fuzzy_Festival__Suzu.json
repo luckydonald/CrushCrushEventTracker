@@ -1,0 +1,530 @@
+{
+  "name": "Fuzzy Festival",
+  "year": 2025,
+  "main_girl": "Ginger & Wasabi",
+  "description": {
+    "text": "NOTE: These requirements changed at some point after the global run in January, but were changed back before the release of the DLC.",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Suzu",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 15,
+              "item_name": "Firefly Jar",
+              "total_price": 14400
+            },
+            {
+              "kind": "hobby_level",
+              "level": 15,
+              "hobby_name": "Optimism"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Goldfish",
+              "total_price": 9600
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 25,
+              "item_name": "Dog Whistle",
+              "total_price": 6000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 17,
+              "hobby_name": "Luck"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Handy Bag",
+              "total_price": 60000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Sign Holder",
+              "job_track": "Mascot"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 21,
+              "hobby_name": "Focus"
+            },
+            {
+              "kind": "purchase",
+              "amount": 200,
+              "item_name": "Fur Comb",
+              "total_price": 384000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Fishing For Compliments",
+              "job_track": "Fisher"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 28,
+              "hobby_name": "Creative"
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Scratching Post",
+              "total_price": 1125000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "money",
+              "amount": 1000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 6,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 8,
+              "item_name": "Toilet Paper Roll",
+              "total_price": 5400000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 5000,
+              "item_name": "Firefly Jar",
+              "total_price": 4800000
+            },
+            {
+              "kind": "date_activity",
+              "count": 9,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Wind Up Mouse",
+              "total_price": 18225000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "money",
+              "amount": 20000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Catnip Toy",
+              "total_price": 72900000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 50000,
+              "item_name": "Firefly Jar",
+              "total_price": 48000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 15,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Baseball",
+              "total_price": 218700000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Halter Holder",
+              "job_track": "Equestrian"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 45,
+              "hobby_name": "Bravery"
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Plushy",
+              "total_price": 820125000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 56,
+        "hobby_name": "Focus",
+        "unlock_character": "Amelia Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 70,
+        "hobby_name": "Optimism",
+        "unlock_character": "Amelia Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 67,
+        "hobby_name": "Charisma",
+        "unlock_character": "Amelia Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Trustworthy",
+        "unlock_character": "Amelia Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Innovation",
+        "unlock_character": "Amelia Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Responsible",
+        "unlock_character": "Amelia Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 73,
+        "hobby_name": "Luck",
+        "unlock_character": "Quill Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 65,
+        "hobby_name": "Tenderness",
+        "unlock_character": "Quill Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 71,
+        "hobby_name": "Caring",
+        "unlock_character": "Catara Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 51,
+        "hobby_name": "Creative",
+        "unlock_character": "Suzu Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 54,
+        "hobby_name": "Bravery",
+        "unlock_character": "Quill Girlfriend",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Peaceful",
+        "unlock_character": "Tessa Acquaintance",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 8,
+          "job_track": "Dog Walker",
+          "job_names": [
+            "Dog Lover",
+            "Dog Leasher",
+            "Leash Lengthener",
+            "Park Wanderer",
+            "Puddle Peruser",
+            "Stop 'N Sniffer",
+            "Poop Scooper",
+            "Sudden Sprinter",
+            "Paw Washer",
+            "Post Walk Snuggler"
+          ],
+          "highlighted_job_name": "Sudden Sprinter"
+        },
+        {
+          "level": 4,
+          "job_track": "Fisher",
+          "job_names": [
+            "Gone Fishin",
+            "Fish Finder",
+            "Fishmonger",
+            "Fishing For Compliments",
+            "Bait and Switcher",
+            "Big Tuna",
+            "Bass Pro",
+            "Extreme Angler",
+            "Shark Wrangler",
+            "Deadliest Catcher"
+          ],
+          "highlighted_job_name": "Fishing For Compliments"
+        },
+        {
+          "level": 2,
+          "job_track": "Mascot",
+          "job_names": [
+            "Costume Cleaner",
+            "Sign Holder",
+            "Crowd Counselor",
+            "Hype-Person",
+            "Life-Sized Animal Plush",
+            "Picture Poser",
+            "High-Five Giver",
+            "Shirt Launcher",
+            "Cutest Celebrity",
+            "Mascot Whisperer"
+          ],
+          "highlighted_job_name": "Sign Holder"
+        },
+        {
+          "level": 5,
+          "job_track": "Animal Trainer",
+          "job_names": [
+            "Treat Dispenser",
+            "Tennis Ball Juggler",
+            "Sit Stay Scholar",
+            "Paw Shaker",
+            "Roll Over Reviewer",
+            "Making Fetch Happen",
+            "Pawsitive Reinforcer",
+            "Off-Leash Enthusiast",
+            "Agility Coach",
+            "Ulti-mutt Dog Trainer"
+          ],
+          "highlighted_job_name": "Roll Over Reviewer"
+        },
+        {
+          "level": 1,
+          "job_track": "Paleontologist",
+          "job_names": [
+            "Intern",
+            "Field Worker",
+            "Rock Reviewer",
+            "Fossil Finder",
+            "Dig Site Supervisor",
+            "Skeleton Sorter",
+            "Relic Reconstructor",
+            "Dino Exhibit Designer",
+            "Extinct Animal Expert",
+            "Dr. Grant"
+          ],
+          "highlighted_job_name": "Intern"
+        },
+        {
+          "level": 6,
+          "job_track": "Equestrian",
+          "job_names": [
+            "Rodeo Clown",
+            "Tail Tender",
+            "Mane Manager",
+            "Saddle Shiner",
+            "Halter Holder",
+            "Junior Jumper",
+            "Great Galloper",
+            "Radiant Rider",
+            "Equine Expert",
+            "Horse Whisperer"
+          ],
+          "highlighted_job_name": "Junior Jumper"
+        },
+        {
+          "level": 4,
+          "job_track": "Falconer",
+          "job_names": [
+            "Bird Watcher",
+            "Owl Observer",
+            "Eagle Eyeballer",
+            "Peregrine Pal",
+            "Falcon Friend",
+            "Kestral Keeper",
+            "Osprey Owner",
+            "Buzzard Breeder",
+            "Hawk Hawker",
+            "Wing Nut"
+          ],
+          "highlighted_job_name": "Peregrine Pal"
+        },
+        {
+          "level": 6,
+          "job_track": "Vet",
+          "job_names": [
+            "Anatomy Admirer",
+            "Nose Booper",
+            "Ear Examiner",
+            "Heartbeat Hearer",
+            "Temperature Taker",
+            "Breath Checker",
+            "Flea Preventer",
+            "Toe Bean Inspector",
+            "Bandage Wrapper",
+            "Ouchie Kisser"
+          ],
+          "highlighted_job_name": "Breath Checker"
+        },
+        {
+          "level": 4,
+          "job_track": "Lion Tamer",
+          "job_names": [
+            "Scratching Post",
+            "Food Supplier",
+            "Cardboard Box Builder",
+            "Pspsps Perfectionist",
+            "Chin Scritcher",
+            "Mane Minder",
+            "Paw Pamperer",
+            "Roar Recorder",
+            "Lion Listener",
+            "Lion Whisperer"
+          ],
+          "highlighted_job_name": "Pspsps Perfectionist"
+        },
+        {
+          "level": 8,
+          "job_track": "Zoologist",
+          "job_names": [
+            "Aardvark Appreciator",
+            "Duck Describer",
+            "Giraffe Greeter",
+            "Capybara Cuddler",
+            "Boar Brusher",
+            "Warthog Washer",
+            "Elephant Exerciser",
+            "Meercat Manager",
+            "Hippo Handler",
+            "Panda Pamperer"
+          ],
+          "highlighted_job_name": "Meercat Manager"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Zoologist",
+        "money_per_second": 4032984,
+        "money_per_time_block_per_second": 403298
+      },
+      {
+        "job_track": "Lion Tamer",
+        "money_per_second": 1024000,
+        "money_per_time_block_per_second": 128000
+      },
+      {
+        "job_track": "Vet",
+        "money_per_second": 819200,
+        "money_per_time_block_per_second": 409600
+      },
+      {
+        "job_track": "Falconer",
+        "money_per_second": 758528,
+        "money_per_time_block_per_second": 126421
+      },
+      {
+        "job_track": "Paleontologist",
+        "money_per_second": 460800,
+        "money_per_time_block_per_second": 65828
+      },
+      {
+        "job_track": "Equestrian",
+        "money_per_second": 219428,
+        "money_per_time_block_per_second": 27428
+      },
+      {
+        "job_track": "Animal Trainer",
+        "money_per_second": 87771,
+        "money_per_time_block_per_second": 21942
+      },
+      {
+        "job_track": "Mascot",
+        "money_per_second": 51200,
+        "money_per_time_block_per_second": 10240
+      },
+      {
+        "job_track": "Fisher",
+        "money_per_second": 12800,
+        "money_per_time_block_per_second": 4266
+      },
+      {
+        "job_track": "Dog Walker",
+        "money_per_second": 6144,
+        "money_per_time_block_per_second": 3072
+      }
+    ]
+  },
+  "warnings": []
+}

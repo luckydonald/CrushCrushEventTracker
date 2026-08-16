@@ -1,0 +1,535 @@
+{
+  "name": "Spring Fling",
+  "year": 2023,
+  "main_girl": "Pepper",
+  "description": {
+    "text": "Note: A few requirements were different in the original run. This table reflects the most recent run.",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Pepper",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 2300,
+              "item_name": "Carrot Cake",
+              "total_price": 38037400
+            },
+            {
+              "kind": "hobby_level",
+              "level": 53,
+              "hobby_name": "Easygoing"
+            },
+            {
+              "kind": "purchase",
+              "amount": 9,
+              "item_name": "Hot Cross Bun",
+              "total_price": 33340608
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 52,
+              "hobby_name": "Sweet Tooth"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 48,
+              "hobby_name": "Selfless"
+            },
+            {
+              "kind": "purchase",
+              "amount": 13,
+              "item_name": "Painted Eggs",
+              "total_price": 216713952
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Flower Picker",
+              "job_track": "Florist"
+            },
+            {
+              "kind": "all_hobbies_level",
+              "level": 47
+            },
+            {
+              "kind": "purchase",
+              "amount": 222,
+              "item_name": "Hot Cross Bun",
+              "total_price": 822401664
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 67,
+              "hobby_name": "Artistic"
+            },
+            {
+              "kind": "purchase",
+              "amount": 9,
+              "item_name": "Painted Eggs",
+              "total_price": 150032736
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Tulips",
+              "total_price": 1880000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 69,
+              "hobby_name": "Sweet Tooth"
+            },
+            {
+              "kind": "date_activity",
+              "count": 29,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 750,
+              "item_name": "Painted Eggs",
+              "total_price": 12500000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 9,
+              "job_name": "Ostentatious Egg Accumulator",
+              "job_track": "Ornamental Egg Collector"
+            },
+            {
+              "kind": "date_activity",
+              "count": 29,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 100,
+              "item_name": "Tulips",
+              "total_price": 37510000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 70,
+              "hobby_name": "Easygoing"
+            },
+            {
+              "kind": "date_activity",
+              "count": 29,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 60,
+              "item_name": "Seedling",
+              "total_price": 135030000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "girls_at_level",
+              "count": 6,
+              "level_label": "Lover"
+            },
+            {
+              "kind": "date_activity",
+              "count": 29,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 33,
+              "item_name": "Veggie Tray",
+              "total_price": 594130000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 8,
+              "job_name": "Butter Scotcher",
+              "job_track": "Candy Maker"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 72,
+              "hobby_name": "Selfless"
+            },
+            {
+              "kind": "purchase",
+              "amount": 15,
+              "item_name": "Seeds",
+              "total_price": 2970000000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 1,
+        "hobby_name": "hobby must be gilded.",
+        "unlock_character": null,
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Responsible",
+        "unlock_character": "Mallory Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 70,
+        "hobby_name": "Easygoing",
+        "unlock_character": "Mallory Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 67,
+        "hobby_name": "Artistic",
+        "unlock_character": "Mallory Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Patience",
+        "unlock_character": "Karma Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Sweet Tooth",
+        "unlock_character": "Mallory Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 52,
+        "hobby_name": "Quirky",
+        "unlock_character": "Karma Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Adventurous",
+        "unlock_character": "Elle Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Resourceful",
+        "unlock_character": "Elle Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Caring",
+        "unlock_character": "Elle Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Observant",
+        "unlock_character": "Wendy Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 63,
+        "hobby_name": "Ambitious",
+        "unlock_character": "Wendy Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Selfless",
+        "unlock_character": "Cassie Adversary",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required. 3 jobs must be gilded. (4 in the original vesion of the event.)",
+    "jobs": {
+      "groups": [
+        {
+          "level": 5,
+          "job_track": "Spring Mascot",
+          "job_names": [
+            "Rabbit’s Foot Holder",
+            "Faux-Fur Wearer",
+            "Cottontail Copycat",
+            "Jelly Bean Distributor",
+            "Bunny Kigu Model",
+            "Silly Rabbit",
+            "Hare Apparent",
+            "Painted Egg Provider",
+            "Spring Festival Mascot",
+            "Mechanical Rabbit Suit Operator"
+          ],
+          "highlighted_job_name": "Bunny Kigu Model"
+        },
+        {
+          "level": 0,
+          "job_track": "Beekeeper",
+          "job_names": [
+            "Fond of Stripes",
+            "Just Winging It",
+            "Wanna-Bee",
+            "Busy Bee",
+            "Bee Friend",
+            "Honey Bunny",
+            "True Beeliever",
+            "Pollentician",
+            "The Bees Knees",
+            "Bee Lawyer"
+          ],
+          "highlighted_job_name": null
+        },
+        {
+          "level": 5,
+          "job_track": "Bonsai Artist",
+          "job_names": [
+            "Sprout Spritzer",
+            "Pot Protector",
+            "Sunlight Searcher",
+            "Soil Supervisor",
+            "Branch Braider",
+            "Leaf Lover",
+            "Blossom Buff",
+            "Fruit Fanatic",
+            "Mini-Tree Master",
+            "Growing Guru"
+          ],
+          "highlighted_job_name": "Branch Braider"
+        },
+        {
+          "level": 8,
+          "job_track": "Candy Maker",
+          "job_names": [
+            "Lollypop Licker",
+            "Gum Chewer",
+            "Taffy Puller",
+            "Peanut Butter Cupper",
+            "Lemon Dropper",
+            "Candy Flosser",
+            "Peppermint Barker",
+            "Butter Scotcher",
+            "Gummy Bearer",
+            "Eccentric Candy Factory Owner"
+          ],
+          "highlighted_job_name": "Butter Scotcher"
+        },
+        {
+          "level": 5,
+          "job_track": "Golden Gooseherder",
+          "job_names": [
+            "Gosling Gazer",
+            "Duck Pond Ponderer",
+            "Waddle Watcher",
+            "Tail Feather Shaker",
+            "Honk Herder",
+            "Gaggle Guider",
+            "Quacker Tracker",
+            "Egg Appraiser",
+            "Egg Trader",
+            "Eggstremely Rich Person"
+          ],
+          "highlighted_job_name": "Honk Herder"
+        },
+        {
+          "level": 7,
+          "job_track": "Tour Guide",
+          "job_names": [
+            "Walk Enjoyer",
+            "Map Double-Checker",
+            "Newbie Navigator",
+            "Place Pointer-Outer",
+            "Itinerary Adherent",
+            "Road Reviewer",
+            "Trip Planner",
+            "Route Representative",
+            "Adventure Advocate",
+            "Excursion Expert"
+          ],
+          "highlighted_job_name": "Trip Planner"
+        },
+        {
+          "level": 9,
+          "job_track": "Ornamental Egg Collector",
+          "job_names": [
+            "Plastic Egg Pack Rat",
+            "Regular Egg Reviewer",
+            "Adorned Egg Appreciator",
+            "Fancy Egg Fancier",
+            "Embellished Egg Enthusiast",
+            "Golden Egg Gatherer",
+            "Magnificent Egg Maven",
+            "Imperial Egg Influencer",
+            "Ostentatious Egg Accumulator",
+            "Resplendent Egg Antiquarian"
+          ],
+          "highlighted_job_name": "Ostentatious Egg Accumulator"
+        },
+        {
+          "level": 8,
+          "job_track": "Farmer",
+          "job_names": [
+            "Grower Shower",
+            "Garden Guru",
+            "Till Tender",
+            "Branch Rancher",
+            "Harvest Loon",
+            "Agriculturalist",
+            "Plant Enchanter",
+            "Sweeper Reaper",
+            "Cosmic Cultivator",
+            "The Green Thumb"
+          ],
+          "highlighted_job_name": "Sweeper Reaper"
+        },
+        {
+          "level": 2,
+          "job_track": "Chocolatier",
+          "job_names": [
+            "Chocoholic",
+            "Cocoa Kook",
+            "Assembly Line Gobbler",
+            "Truffle Tester",
+            "Chocolate Chipper",
+            "Ganache Stirrer",
+            "Fudge Drizzler",
+            "Chocolate Bar-tender",
+            "Artisanal Chocolate Maker",
+            "Confectionist Perfectionist"
+          ],
+          "highlighted_job_name": "Cocoa Kook"
+        },
+        {
+          "level": 2,
+          "job_track": "Florist",
+          "job_names": [
+            "Gardener",
+            "Flower Picker",
+            "Stem Trimmer",
+            "Leaf Cleaner",
+            "Bloom Arranger",
+            "Bouquet Builder",
+            "Custom Bouquet Builder",
+            "Rare Flower Researcher",
+            "Fancy Flower Shop Owner",
+            "Florist To The Stars"
+          ],
+          "highlighted_job_name": "Flower Picker"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Florist",
+        "money_per_second": 4688964,
+        "money_per_time_block_per_second": 520996
+      },
+      {
+        "job_track": "Chocolatier",
+        "money_per_second": 3166156,
+        "money_per_time_block_per_second": 395769
+      },
+      {
+        "job_track": "Farmer",
+        "money_per_second": 1311660,
+        "money_per_time_block_per_second": 327915
+      },
+      {
+        "job_track": "Ornamental Egg Collector",
+        "money_per_second": 1057433,
+        "money_per_time_block_per_second": 176238
+      },
+      {
+        "job_track": "Tour Guide",
+        "money_per_second": 1022890,
+        "money_per_time_block_per_second": 170481
+      },
+      {
+        "job_track": "Golden Gooseherder",
+        "money_per_second": 291840,
+        "money_per_time_block_per_second": 48640
+      },
+      {
+        "job_track": "Candy Maker",
+        "money_per_second": 214747,
+        "money_per_time_block_per_second": 53686
+      },
+      {
+        "job_track": "Bonsai Artist",
+        "money_per_second": 162389,
+        "money_per_time_block_per_second": 40597
+      },
+      {
+        "job_track": "Beekeeper",
+        "money_per_second": 92160,
+        "money_per_time_block_per_second": 30720
+      },
+      {
+        "job_track": "Spring Mascot",
+        "money_per_second": 60928,
+        "money_per_time_block_per_second": 30464
+      }
+    ]
+  },
+  "warnings": []
+}

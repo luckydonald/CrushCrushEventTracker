@@ -1,0 +1,527 @@
+{
+  "name": "Time Warp Event",
+  "year": 2025,
+  "main_girl": "Polly",
+  "description": {
+    "text": "NOTE: The girls in the August 2026 rerun are different, but the requirements are otherwise the same! We've just swapped in Vellatrix instead of Iro and Shibuki instead of Charlotte.",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Bearverly",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Arrowhead",
+              "total_price": 700
+            },
+            {
+              "kind": "hobby_level",
+              "level": 7,
+              "hobby_name": "Observant"
+            },
+            {
+              "kind": "money",
+              "amount": 2000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Archeologist"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 9,
+              "hobby_name": "Focus"
+            },
+            {
+              "kind": "purchase",
+              "amount": 10,
+              "item_name": "Dino Skull",
+              "total_price": 4000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Seer"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 14,
+              "hobby_name": "Strength"
+            },
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Venus Statue",
+              "total_price": 16000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 10,
+              "item_name": "Wheel",
+              "total_price": 2000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 20,
+              "hobby_name": "Experimentation"
+            },
+            {
+              "kind": "purchase",
+              "amount": 10,
+              "item_name": "Laurel Wreath",
+              "total_price": 73920
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 3,
+              "job_name": "Magic Monitor",
+              "job_track": "Witch Hunter"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 25,
+              "hobby_name": "Patience"
+            },
+            {
+              "kind": "purchase",
+              "amount": 16,
+              "item_name": "Helmet",
+              "total_price": 272032
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Helmet",
+              "total_price": 119014
+            },
+            {
+              "kind": "date_activity",
+              "count": 7,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Sword",
+              "total_price": 2040260
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 240,
+              "item_name": "Tut Mask",
+              "total_price": 806400
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 55,
+              "item_name": "Compass",
+              "total_price": 14587870
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 39,
+              "hobby_name": "Stamina"
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 52,
+              "item_name": "Pocket Watch",
+              "total_price": 115854180
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 7,
+              "job_name": "Broomstick Breaker",
+              "job_track": "Witch Hunter"
+            },
+            {
+              "kind": "date_activity",
+              "count": 20,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Floppy Disk",
+              "total_price": 529364520
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls. REMINDER: This event features resets! This is indicating when we think the first unlock of each hobby happens, but there's a lot we don't know at time of writing, so your mileage may vary in different resets.NOTE: The girls in the August 2026 rerun are different, but the requirements are otherwise the same! We've just swapped in Vellatrix instead of Iro and Shibuki instead of Charlotte.",
+    "hobbies": [
+      {
+        "max_level": 56,
+        "hobby_name": "Observant",
+        "unlock_character": "Polly Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Stamina",
+        "unlock_character": "Polly Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 58,
+        "hobby_name": "Science",
+        "unlock_character": "Polly Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Communication",
+        "unlock_character": "Bearverly Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Focus",
+        "unlock_character": "Bearverly Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Strength",
+        "unlock_character": "Bearverly Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Patience",
+        "unlock_character": "Vellatrix/Iro Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Experimentation",
+        "unlock_character": "Bearverly Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Taste",
+        "unlock_character": "Polly Sweetheart",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Elegance",
+        "unlock_character": "Vellatrix/Iro Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Creativity",
+        "unlock_character": "Shibuki/Charlotte Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 57,
+        "hobby_name": "Fashion",
+        "unlock_character": "Shibuki/Charlotte Frenemy",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required overall. REMINDER: This is not accounting for resets.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 4,
+          "job_track": "Time Machine Repair",
+          "job_names": [
+            "Dent Smoother",
+            "Tire Rotater",
+            "Brake Checker",
+            "Tune Up Technician",
+            "Fuel System Inspector",
+            "Engine Shampooer",
+            "Year Calibrator",
+            "Flux Capacitor Fixer",
+            "Timeline Tinkerer",
+            "Future Fanatic"
+          ],
+          "highlighted_job_name": "Tune Up Technician"
+        },
+        {
+          "level": 0,
+          "job_track": "Hunter/Gatherer",
+          "job_names": [
+            "Sustenance Spotter",
+            "Dandelion Devourer",
+            "Dodo Chaser",
+            "Fruit Tree Shaker",
+            "Mastodon Stalker",
+            "Salad Tosser",
+            "Coelacanth Catcher",
+            "Feisty Forager",
+            "Takedown Tactician",
+            "Recipe Writer"
+          ],
+          "highlighted_job_name": null
+        },
+        {
+          "level": 6,
+          "job_track": "Archeologist",
+          "job_names": [
+            "Field Worker",
+            "Fossil Finder",
+            "Dig Site Supervisor",
+            "Discovery Doubter",
+            "Relic Reconstructor",
+            "Yesteryear Scholar",
+            "Hawt Historian",
+            "Field Researcher",
+            "Adventuring Archaeologist",
+            "Dr. Jones"
+          ],
+          "highlighted_job_name": "Yesteryear Scholar"
+        },
+        {
+          "level": 6,
+          "job_track": "Seer",
+          "job_names": [
+            "Tarot Card Shuffler",
+            "Crystal Ball Polisher",
+            "Fortune Cookie Writer",
+            "Psychic Hotline Worker",
+            "Terrible Tasseographer",
+            "Mediocre Mentalist",
+            "Passable Palm Reader",
+            "Adept Astrologer",
+            "Flawless Forecaster",
+            "The Next Nostradamus"
+          ],
+          "highlighted_job_name": "Mediocre Mentalist"
+        },
+        {
+          "level": 7,
+          "job_track": "Witch Hunter",
+          "job_names": [
+            "Nosy Neighbor",
+            "Rumor Analyst",
+            "Magic Monitor",
+            "Spell Sniffer-Outer",
+            "Witch Weigher",
+            "Wand Confiscator",
+            "Broomstick Breaker",
+            "Coven Crusher",
+            "Hysteria Handler",
+            "Chief Witch Hunter"
+          ],
+          "highlighted_job_name": "Broomstick Breaker"
+        },
+        {
+          "level": 8,
+          "job_track": "Inventor",
+          "job_names": [
+            "Gadget Gatherer",
+            "Lightbulb Illuminator",
+            "Telephone Technician",
+            "Industrial Catalyst",
+            "Steam Power Pusher",
+            "Automation Advocate",
+            "Technology Wizard",
+            "Illustrious Inventor",
+            "Free Energy Radical",
+            "Mechanical Mastermind"
+          ],
+          "highlighted_job_name": "Illustrious Inventor"
+        },
+        {
+          "level": 0,
+          "job_track": "Cosmetics",
+          "job_names": [
+            "Powder Puff",
+            "Eyebrow Comber",
+            "Complexion Corrector",
+            "Blush Blusher",
+            "Cheekbone Highlighter",
+            "Eyelash Elongater",
+            "Lip Plumper",
+            "Nail Polisher",
+            "Perfume Spritzer",
+            "Looks Maxxer"
+          ],
+          "highlighted_job_name": null
+        },
+        {
+          "level": 4,
+          "job_track": "Dressmaker",
+          "job_names": [
+            "Pin Cushion",
+            "Tape Measurer",
+            "Stitch Ripper",
+            "Perfect Pleater",
+            "Bow Builder",
+            "Frill Fluffer",
+            "Super Sewist",
+            "Pattern Maker",
+            "Daring Designer",
+            "Stylist Supreme"
+          ],
+          "highlighted_job_name": "Perfect Pleater"
+        },
+        {
+          "level": 6,
+          "job_track": "Lifeguard",
+          "job_names": [
+            "Life Guard",
+            "Beach Patrol",
+            "Sexy Lifeguard",
+            "Surf and Protect",
+            "Heli-Jumper",
+            "Search and Rescue",
+            "Coast Guardian",
+            "Life Preserver",
+            "Shark Puncher",
+            "Atlantean King"
+          ],
+          "highlighted_job_name": "Search and Rescue"
+        },
+        {
+          "level": 8,
+          "job_track": "Travel Writer",
+          "job_names": [
+            "Tourist",
+            "Food Critic",
+            "Bathroom Reviewer",
+            "Activity Attempter",
+            "Transportation Tester",
+            "Culture Considerer",
+            "Walking Tour Planner",
+            "Phrase Book Writer",
+            "Guidebook Guru",
+            "Travelogue Tycoon"
+          ],
+          "highlighted_job_name": "Phrase Book Writer"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Travel Writer",
+        "money_per_second": 10716364,
+        "money_per_time_block_per_second": 1190707
+      },
+      {
+        "job_track": "Lifeguard",
+        "money_per_second": 2068684,
+        "money_per_time_block_per_second": 258585
+      },
+      {
+        "job_track": "Dressmaker",
+        "money_per_second": 372363,
+        "money_per_time_block_per_second": 93090
+      },
+      {
+        "job_track": "Inventor",
+        "money_per_second": 331221,
+        "money_per_time_block_per_second": 41402
+      },
+      {
+        "job_track": "Cosmetics",
+        "money_per_second": 320064,
+        "money_per_time_block_per_second": 53344
+      },
+      {
+        "job_track": "Witch Hunter",
+        "money_per_second": 81433,
+        "money_per_time_block_per_second": 13572
+      },
+      {
+        "job_track": "Seer",
+        "money_per_second": 74240,
+        "money_per_time_block_per_second": 18560
+      },
+      {
+        "job_track": "Archeologist",
+        "money_per_second": 64938,
+        "money_per_time_block_per_second": 12987
+      },
+      {
+        "job_track": "Hunter/Gatherer",
+        "money_per_second": 25088,
+        "money_per_time_block_per_second": 8362
+      },
+      {
+        "job_track": "Time Machine Repair",
+        "money_per_second": 6400,
+        "money_per_time_block_per_second": 3200
+      }
+    ]
+  },
+  "warnings": []
+}

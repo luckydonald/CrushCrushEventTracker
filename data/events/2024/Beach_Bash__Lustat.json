@@ -1,0 +1,528 @@
+{
+  "name": "Beach Bash",
+  "year": 2024,
+  "main_girl": "Shelly",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Lustat",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Banana Splitter",
+              "job_track": "Ice Cream Vendor"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 24,
+              "hobby_name": "Culinary"
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Waterpistol",
+              "total_price": 60000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Marine Biologist"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 22,
+              "hobby_name": "Buff"
+            },
+            {
+              "kind": "purchase",
+              "amount": 16,
+              "item_name": "Watermelon",
+              "total_price": 480000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Fisher"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 28,
+              "hobby_name": "Healthy"
+            },
+            {
+              "kind": "purchase",
+              "amount": 15,
+              "item_name": "Fountain",
+              "total_price": 3375000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Watermelon",
+              "total_price": 30000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 40,
+              "hobby_name": "Independent"
+            },
+            {
+              "kind": "purchase",
+              "amount": 11,
+              "item_name": "Sunglasses",
+              "total_price": 22275000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 45,
+              "hobby_name": "Patience"
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 6,
+              "item_name": "Seashell",
+              "total_price": 109350000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 43,
+              "hobby_name": "Cool"
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 270,
+              "item_name": "Sunglasses",
+              "total_price": 546750000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 6,
+              "item_name": "Fountain",
+              "total_price": 1350000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 11,
+              "item_name": "Fruit Basket",
+              "total_price": 1250000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Seashell",
+              "total_price": 364500000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Rose",
+              "total_price": 2850000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 7,
+              "job_name": "Bass Pro",
+              "job_track": "Fisher"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 50,
+              "hobby_name": "Brave"
+            },
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Bubble Tea",
+              "total_price": 7970000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 71,
+        "hobby_name": "Competitive",
+        "unlock_character": "Iro Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 54,
+        "hobby_name": "Culinary",
+        "unlock_character": "Iro Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Thorough",
+        "unlock_character": "Iro Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Independent",
+        "unlock_character": "Roxxy Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 54,
+        "hobby_name": "Healthy",
+        "unlock_character": "Iro Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Adventurous",
+        "unlock_character": "Roxxy Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Patience",
+        "unlock_character": "Nova Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Sentimental",
+        "unlock_character": "Nova Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 62,
+        "hobby_name": "Buff",
+        "unlock_character": "Lustat Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 54,
+        "hobby_name": "Brave",
+        "unlock_character": "Shibuki Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 71,
+        "hobby_name": "Easygoing",
+        "unlock_character": "Shibuki Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Cool",
+        "unlock_character": "Shibuki Frenemy",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 5,
+          "job_track": "Ice Cream Vendor",
+          "job_names": [
+            "Smoothie Sipper",
+            "Milk Shaker",
+            "Soft Server",
+            "Ice Cream Scooper",
+            "Banana Splitter",
+            "Syrup Drizzler",
+            "Sundae Bae",
+            "Sherbet Shill",
+            "Fro-Yo Pro",
+            "Gelato Inamorato"
+          ],
+          "highlighted_job_name": "Banana Splitter"
+        },
+        {
+          "level": 2,
+          "job_track": "Lemonade Stand",
+          "job_names": [
+            "Lemon Recipient",
+            "Lemonade Maker",
+            "Optimist",
+            "Capitalist Adventurer",
+            "Lemontrepreneur",
+            "Lemonade Tycoon",
+            "Very Apeeling",
+            "Pucker Upper",
+            "Main Squeeze",
+            "Simply the Zest"
+          ],
+          "highlighted_job_name": "Lemonade Maker"
+        },
+        {
+          "level": 5,
+          "job_track": "Metal Detector",
+          "job_names": [
+            "Trash Picker",
+            "Sand Searcher",
+            "Coin Collector",
+            "Gold Digger",
+            "Trinket Tracker",
+            "Ring Recoverer",
+            "Treasure Hunter",
+            "Treasure Finder",
+            "Proper Prospector",
+            "Made Of Money"
+          ],
+          "highlighted_job_name": "Trinket Tracker"
+        },
+        {
+          "level": 3,
+          "job_track": "Skateboarder",
+          "job_names": [
+            "Poser",
+            "Gnarly Novice",
+            "Goofy-Footed",
+            "Sidewalk Surfer",
+            "Downhill Skater",
+            "Kick-Flipper",
+            "Alley-Ooper",
+            "Half-Pipe Hero",
+            "Wheels of Steel",
+            "Thrasher"
+          ],
+          "highlighted_job_name": "Goofy-Footed"
+        },
+        {
+          "level": 5,
+          "job_track": "Melon Farmer",
+          "job_names": [
+            "Melon Muncher",
+            "Seed Spitter",
+            "Sprout Noticer",
+            "Vine Tender",
+            "Green Thumb",
+            "Melon Picker",
+            "Melon Smasher",
+            "Melon Baller",
+            "Slice Of Lifer",
+            "One In A Melon"
+          ],
+          "highlighted_job_name": "Green Thumb"
+        },
+        {
+          "level": 7,
+          "job_track": "Marine Biologist",
+          "job_names": [
+            "Kelp Collector",
+            "Whale Watcher",
+            "Turtle-ly Curious",
+            "Crab Categorizer",
+            "Ray Ranker",
+            "Otter-ly Intrigued",
+            "Seahorse Surveyor",
+            "Octopus Ogler",
+            "Reef Restorer",
+            "O-Fish-Ally An Expert"
+          ],
+          "highlighted_job_name": "Seahorse Surveyor"
+        },
+        {
+          "level": 7,
+          "job_track": "Fisher",
+          "job_names": [
+            "Gone Fishin’",
+            "Fish Finder",
+            "Fishmonger",
+            "Fishing For Compliments",
+            "Bait and Switcher",
+            "Big Tuna",
+            "Bass Pro",
+            "Extreme Angler",
+            "Shark Wrangler",
+            "Deadliest Catcher"
+          ],
+          "highlighted_job_name": "Bass Pro"
+        },
+        {
+          "level": 9,
+          "job_track": "Lifeguard",
+          "job_names": [
+            "Life Guard",
+            "Beach Patrol",
+            "Sexy Lifeguard",
+            "Surf And Protect",
+            "Heli-Jumper",
+            "Search And Rescue",
+            "Coast Guardian",
+            "Life Preserver",
+            "Shark Puncher",
+            "Atlantean King"
+          ],
+          "highlighted_job_name": "Shark Puncher"
+        },
+        {
+          "level": 1,
+          "job_track": "Snack Shack",
+          "job_names": [
+            "Burger Flipper",
+            "Bun Toaster",
+            "Onion Rehydrator",
+            "Mascot",
+            "Sandwich Artist",
+            "Burger Meister",
+            "Meat Manager",
+            "Hambaron",
+            "Fry Franchiser",
+            "Beef Chief"
+          ],
+          "highlighted_job_name": "Burger Flipper"
+        },
+        {
+          "level": 2,
+          "job_track": "Florist",
+          "job_names": [
+            "Gardener",
+            "Flower Picker",
+            "Stem Trimmer",
+            "Leaf Cleaner",
+            "Bloom Arranger",
+            "Bouquet Builder",
+            "Custom Bouquet Builder",
+            "Rare Flower Researcher",
+            "Fancy Flower Shop Owner",
+            "Florist To The Stars"
+          ],
+          "highlighted_job_name": "Flower Picker"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Florist",
+        "money_per_second": 6241211,
+        "money_per_time_block_per_second": 520100
+      },
+      {
+        "job_track": "Marine Biologist",
+        "money_per_second": 6005691,
+        "money_per_time_block_per_second": 1000948
+      },
+      {
+        "job_track": "Snack Shack",
+        "money_per_second": 1536000,
+        "money_per_time_block_per_second": 192000
+      },
+      {
+        "job_track": "Fisher",
+        "money_per_second": 768286,
+        "money_per_time_block_per_second": 128047
+      },
+      {
+        "job_track": "Lifeguard",
+        "money_per_second": 658285,
+        "money_per_time_block_per_second": 219428
+      },
+      {
+        "job_track": "Melon Farmer",
+        "money_per_second": 291840,
+        "money_per_time_block_per_second": 36480
+      },
+      {
+        "job_track": "Skateboarder",
+        "money_per_second": 153941,
+        "money_per_time_block_per_second": 51313
+      },
+      {
+        "job_track": "Metal Detector",
+        "money_per_second": 122507,
+        "money_per_time_block_per_second": 30626
+      },
+      {
+        "job_track": "Lemonade Stand",
+        "money_per_second": 50176,
+        "money_per_time_block_per_second": 12544
+      },
+      {
+        "job_track": "Ice Cream Vendor",
+        "money_per_second": 17066,
+        "money_per_time_block_per_second": 8533
+      }
+    ]
+  },
+  "warnings": []
+}

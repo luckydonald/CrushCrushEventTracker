@@ -1,0 +1,530 @@
+{
+  "name": "Valentine's Event",
+  "year": 2024,
+  "main_girl": "Desdemona",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Peanut",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 6,
+              "item_name": "Treats Bag",
+              "total_price": 11520
+            },
+            {
+              "kind": "hobby_level",
+              "level": 11,
+              "hobby_name": "Active Listening"
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Choco Strawberry",
+              "total_price": 13440
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Cupcake Tower",
+              "total_price": 36000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 14,
+              "hobby_name": "Eye Contact"
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Cupcake",
+              "total_price": 67200
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Framed Photo",
+              "total_price": 150000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 18,
+              "hobby_name": "Sensuality"
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Cupcake Tower",
+              "total_price": 168000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Diamond Miner"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 20,
+              "hobby_name": "Attentiveness"
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Framed Photo",
+              "total_price": 1050000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Framed Photo",
+              "total_price": 1500000
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Greeting Card",
+              "total_price": 3150000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 300,
+              "item_name": "Greeting Card",
+              "total_price": 67500000
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Heart Balloon",
+              "total_price": 9450000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "girls_at_level",
+              "count": 2,
+              "level_label": "Lover"
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Locket",
+              "total_price": 85050000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 46,
+              "hobby_name": "Eye Contact"
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Lollipop",
+              "total_price": 255150000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Headlamp Shiner",
+              "job_track": "Diamond Miner"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 48,
+              "hobby_name": "Friendliness"
+            },
+            {
+              "kind": "purchase",
+              "amount": 14,
+              "item_name": "Candy Hearts",
+              "total_price": 637875000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 69,
+        "hobby_name": "Empathy",
+        "unlock_character": "QPernikiss Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Experimentation",
+        "unlock_character": "QPernikiss Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Passion",
+        "unlock_character": "QPernikiss Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Active Listening",
+        "unlock_character": "Bonnibel Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 52,
+        "hobby_name": "Eye Contact",
+        "unlock_character": "QPernikiss Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Patience",
+        "unlock_character": "Bonnibel Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Sensuality",
+        "unlock_character": "Bonnibel Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Attentiveness",
+        "unlock_character": "Bonnibel Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Dedication",
+        "unlock_character": "Peanut Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Friendliness",
+        "unlock_character": "Babybelle Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 60,
+        "hobby_name": "Spontaneity",
+        "unlock_character": "Babybelle Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Thoughtfulness",
+        "unlock_character": "Marybelle Adversary",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 2,
+          "job_track": "Balloon Vendor",
+          "job_names": [
+            "Balloon Popper",
+            "Water Balloon Thrower",
+            "Balloon Blower-Upper",
+            "Helium-Voiced Comedian",
+            "Friend to Balloon Animals",
+            "Balloon Arch Architect",
+            "Inflation Expert",
+            "Balloon Festival Organizer",
+            "Hot Air Balloon Pilot",
+            "House Lifter"
+          ],
+          "highlighted_job_name": "Water Balloon Thrower"
+        },
+        {
+          "level": 3,
+          "job_track": "Wine Maker",
+          "job_names": [
+            "Grape Picker",
+            "Grape Smusher",
+            "Grape Juicer",
+            "Grape Juice Fermenter",
+            "Wine Barreler",
+            "Wine Bottler",
+            "Wine Taster",
+            "Wine-Tasting Host",
+            "Wine-Pairing Advisor",
+            "Sommelier"
+          ],
+          "highlighted_job_name": "Grape Juicer"
+        },
+        {
+          "level": 6,
+          "job_track": "Bed Seller",
+          "job_names": [
+            "Spring Squisher",
+            "Foam Memorizer",
+            "Mattress Reviewer",
+            "Headboard Handler",
+            "Bedframe Builder",
+            "Fitted Sheet Folder",
+            "Duvet Coverer",
+            "Personal Pillow Fluffer",
+            "Cozy Bedding Specialist",
+            "Bedchamber Chamberlain"
+          ],
+          "highlighted_job_name": "Fitted Sheet Folder"
+        },
+        {
+          "level": 9,
+          "job_track": "Candle Maker",
+          "job_names": [
+            "Casual Candle Fan",
+            "Candle Admirer",
+            "Candle Addict",
+            "Matchstick Maker",
+            "Tealight Tester",
+            "Wax Melter",
+            "Wick Dipper",
+            "Paraffin Perfectionist",
+            "Creative Candle Carver",
+            "Flambeau Fanatic"
+          ],
+          "highlighted_job_name": "Creative Candle Carver"
+        },
+        {
+          "level": 6,
+          "job_track": "Chocolatier",
+          "job_names": [
+            "Chocoholic",
+            "Cocoa Kook",
+            "Assembly Line Gobbler",
+            "Truffle Tester",
+            "Chocolate Chipper",
+            "Ganache Stirrer",
+            "Fudge Drizzler",
+            "Chocolate Bar-tender",
+            "Artisanal Chocolate Maker",
+            "Confectionist Perfectionist"
+          ],
+          "highlighted_job_name": "Ganache Stirrer"
+        },
+        {
+          "level": 5,
+          "job_track": "Diamond Miner",
+          "job_names": [
+            "Hole Digger",
+            "Rock Smasher",
+            "Pickaxe Swinger",
+            "Diamond Pickaxe Swinger",
+            "Headlamp Shiner",
+            "Minecart Rider",
+            "Dynamite Detonator",
+            "Common Mineral Grinder",
+            "Rare Mineral Finder",
+            "Ultra-rare Mineral Diviner"
+          ],
+          "highlighted_job_name": "Headlamp Shiner"
+        },
+        {
+          "level": 8,
+          "job_track": "Florist",
+          "job_names": [
+            "Gardener",
+            "Flower Picker",
+            "Stem Trimmer",
+            "Leaf Cleaner",
+            "Bloom Arranger",
+            "Bouquet Builder",
+            "Custom Bouquet Builder",
+            "Rare Flower Researcher",
+            "Fancy Flower Shop Owner",
+            "Florist To The Stars"
+          ],
+          "highlighted_job_name": "Rare Flower Researcher"
+        },
+        {
+          "level": 8,
+          "job_track": "Gem Appraiser",
+          "job_names": [
+            "Emerald Eyeballer",
+            "Ruby Recognizer",
+            "Onyx Identifier",
+            "Sapphire Substantiator",
+            "Amethyst Authority",
+            "Citrine Certifier",
+            "Diamond Dealer",
+            "Tourmaline Tycoon",
+            "Peridot Pundit",
+            "Moonstone Mogul"
+          ],
+          "highlighted_job_name": "Tourmaline Tycoon"
+        },
+        {
+          "level": 2,
+          "job_track": "Greeting Card Writer",
+          "job_names": [
+            "Heart Doodler",
+            "Limerick Scribbler",
+            "Poem Composer",
+            "Free Verse Freelancer",
+            "Postcard Sender",
+            "E-Card Designer",
+            "Cardstock Cutter",
+            "Handmade Card Artist",
+            "Card Company Founder",
+            "Greeting Card Plutocrat"
+          ],
+          "highlighted_job_name": "Limerick Scribbler"
+        },
+        {
+          "level": 2,
+          "job_track": "Love",
+          "job_names": [
+            "Love Doctor",
+            "Love Guru",
+            "Love Fairy",
+            "Love God",
+            "Loveicus Prime",
+            "Cupid",
+            "Love Maker",
+            "The Unity",
+            "Eros",
+            "Aphrodome"
+          ],
+          "highlighted_job_name": "Love Guru"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Love",
+        "money_per_second": 6241211,
+        "money_per_time_block_per_second": 520100
+      },
+      {
+        "job_track": "Diamond Miner",
+        "money_per_second": 6005691,
+        "money_per_time_block_per_second": 1000948
+      },
+      {
+        "job_track": "Greeting Card Writer",
+        "money_per_second": 1536000,
+        "money_per_time_block_per_second": 192000
+      },
+      {
+        "job_track": "Florist",
+        "money_per_second": 768286,
+        "money_per_time_block_per_second": 128047
+      },
+      {
+        "job_track": "Gem Appraiser",
+        "money_per_second": 658285,
+        "money_per_time_block_per_second": 219428
+      },
+      {
+        "job_track": "Chocolatier",
+        "money_per_second": 291840,
+        "money_per_time_block_per_second": 36480
+      },
+      {
+        "job_track": "Candle Maker",
+        "money_per_second": 153941,
+        "money_per_time_block_per_second": 51313
+      },
+      {
+        "job_track": "Bed Seller",
+        "money_per_second": 129877,
+        "money_per_time_block_per_second": 25975
+      },
+      {
+        "job_track": "Wine Maker",
+        "money_per_second": 50176,
+        "money_per_time_block_per_second": 12544
+      },
+      {
+        "job_track": "Balloon Vendor",
+        "money_per_second": 17066,
+        "money_per_time_block_per_second": 5688
+      }
+    ]
+  },
+  "warnings": []
+}

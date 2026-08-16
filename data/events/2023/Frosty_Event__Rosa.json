@@ -1,0 +1,528 @@
+{
+  "name": "Frosty Event",
+  "year": 2023,
+  "main_girl": "Grace",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Rosa",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Surface Inspector",
+              "job_track": "Zamphoney Driver"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 1,
+              "hobby_name": "Buff"
+            },
+            {
+              "kind": "money",
+              "amount": 20
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 3,
+              "hobby_name": "Suave"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Candy Cane",
+              "total_price": 100
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Cookie",
+              "total_price": 150
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 4,
+              "hobby_name": "Adventurous"
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Cookie",
+              "total_price": 600
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Blanket",
+              "total_price": 450
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 5,
+              "hobby_name": "Generosity"
+            },
+            {
+              "kind": "purchase",
+              "amount": 8,
+              "item_name": "Blanket",
+              "total_price": 3600
+            },
+            {
+              "kind": "money",
+              "amount": 400
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 6,
+              "hobby_name": "Creativity"
+            },
+            {
+              "kind": "date_activity",
+              "count": 3,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Hot Cocoa",
+              "total_price": 4050
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 9,
+              "hobby_name": "Confidence"
+            },
+            {
+              "kind": "date_activity",
+              "count": 1,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Earmuffs",
+              "total_price": 18900
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Slush Smoother",
+              "job_track": "Zamphoney Driver"
+            },
+            {
+              "kind": "date_activity",
+              "count": 1,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Snow Bunny",
+              "total_price": 66152
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Frost Flattener",
+              "job_track": "Zamphoney Driver"
+            },
+            {
+              "kind": "date_activity",
+              "count": 1,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Toy Train",
+              "total_price": 173649
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 26,
+              "hobby_name": "Balance"
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Stocking",
+              "total_price": 926128
+            },
+            {
+              "kind": "purchase",
+              "amount": 24,
+              "item_name": "Earmuffs",
+              "total_price": 113400
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 70,
+        "hobby_name": "Buff",
+        "unlock_character": "Rosa Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Suave",
+        "unlock_character": "Rosa Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Adventurous",
+        "unlock_character": "Rosa Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Generosity",
+        "unlock_character": "Rosa Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 62,
+        "hobby_name": "Creativity",
+        "unlock_character": "Rosa Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Confidence",
+        "unlock_character": "Rosa Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Patience",
+        "unlock_character": "Fumi Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Balance",
+        "unlock_character": "Peanut Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Discipline",
+        "unlock_character": "Fumi Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 24,
+        "hobby_name": "Reflexes",
+        "unlock_character": "Renée Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 32,
+        "hobby_name": "Peacefulness",
+        "unlock_character": "Juliet Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 48,
+        "hobby_name": "Culinary",
+        "unlock_character": "Juliet Nuisance",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required. 1 job must be gilded.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 6,
+          "job_track": "Zamphoney Driver",
+          "job_names": [
+            "Slipper & Faller",
+            "Surface Inspector",
+            "Snow Sweeper",
+            "Slush Smoother",
+            "Frost Flattener",
+            "Ice Improver",
+            "Rink Refurbisher",
+            "Glacier Glider",
+            "Iceberg Idolizer",
+            "Zamphoney Zealot"
+          ],
+          "highlighted_job_name": "Ice Improver"
+        },
+        {
+          "level": 7,
+          "job_track": "Train Conductor",
+          "job_names": [
+            "Trainhopper",
+            "Trainspotter",
+            "Track Builder",
+            "Coal Shoveler",
+            "Station Porter",
+            "Ticket Inspector",
+            "Coach Attendant",
+            "Train Engineer",
+            "Train Conductor",
+            "Trainmaster"
+          ],
+          "highlighted_job_name": "Coach Attendant"
+        },
+        {
+          "level": 1,
+          "job_track": "Sleigh Driver",
+          "job_names": [
+            "Sleigh Bell Fastener",
+            "Runner Realigner",
+            "Route Planner",
+            "Merry Mechanic",
+            "Reindeer Wrangler",
+            "Takeoff Technician",
+            "Fog Navigator",
+            "Heavy Snowfall Strategist",
+            "Night Flight Ace",
+            "Claus Family Chauffer"
+          ],
+          "highlighted_job_name": "Sleigh Bell Fastener"
+        },
+        {
+          "level": 6,
+          "job_track": "Frostmas Filmmaker",
+          "job_names": [
+            "Fake Snow Arranger",
+            "Plastic Mistletoe Hanger",
+            "Cozy Lighting Positioner",
+            "Snowman Stunt Double",
+            "Cute Camera Operator",
+            "Thermal Costume Designer",
+            "Kiss-Scene Choreographer",
+            "Predictable-Script Writer",
+            "Pepperminty Producer",
+            "Decorated Director"
+          ],
+          "highlighted_job_name": "Thermal Costume Designer"
+        },
+        {
+          "level": 2,
+          "job_track": "Mall Santa",
+          "job_names": [
+            "Candy Cane Distributer",
+            "Awkward Helper Elf",
+            "Fake Beard Fraudster",
+            "North Pole Poser",
+            "List Maker",
+            "List Checker",
+            "List Double-Checker",
+            "Jolly Ol' Impersonator",
+            "Certified Santa Stand-In",
+            "Practically The Real Deal"
+          ],
+          "highlighted_job_name": "Awkward Helper Elf"
+        },
+        {
+          "level": 10,
+          "job_track": "Igloo Builder",
+          "job_names": [
+            "Snowscaper",
+            "Sub-Zero Basement Digger",
+            "Foundation Freezer",
+            "Ice Brick Layer",
+            "Frozen Pipe Plumber",
+            "Chimney Melter",
+            "Frosty Floor Planner",
+            "Polar House Builder",
+            "Snow Chateau Designer",
+            "Ice Palace Architect"
+          ],
+          "highlighted_job_name": "Ice Palace Architect"
+        },
+        {
+          "level": 6,
+          "job_track": "Hockey Player",
+          "job_names": [
+            "Hoser",
+            "Puck Polisher",
+            "Skate Sharpener",
+            "Helmet Tester",
+            "Benchwarmer",
+            "Fist Fighter",
+            "Stickhandler",
+            "Slapshotter",
+            "Puck Master",
+            "The Great One"
+          ],
+          "highlighted_job_name": "Fist Fighter"
+        },
+        {
+          "level": 6,
+          "job_track": "Gift Wrapper",
+          "job_names": [
+            "Envelope Licker",
+            "Stamp Sticker",
+            "Bag Stuffer",
+            "Tissue Paper Fluffer",
+            "Paper Cutter",
+            "Ribbon Curler",
+            "Tag Writer",
+            "Glitter Shaker",
+            "Bow Maker",
+            "Gift Stacker"
+          ],
+          "highlighted_job_name": "Ribbon Curler"
+        },
+        {
+          "level": 2,
+          "job_track": "Dog Sledder",
+          "job_names": [
+            "Puppy Herder",
+            "Wet Dog Dodger",
+            "Pack Perfector",
+            "Paw Pad Pamperer",
+            "Seasonal Sledder",
+            "Fur Coat Caretaker",
+            "Severe Weather Scoffer",
+            "Arctic Adventurer",
+            "Blizzard Wizard",
+            "Magnificent Musher"
+          ],
+          "highlighted_job_name": "Wet Dog Dodger"
+        },
+        {
+          "level": 9,
+          "job_track": "Snow Cone Vendor",
+          "job_names": [
+            "Snow Scooper",
+            "Syrup Drizzler",
+            "New Flavor Inventor",
+            "Snow Cone Connoisseur",
+            "Brand Ambassador",
+            "Small Business Owner",
+            "Shaved Ice Wholesaler",
+            "Gourmet Flavor Merchant",
+            "Snow Cone Restaurateur",
+            "Snow Cone Tycoon"
+          ],
+          "highlighted_job_name": "Snow Cone Restaurateur"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Snow Cone Vendor",
+        "money_per_second": 34292411,
+        "money_per_time_block_per_second": 3810267
+      },
+      {
+        "job_track": "Dog Sledder",
+        "money_per_second": 4137369,
+        "money_per_time_block_per_second": 517171
+      },
+      {
+        "job_track": "Igloo Builder",
+        "money_per_second": 2782481,
+        "money_per_time_block_per_second": 347810
+      },
+      {
+        "job_track": "Gift Wrapper",
+        "money_per_second": 744727,
+        "money_per_time_block_per_second": 186181
+      },
+      {
+        "job_track": "Hockey Player",
+        "money_per_second": 640128,
+        "money_per_time_block_per_second": 106688
+      },
+      {
+        "job_track": "Mall Santa",
+        "money_per_second": 162867,
+        "money_per_time_block_per_second": 27144
+      },
+      {
+        "job_track": "Frostmas Filmmaker",
+        "money_per_second": 148480,
+        "money_per_time_block_per_second": 37120
+      },
+      {
+        "job_track": "Sleigh Driver",
+        "money_per_second": 129877,
+        "money_per_time_block_per_second": 25975
+      },
+      {
+        "job_track": "Train Conductor",
+        "money_per_second": 50176,
+        "money_per_time_block_per_second": 16725
+      },
+      {
+        "job_track": "Zamphoney Driver",
+        "money_per_second": 12800,
+        "money_per_time_block_per_second": 4266
+      }
+    ]
+  },
+  "warnings": []
+}

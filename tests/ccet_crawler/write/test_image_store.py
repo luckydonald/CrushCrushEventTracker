@@ -42,6 +42,29 @@ class StoreImagesTest(unittest.TestCase):
             self.assertTrue(mapping["https://example.com/pic.jpg?v=2"].endswith(".jpg"))
         # end with
     # end def
+
+    def test_extension_sniffed_from_content_when_url_has_none(self) -> None:
+        png_bytes = b"\x89PNG\r\n\x1a\n" + b"rest-of-file"
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "img"
+            mapping = store_images(
+                [("https://images.steamusercontent.com/ugc/123/ABC/", "")],
+                output_dir,
+                downloader=lambda url: png_bytes,
+            )
+            self.assertTrue(mapping["https://images.steamusercontent.com/ugc/123/ABC/"].endswith(".png"))
+        # end with
+    # end def
+
+    def test_unrecognized_content_without_url_extension_falls_back_to_bin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output_dir = Path(tmp) / "img"
+            mapping = store_images(
+                [("https://example.com/opaque-id", "")], output_dir, downloader=lambda url: b"not-a-known-format"
+            )
+            self.assertTrue(mapping["https://example.com/opaque-id"].endswith(".bin"))
+        # end with
+    # end def
 # end class
 
 

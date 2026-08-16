@@ -18,7 +18,7 @@ def store_images(images: list[tuple[str, str]], output_dir: Path, downloader: Do
         digest = hashlib.sha256(content).hexdigest()[:16]
 
         if digest not in filename_by_hash:
-            filename = f"{digest}{_guess_extension(source_url)}"
+            filename = f"{digest}{_guess_extension(source_url, content)}"
             path = output_dir / filename
             if not path.exists():
                 path.write_bytes(content)
@@ -33,11 +33,29 @@ def store_images(images: list[tuple[str, str]], output_dir: Path, downloader: Do
 # end def
 
 
-def _guess_extension(url: str) -> str:
+_MAGIC_BYTE_EXTENSIONS: list[tuple[bytes, str]] = [
+    (b"\x89PNG\r\n\x1a\n", ".png"),
+    (b"\xff\xd8\xff", ".jpg"),
+    (b"GIF87a", ".gif"),
+    (b"GIF89a", ".gif"),
+]
+
+
+def _guess_extension(url: str, content: bytes) -> str:
     path = url.split("?", 1)[0].split("#", 1)[0]
     basename = path.rsplit("/", 1)[-1]
     if "." in basename:
         return "." + basename.rsplit(".", 1)[-1]
     # end if
+
+    if content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return ".webp"
+    # end if
+    for magic, extension in _MAGIC_BYTE_EXTENSIONS:
+        if content.startswith(magic):
+            return extension
+        # end if
+    # end for
+
     return ".bin"
 # end def

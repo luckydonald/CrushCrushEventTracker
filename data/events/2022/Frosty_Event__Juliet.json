@@ -1,0 +1,531 @@
+{
+  "name": "Frosty Event",
+  "year": 2022,
+  "main_girl": "Yuki",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Juliet",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Stamp Sticker",
+              "job_track": "Gift Wrapper"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 34,
+              "hobby_name": "Creativity"
+            },
+            {
+              "kind": "purchase",
+              "amount": 60,
+              "item_name": "Earmuffs",
+              "total_price": 283500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Wet Dog Dodger",
+              "job_track": "Dog Sledder"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 36,
+              "hobby_name": "Culinary"
+            },
+            {
+              "kind": "purchase",
+              "amount": 320,
+              "item_name": "Snow Bunny",
+              "total_price": 5292160
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Helmet Tester",
+              "job_track": "Hockey Player"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 48,
+              "hobby_name": "Suave"
+            },
+            {
+              "kind": "purchase",
+              "amount": 80,
+              "item_name": "Drum",
+              "total_price": 74090240
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Tissue Paper Fluffer",
+              "job_track": "Gift Wrapper"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 50,
+              "hobby_name": "Generosity"
+            },
+            {
+              "kind": "purchase",
+              "amount": 240,
+              "item_name": "Heat Lamp",
+              "total_price": 889082880
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 240,
+              "item_name": "Holly",
+              "total_price": 4000000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "money",
+              "amount": 1000000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 53,
+              "hobby_name": "Suave"
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 24,
+              "item_name": "Present",
+              "total_price": 9000000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 1000000,
+              "item_name": "Candy Cane",
+              "total_price": 50000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 24,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 320,
+              "item_name": "Gingerbread House",
+              "total_price": 24010000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 40000,
+              "item_name": "Drum",
+              "total_price": 37050000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 24,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 12,
+              "item_name": "Present",
+              "total_price": 4500000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 9,
+              "job_name": "Snow Cone Restaurateur",
+              "job_track": "Snow Cone Vendor"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 60,
+              "hobby_name": "Creativity"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Festive Tree",
+              "total_price": 173290000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 70,
+        "hobby_name": "Buff",
+        "unlock_character": "Rosa Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Suave",
+        "unlock_character": "Rosa Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 49,
+        "hobby_name": "Adventurous",
+        "unlock_character": "Rosa Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 65,
+        "hobby_name": "Generosity",
+        "unlock_character": "Rosa Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 62,
+        "hobby_name": "Creativity",
+        "unlock_character": "Rosa Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 70,
+        "hobby_name": "Confidence",
+        "unlock_character": "Rosa Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Patience",
+        "unlock_character": "Fumi Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 48,
+        "hobby_name": "Balance",
+        "unlock_character": "Peanut Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Discipline",
+        "unlock_character": "Fumi Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 24,
+        "hobby_name": "Reflexes",
+        "unlock_character": "Renée Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 32,
+        "hobby_name": "Peacefulness",
+        "unlock_character": "Juliet Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 48,
+        "hobby_name": "Culinary",
+        "unlock_character": "Juliet Nuisance",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required. 1 job must be gilded.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 6,
+          "job_track": "Zamphoney Driver",
+          "job_names": [
+            "Slipper & Faller",
+            "Surface Inspector",
+            "Snow Sweeper",
+            "Slush Smoother",
+            "Frost Flattener",
+            "Ice Improver",
+            "Rink Refurbisher",
+            "Glacier Glider",
+            "Iceberg Idolizer",
+            "Zamphoney Zealot"
+          ],
+          "highlighted_job_name": "Ice Improver"
+        },
+        {
+          "level": 7,
+          "job_track": "Train Conductor",
+          "job_names": [
+            "Trainhopper",
+            "Trainspotter",
+            "Track Builder",
+            "Coal Shoveler",
+            "Station Porter",
+            "Ticket Inspector",
+            "Coach Attendant",
+            "Train Engineer",
+            "Train Conductor",
+            "Trainmaster"
+          ],
+          "highlighted_job_name": "Coach Attendant"
+        },
+        {
+          "level": 1,
+          "job_track": "Sleigh Driver",
+          "job_names": [
+            "Sleigh Bell Fastener",
+            "Runner Realigner",
+            "Route Planner",
+            "Merry Mechanic",
+            "Reindeer Wrangler",
+            "Takeoff Technician",
+            "Fog Navigator",
+            "Heavy Snowfall Strategist",
+            "Night Flight Ace",
+            "Claus Family Chauffer"
+          ],
+          "highlighted_job_name": "Sleigh Bell Fastener"
+        },
+        {
+          "level": 6,
+          "job_track": "Frostmas Filmmaker",
+          "job_names": [
+            "Fake Snow Arranger",
+            "Plastic Mistletoe Hanger",
+            "Cozy Lighting Positioner",
+            "Snowman Stunt Double",
+            "Cute Camera Operator",
+            "Thermal Costume Designer",
+            "Kiss-Scene Choreographer",
+            "Predictable-Script Writer",
+            "Pepperminty Producer",
+            "Decorated Director"
+          ],
+          "highlighted_job_name": "Thermal Costume Designer"
+        },
+        {
+          "level": 2,
+          "job_track": "Mall Santa",
+          "job_names": [
+            "Candy Cane Distributer",
+            "Awkward Helper Elf",
+            "Fake Beard Fraudster",
+            "North Pole Poser",
+            "List Maker",
+            "List Checker",
+            "List Double-Checker",
+            "Jolly Ol' Impersonator",
+            "Certified Santa Stand-In",
+            "Practically The Real Deal"
+          ],
+          "highlighted_job_name": "Awkward Helper Elf"
+        },
+        {
+          "level": 10,
+          "job_track": "Igloo Builder",
+          "job_names": [
+            "Snowscaper",
+            "Sub-Zero Basement Digger",
+            "Foundation Freezer",
+            "Ice Brick Layer",
+            "Frozen Pipe Plumber",
+            "Chimney Melter",
+            "Frosty Floor Planner",
+            "Polar House Builder",
+            "Snow Chateau Designer",
+            "Ice Palace Architect"
+          ],
+          "highlighted_job_name": "Ice Palace Architect"
+        },
+        {
+          "level": 6,
+          "job_track": "Hockey Player",
+          "job_names": [
+            "Hoser",
+            "Puck Polisher",
+            "Skate Sharpener",
+            "Helmet Tester",
+            "Benchwarmer",
+            "Fist Fighter",
+            "Stickhandler",
+            "Slapshotter",
+            "Puck Master",
+            "The Great One"
+          ],
+          "highlighted_job_name": "Fist Fighter"
+        },
+        {
+          "level": 6,
+          "job_track": "Gift Wrapper",
+          "job_names": [
+            "Envelope Licker",
+            "Stamp Sticker",
+            "Bag Stuffer",
+            "Tissue Paper Fluffer",
+            "Paper Cutter",
+            "Ribbon Curler",
+            "Tag Writer",
+            "Glitter Shaker",
+            "Bow Maker",
+            "Gift Stacker"
+          ],
+          "highlighted_job_name": "Ribbon Curler"
+        },
+        {
+          "level": 2,
+          "job_track": "Dog Sledder",
+          "job_names": [
+            "Puppy Herder",
+            "Wet Dog Dodger",
+            "Pack Perfector",
+            "Paw Pad Pamperer",
+            "Seasonal Sledder",
+            "Fur Coat Caretaker",
+            "Severe Weather Scoffer",
+            "Arctic Adventurer",
+            "Blizzard Wizard",
+            "Magnificent Musher"
+          ],
+          "highlighted_job_name": "Wet Dog Dodger"
+        },
+        {
+          "level": 9,
+          "job_track": "Snow Cone Vendor",
+          "job_names": [
+            "Snow Scooper",
+            "Syrup Drizzler",
+            "New Flavor Inventor",
+            "Snow Cone Connoisseur",
+            "Brand Ambassador",
+            "Small Business Owner",
+            "Shaved Ice Wholesaler",
+            "Gourmet Flavor Merchant",
+            "Snow Cone Restaurateur",
+            "Snow Cone Tycoon"
+          ],
+          "highlighted_job_name": "Snow Cone Restaurateur"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Snow Cone Vendor",
+        "money_per_second": 34292411,
+        "money_per_time_block_per_second": 3810267
+      },
+      {
+        "job_track": "Dog Sledder",
+        "money_per_second": 4137369,
+        "money_per_time_block_per_second": 517171
+      },
+      {
+        "job_track": "Igloo Builder",
+        "money_per_second": 2782481,
+        "money_per_time_block_per_second": 347810
+      },
+      {
+        "job_track": "Gift Wrapper",
+        "money_per_second": 744727,
+        "money_per_time_block_per_second": 186181
+      },
+      {
+        "job_track": "Hockey Player",
+        "money_per_second": 640128,
+        "money_per_time_block_per_second": 106688
+      },
+      {
+        "job_track": "Mall Santa",
+        "money_per_second": 162867,
+        "money_per_time_block_per_second": 27144
+      },
+      {
+        "job_track": "Frostmas Filmmaker",
+        "money_per_second": 148480,
+        "money_per_time_block_per_second": 37120
+      },
+      {
+        "job_track": "Sleigh Driver",
+        "money_per_second": 129877,
+        "money_per_time_block_per_second": 25975
+      },
+      {
+        "job_track": "Train Conductor",
+        "money_per_second": 50176,
+        "money_per_time_block_per_second": 16725
+      },
+      {
+        "job_track": "Zamphoney Driver",
+        "money_per_second": 12800,
+        "money_per_time_block_per_second": 4266
+      }
+    ]
+  },
+  "warnings": []
+}

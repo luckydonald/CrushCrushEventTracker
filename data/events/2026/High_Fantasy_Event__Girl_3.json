@@ -1,0 +1,530 @@
+{
+  "name": "High Fantasy Event",
+  "year": 2026,
+  "main_girl": "Moonbeam",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Girl #3",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Dragon Egg",
+              "total_price": 35000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 14,
+              "hobby_name": "Constitution"
+            },
+            {
+              "kind": "purchase",
+              "amount": 12,
+              "item_name": "Crown",
+              "total_price": 12000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 3,
+              "job_name": "Grape Juicer",
+              "job_track": "Winemaker"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 22,
+              "hobby_name": "Wisdom"
+            },
+            {
+              "kind": "purchase",
+              "amount": 13,
+              "item_name": "Flower Crown",
+              "total_price": 162500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Outfitter"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 20,
+              "hobby_name": "Strength"
+            },
+            {
+              "kind": "purchase",
+              "amount": 16,
+              "item_name": "Goblet",
+              "total_price": 500000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Tunic Tucker",
+              "job_track": "Outfitter"
+            },
+            {
+              "kind": "gild_jobs",
+              "count": 1
+            },
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Potion",
+              "total_price": 1640625
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 80,
+              "item_name": "Goblet",
+              "total_price": 2500000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 8,
+              "item_name": "Quill",
+              "total_price": 5625000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 400,
+              "item_name": "Goblet",
+              "total_price": 12500000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 12,
+              "item_name": "Scroll",
+              "total_price": 25312500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 800,
+              "item_name": "Goblet",
+              "total_price": 25000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 18,
+              "item_name": "Spellbook",
+              "total_price": 113906250
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 47,
+              "hobby_name": "Arcana"
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 9,
+              "item_name": "Wizard Hat",
+              "total_price": 427148433
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 7,
+              "job_name": "Wine Taster",
+              "job_track": "Winemaker"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 50,
+              "hobby_name": "Strength"
+            },
+            {
+              "kind": "purchase",
+              "amount": 6,
+              "item_name": "Battle Helmet",
+              "total_price": 1780000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 70,
+        "hobby_name": "Nature",
+        "unlock_character": "Girl #1 Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Wisdom",
+        "unlock_character": "Girl #1 Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Charisma",
+        "unlock_character": "Girl #1 Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Performance",
+        "unlock_character": "Girl #1 Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 62,
+        "hobby_name": "Arcana",
+        "unlock_character": "Girl #1 Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Intelligence",
+        "unlock_character": "Girl #1 Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Constitution",
+        "unlock_character": "Girl #2 Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 71,
+        "hobby_name": "Crafting",
+        "unlock_character": "Girl #2 Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Strength",
+        "unlock_character": "Girl #3 Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Insight",
+        "unlock_character": "Girl #4 Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 55,
+        "hobby_name": "Dexterity",
+        "unlock_character": "Girl #4 Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 48,
+        "hobby_name": "Intimidation",
+        "unlock_character": "Girl #5 Nuisance",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required. 1 job must be gilded.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 6,
+          "job_track": "Farmer",
+          "job_names": [
+            "Scarecrow",
+            "Weed Puller",
+            "Cow Un-Tipper",
+            "Fence Mender",
+            "Hay Baler",
+            "Produce Picker",
+            "Tractor Rider",
+            "Seed Sower",
+            "Horse Whisperer",
+            "Old Macdonald"
+          ],
+          "highlighted_job_name": "Produce Picker"
+        },
+        {
+          "level": 7,
+          "job_track": "Winemaker",
+          "job_names": [
+            "Grape Picker",
+            "Grape Smusher",
+            "Grape Juicer",
+            "Grape Juice Fermenter",
+            "Wine Barreler",
+            "Wine Bottler",
+            "Wine Taster",
+            "Wine-Tasting Host",
+            "Wine-Pairing Advisor",
+            "Sommelier"
+          ],
+          "highlighted_job_name": "Wine Taster"
+        },
+        {
+          "level": 1,
+          "job_track": "Jester",
+          "job_names": [
+            "Joke-Teller",
+            "Very Punny",
+            "Giggling Juggler",
+            "Bell Jingler",
+            "Village Idiot",
+            "Dancing Monkey",
+            "Clever Clogs",
+            "Brilliant Buffoon",
+            "Impressionista",
+            "Standup Star"
+          ],
+          "highlighted_job_name": "Joke-Teller"
+        },
+        {
+          "level": 6,
+          "job_track": "Healer",
+          "job_names": [
+            "Booboo Kisser",
+            "Wound Dresser",
+            "Bandage Bandier",
+            "Salve Spreader",
+            "Stitch Unstitcher",
+            "Herbalist",
+            "Bonesaw",
+            "Distinguished Doctor",
+            "White Mage",
+            "Head Cleric"
+          ],
+          "highlighted_job_name": "Herbalist"
+        },
+        {
+          "level": 2,
+          "job_track": "Blacksmith",
+          "job_names": [
+            "Fire Stoker",
+            "Bellow Blower",
+            "Tin Tinkerer",
+            "Iron Heater",
+            "Hammer Hitter",
+            "Metal Melter",
+            "Ingot Expert",
+            "Sword Forger or Quality Quencher?",
+            "Damascus Detailer",
+            "Forged In Fire"
+          ],
+          "highlighted_job_name": "Bellow Blower"
+        },
+        {
+          "level": 10,
+          "job_track": "Outfitter",
+          "job_names": [
+            "Potion Peddler",
+            "Tunic Tucker",
+            "Doublet Dealer",
+            "Quiver Giver",
+            "Chainmail Trader",
+            "Helmet Handler",
+            "Spell Scroll Seller",
+            "Platemail Pusher",
+            "Ultimate Armorer",
+            "Adventure Gear Guru"
+          ],
+          "highlighted_job_name": "Adventure Gear Guru"
+        },
+        {
+          "level": 6,
+          "job_track": "Wizard",
+          "job_names": [
+            "Wizard",
+            "Hairy Wizard",
+            "Very Hairy Wizard",
+            "Sorcerer",
+            "More-cerer",
+            "Magus Awesomus",
+            "Grand Magus",
+            "Archmage",
+            "Arch Archmage",
+            "Sorcerer Supremo"
+          ],
+          "highlighted_job_name": "Magus Awesomus"
+        },
+        {
+          "level": 6,
+          "job_track": "Fortune Teller",
+          "job_names": [
+            "Tarot Card Shuffler",
+            "Crystal Ball Polisher",
+            "Fortune Cookie Writer",
+            "Psychic Hotline Worker",
+            "Terrible Tasseographer",
+            "Mediocre Mentalist",
+            "Passable Palm Reader",
+            "Adept Astrologer",
+            "Flawless Forecaster",
+            "The Next Nostradamus"
+          ],
+          "highlighted_job_name": "Mediocre Mentalist"
+        },
+        {
+          "level": 2,
+          "job_track": "Slayer",
+          "job_names": [
+            "Demon Hunter",
+            "Vampire Slayer",
+            "Dragon Killer",
+            "Kraken Kracker",
+            "Titan Tosser",
+            "Planet Buster",
+            "Star Destroy-Doer",
+            "Deity Destroyer",
+            "Chuck Slayer",
+            "Everything Slayer"
+          ],
+          "highlighted_job_name": "Vampire Slayer"
+        },
+        {
+          "level": 9,
+          "job_track": "Usurper",
+          "job_names": [
+            "Crown Critiquer",
+            "Dedicated Dissenter",
+            "Revolution Enthusiast",
+            "Riot Inciter",
+            "Eager Insurgent",
+            "Mutiny Planner",
+            "Rebel Leader",
+            "Castle Crasher",
+            "King Dethroner",
+            "Anarchist"
+          ],
+          "highlighted_job_name": "King Dethroner"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Blacksmith",
+        "money_per_second": 4608000,
+        "money_per_time_block_per_second": 658285
+      },
+      {
+        "job_track": "Usurper",
+        "money_per_second": 4032984,
+        "money_per_time_block_per_second": 403298
+      },
+      {
+        "job_track": "Slayer",
+        "money_per_second": 1024000,
+        "money_per_time_block_per_second": 128000
+      },
+      {
+        "job_track": "Fortune Teller",
+        "money_per_second": 819200,
+        "money_per_time_block_per_second": 409600
+      },
+      {
+        "job_track": "Wizard",
+        "money_per_second": 758528,
+        "money_per_time_block_per_second": 126421
+      },
+      {
+        "job_track": "Outfitter",
+        "money_per_second": 219428,
+        "money_per_time_block_per_second": 27428
+      },
+      {
+        "job_track": "Healer",
+        "money_per_second": 87771,
+        "money_per_time_block_per_second": 43885
+      },
+      {
+        "job_track": "Jester",
+        "money_per_second": 51200,
+        "money_per_time_block_per_second": 10240
+      },
+      {
+        "job_track": "Winemaker",
+        "money_per_second": 12800,
+        "money_per_time_block_per_second": 3200
+      },
+      {
+        "job_track": "Farmer",
+        "money_per_second": 6144,
+        "money_per_time_block_per_second": 2048
+      }
+    ]
+  },
+  "warnings": []
+}

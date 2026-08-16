@@ -1,0 +1,532 @@
+{
+  "name": "School Spirit",
+  "year": 2024,
+  "main_girl": "Karyn",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Ruri",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 8,
+              "item_name": "Backpack",
+              "total_price": 400
+            },
+            {
+              "kind": "hobby_level",
+              "level": 11,
+              "hobby_name": "Helpful"
+            },
+            {
+              "kind": "purchase",
+              "amount": 6,
+              "item_name": "Notebook",
+              "total_price": 28350
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Table Wiper",
+              "job_track": "Cafeteria"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 14,
+              "hobby_name": "Composure"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Pencil Case",
+              "total_price": 115766
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 3,
+              "job_name": "Tray Taker",
+              "job_track": "Cafeteria"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 18,
+              "hobby_name": "Foresight"
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Ruler",
+              "total_price": 694596
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 8,
+              "item_name": "Pencil",
+              "total_price": 132304
+            },
+            {
+              "kind": "hobby_level",
+              "level": 18,
+              "hobby_name": "Impartial"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Stapler",
+              "total_price": 1852256
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Lab Tech",
+              "job_track": "Science Teacher"
+            },
+            {
+              "kind": "date_activity",
+              "count": 8,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 9,
+              "item_name": "Stapler",
+              "total_price": 8335152
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Stapler",
+              "total_price": 926128
+            },
+            {
+              "kind": "date_activity",
+              "count": 8,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Apple",
+              "total_price": 25931584
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "girls_at_level",
+              "count": 2,
+              "level_label": "Lover"
+            },
+            {
+              "kind": "date_activity",
+              "count": 8,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 9,
+              "item_name": "Encyclopedia",
+              "total_price": 150032736
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 45,
+              "hobby_name": "Composure"
+            },
+            {
+              "kind": "date_activity",
+              "count": 8,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 29,
+              "item_name": "Encyclopedia",
+              "total_price": 483438816
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Lab Legend",
+              "job_track": "Science Teacher"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 50,
+              "hobby_name": "Smart"
+            },
+            {
+              "kind": "purchase",
+              "amount": 36,
+              "item_name": "Crypto",
+              "total_price": 2700000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 71,
+        "hobby_name": "Passion",
+        "unlock_character": "Sawyer Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 55,
+        "hobby_name": "Stamina",
+        "unlock_character": "Sawyer Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Insight",
+        "unlock_character": "Sawyer Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Helpful",
+        "unlock_character": "Lake Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 55,
+        "hobby_name": "Composure",
+        "unlock_character": "Sawyer Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Funny",
+        "unlock_character": "Lake Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 64,
+        "hobby_name": "Foresight",
+        "unlock_character": "Ruri Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 66,
+        "hobby_name": "Impartial",
+        "unlock_character": "Ayeka Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Smart",
+        "unlock_character": "Ayeka Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 71,
+        "hobby_name": "Enthusiasm",
+        "unlock_character": "Ayeka Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Joy",
+        "unlock_character": "Generica Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Balance",
+        "unlock_character": "Generica Frenemy",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 5,
+          "job_track": "Bus Driver",
+          "job_names": [
+            "Crossing Guard",
+            "Seat Saver",
+            "Windshield Washer",
+            "Door Operator",
+            "Fare Taker",
+            "Stop Scheduler",
+            "Horn Beeper",
+            "Average Driver",
+            "Professional Driver",
+            "Golden Charioteer"
+          ],
+          "highlighted_job_name": "Fare Taker"
+        },
+        {
+          "level": 7,
+          "job_track": "Sports Coach",
+          "job_names": [
+            "Bench Warmer",
+            "Grass Painter",
+            "Pylon Positioner",
+            "Ball Butler",
+            "Cheerleader",
+            "Sideline Strategist",
+            "Penalty Pro",
+            "Assistant Coach",
+            "Goal Guru",
+            "World Cup Winner"
+          ],
+          "highlighted_job_name": "Penalty Pro"
+        },
+        {
+          "level": 5,
+          "job_track": "Librarian",
+          "job_names": [
+            "Bookmark Collector",
+            "Dog Ear Unfolder",
+            "Shelf Duster",
+            "Page",
+            "Display Maker",
+            "Shusher",
+            "Card Checker",
+            "Exam Proctor",
+            "Archivist",
+            "Library Director"
+          ],
+          "highlighted_job_name": "Display Maker"
+        },
+        {
+          "level": 3,
+          "job_track": "Cafeteria",
+          "job_names": [
+            "Dish Washer",
+            "Table Wiper",
+            "Tray Taker",
+            "Slop Server",
+            "Dessert Distributor",
+            "Soup Supervisor",
+            "Menu Maker",
+            "Canteen Controller",
+            "Supreme Chef",
+            "Big Enchilada"
+          ],
+          "highlighted_job_name": "Tray Taker"
+        },
+        {
+          "level": 5,
+          "job_track": "Cleaner",
+          "job_names": [
+            "Janitor",
+            "Custodial Engineer",
+            "Chief Sweeper",
+            "Vomitorius Maximus",
+            "Superintendant",
+            "Groundskeeper",
+            "Garbageman",
+            "Undertaker",
+            "Hazmat Specialist",
+            "Bomb Disposal"
+          ],
+          "highlighted_job_name": "Superintendant"
+        },
+        {
+          "level": 7,
+          "job_track": "Science Teacher",
+          "job_names": [
+            "Lab Rat",
+            "Lab Tech",
+            "Hypothesizer",
+            "Beaker Bae",
+            "Lab Legend",
+            "Science Sensei",
+            "Peer Reviewer",
+            "Sane Scientist",
+            "Mad Scientist",
+            "Nutty Professor"
+          ],
+          "highlighted_job_name": "Peer Reviewer"
+        },
+        {
+          "level": 7,
+          "job_track": "History Teacher",
+          "job_names": [
+            "Timely Tutor",
+            "Research Assistant",
+            "Chronology Lecturer",
+            "Essay Assigner",
+            "Professor Of The Past",
+            "Yesteryear Scholar",
+            "Hawt Historian",
+            "Field Researcher",
+            "Adventuring Archaeologist",
+            "Dr. Jones"
+          ],
+          "highlighted_job_name": "Hawt Historian"
+        },
+        {
+          "level": 9,
+          "job_track": "English Teacher",
+          "job_names": [
+            "Voracious Reader",
+            "Book Club President",
+            "Book Reviewer",
+            "Grammarian",
+            "Thesis Judger",
+            "Prose Professor",
+            "Poetry Pundit",
+            "Discourse Discusser",
+            "Fiction Philosopher",
+            "Literary Pedagogue"
+          ],
+          "highlighted_job_name": "Fiction Philosopher"
+        },
+        {
+          "level": 4,
+          "job_track": "PE Teacher",
+          "job_names": [
+            "Fitness Fanatic",
+            "Stretching Specialist",
+            "Sweat Sergeant",
+            "Cardio Commander",
+            "Flexibility Fiend",
+            "Push-Up Prodigy",
+            "Weight Lifter",
+            "Gym Guru",
+            "Workout Wizard",
+            "Miracle Mentor"
+          ],
+          "highlighted_job_name": "Cardio Commander"
+        },
+        {
+          "level": 1,
+          "job_track": "Administration",
+          "job_names": [
+            "Chalk Cleaner",
+            "Teacher's Pet",
+            "Hall Monitor",
+            "Resident Advisor",
+            "Student Body President",
+            "Department Head",
+            "Curriculum Conductor",
+            "Academic Ace",
+            "The Registrar",
+            "The Dean"
+          ],
+          "highlighted_job_name": "Chalk Cleaner"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Administration",
+        "money_per_second": 6241211,
+        "money_per_time_block_per_second": 520100
+      },
+      {
+        "job_track": "Science Teacher",
+        "money_per_second": 6005691,
+        "money_per_time_block_per_second": 1000948
+      },
+      {
+        "job_track": "PE Teacher",
+        "money_per_second": 1536000,
+        "money_per_time_block_per_second": 192000
+      },
+      {
+        "job_track": "History Teacher",
+        "money_per_second": 768286,
+        "money_per_time_block_per_second": 128047
+      },
+      {
+        "job_track": "English Teacher",
+        "money_per_second": 658285,
+        "money_per_time_block_per_second": 219428
+      },
+      {
+        "job_track": "Cleaner",
+        "money_per_second": 291840,
+        "money_per_time_block_per_second": 36480
+      },
+      {
+        "job_track": "Cafeteria",
+        "money_per_second": 153941,
+        "money_per_time_block_per_second": 51313
+      },
+      {
+        "job_track": "Librarian",
+        "money_per_second": 122507,
+        "money_per_time_block_per_second": 30626
+      },
+      {
+        "job_track": "Sports Coach",
+        "money_per_second": 50176,
+        "money_per_time_block_per_second": 12544
+      },
+      {
+        "job_track": "Bus Driver",
+        "money_per_second": 17066,
+        "money_per_time_block_per_second": 8533
+      }
+    ]
+  },
+  "warnings": []
+}

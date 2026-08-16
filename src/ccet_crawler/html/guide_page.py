@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4.element import NavigableString, Tag
 
 from ccet_crawler.html.section_classify import ClassifiedSection, SectionKind, classify_section
 
@@ -61,4 +61,19 @@ def group_by_event(sections: list[ClassifiedSection]) -> list[EventSections]:
         # end if
     # end for
     return list(grouped.values())
+# end def
+
+
+def extract_section_description(body: Tag) -> str:
+    first_h2 = body.find("div", class_="bb_h2")
+    parts: list[str] = []
+    for node in body.children:
+        if node is first_h2:
+            break
+        # end if
+        if isinstance(node, NavigableString):
+            parts.append(str(node))
+        # end if
+    # end for
+    return "".join(parts).strip()
 # end def

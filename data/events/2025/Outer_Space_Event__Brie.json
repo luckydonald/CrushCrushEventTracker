@@ -1,0 +1,534 @@
+{
+  "name": "Outer Space Event",
+  "year": 2025,
+  "main_girl": "Loola",
+  "description": {
+    "text": "NOTE: This event was changed in its September 2025 rerun. The data below is for the most recent run of the event.Some mobile players may see different requirements in the May 2026 rerun; see the next section for those.",
+    "notes": "Some mobile players may see different requirements for the May 2026 rerun, listed below. PC players should refer to the table above."
+  },
+  "character_tables": [
+    {
+      "girl_name": "Brie",
+      "variant": "alt",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Relation Recommender",
+              "job_track": "Alien Ambassador"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 30,
+              "hobby_name": "Smart"
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Moon Rock",
+              "total_price": 220500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 3,
+              "job_name": "Brake Checker",
+              "job_track": "Ship Repair"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 39,
+              "hobby_name": "Balance"
+            },
+            {
+              "kind": "purchase",
+              "amount": 5,
+              "item_name": "Moon Rock",
+              "total_price": 1102500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Code Cracker",
+              "job_track": "Communications"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 40,
+              "hobby_name": "Gamer"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Oxygen Tank",
+              "total_price": 11907000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 4,
+              "job_name": "Tune Up Technician",
+              "job_track": "Ship Repair"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 47,
+              "hobby_name": "Balance"
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "CD Rom",
+              "total_price": 53581500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "money",
+              "amount": 1000000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Laser Pointer",
+              "total_price": 160744500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 51,
+              "hobby_name": "Observant"
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Alien Snack",
+              "total_price": 482233500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 50,
+              "item_name": "Oxygen Tank",
+              "total_price": 297675000
+            },
+            {
+              "kind": "date_activity",
+              "count": 26,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Towel",
+              "total_price": 1450000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 25,
+              "item_name": "CD Rom",
+              "total_price": 1340000000
+            },
+            {
+              "kind": "date_activity",
+              "count": 26,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Obelisk",
+              "total_price": 4340000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 8,
+              "job_name": "Flux Capacitor Fixer",
+              "job_track": "Ship Repair"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 61,
+              "hobby_name": "Balance"
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Obelisk",
+              "total_price": 8680000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 69,
+        "hobby_name": "Analytical",
+        "unlock_character": "Fumi Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Creativity",
+        "unlock_character": "Fumi Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 57,
+        "hobby_name": "Enthusiasm",
+        "unlock_character": "Fumi Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 47,
+        "hobby_name": "Patience",
+        "unlock_character": "Eva Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 51,
+        "hobby_name": "Methodical",
+        "unlock_character": "Fumi Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 59,
+        "hobby_name": "Brave",
+        "unlock_character": "Eva Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 51,
+        "hobby_name": "Peacefulness",
+        "unlock_character": "Eva Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 63,
+        "hobby_name": "Observant",
+        "unlock_character": "Eva Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 57,
+        "hobby_name": "Gamer",
+        "unlock_character": "Sirina Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 50,
+        "hobby_name": "Adventurous",
+        "unlock_character": "Odango Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 61,
+        "hobby_name": "Balance",
+        "unlock_character": "Odango Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Smart",
+        "unlock_character": "Brie Adversary",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 2,
+          "job_track": "Computers",
+          "job_names": [
+            "Programmer",
+            "IT Monkey",
+            "Techie",
+            "Hacker",
+            "Engineer",
+            "Computer Whisperer",
+            "Cyberneticist",
+            "Futurist",
+            "Artificial Entity",
+            "Singularity"
+          ],
+          "highlighted_job_name": "IT Monkey"
+        },
+        {
+          "level": 5,
+          "job_track": "Robotics",
+          "job_names": [
+            "Tinkerer",
+            "Tech Enthusiast",
+            "Drone Pilot",
+            "Animatronics Whiz",
+            "Exoskeleton Maker",
+            "Automaton Builder",
+            "Android Innovator",
+            "Robotics Pioneer",
+            "Turing Tester",
+            "I",
+            "Marshmallow"
+          ],
+          "highlighted_job_name": "Exoskeleton Maker"
+        },
+        {
+          "level": 6,
+          "job_track": "Communications",
+          "job_names": [
+            "Ground Control",
+            "Message Manager",
+            "Tactical Talker",
+            "Signal Synchronizer",
+            "Code Cracker",
+            "Space Phone Operator",
+            "Interstellar Transcriber",
+            "Deep Space Dictation",
+            "Galactic Messenger",
+            "Universal Translator"
+          ],
+          "highlighted_job_name": "Space Phone Operator"
+        },
+        {
+          "level": 9,
+          "job_track": "Asteroid Cleanup",
+          "job_names": [
+            "Crumb Sweeper",
+            "Pebble Pusher",
+            "Gravel Crusher",
+            "Rubble Rouser",
+            "Rock Roller",
+            "Boulder Holder",
+            "Meteor Manager",
+            "Planetoid Puncher",
+            "Asteroid Exploder",
+            "Earth Defender"
+          ],
+          "highlighted_job_name": "Asteroid Exploder"
+        },
+        {
+          "level": 6,
+          "job_track": "Alien Ambassador",
+          "job_names": [
+            "First Contacter",
+            "Information Exchanger",
+            "Earth's Spokesperson",
+            "Relation Recommender",
+            "Invested Interpreter",
+            "Culture Sharer",
+            "Culture Craver",
+            "Alien Ally",
+            "Alien Bosom Buddy",
+            "Honorary Alien"
+          ],
+          "highlighted_job_name": "Culture Sharer"
+        },
+        {
+          "level": 6,
+          "job_track": "Rockets",
+          "job_names": [
+            "Launch Pad Cleaner",
+            "Junk Yard Searcher",
+            "Scrap Seller",
+            "Rocket Repairer",
+            "Rocket Researcher",
+            "Rocket Scientist",
+            "Trajectory Identifier",
+            "Staging Supervisor",
+            "Launch Code Keeper",
+            "Blasting Off Again"
+          ],
+          "highlighted_job_name": "Rocket Scientist"
+        },
+        {
+          "level": 7,
+          "job_track": "Bounty Hunter",
+          "job_names": [
+            "Watchful Watchdog",
+            "Veritable Vigilante",
+            "Thug Threatener",
+            "Bandit Buster",
+            "Fugitive Finder",
+            "Criminal Catcher",
+            "Wrongdoer Wrangler",
+            "Delinquent Defeater",
+            "Judge",
+            "Jury",
+            "Etc.",
+            "The Law"
+          ],
+          "highlighted_job_name": "Wrongdoer Wrangler"
+        },
+        {
+          "level": 8,
+          "job_track": "Ship Repair",
+          "job_names": [
+            "Oil Changer",
+            "Tire Rotater",
+            "Brake Checker",
+            "Tune Up Technician",
+            "Fuel System Inspector",
+            "Engine Shampooer",
+            "Asteroid Belt Installer",
+            "Flux Capacitor Fixer",
+            "Stellar Repair Specialist",
+            "Cosmic Mechanic"
+          ],
+          "highlighted_job_name": "Flux Capacitor Fixer"
+        },
+        {
+          "level": 2,
+          "job_track": "Astrophysics",
+          "job_names": [
+            "Stargazer",
+            "Telescope Operator",
+            "Planetarium Worker",
+            "Solar System Studier",
+            "Big Bang Believer",
+            "Black Hole Appreciator",
+            "Cosmic Ray Researcher",
+            "Outer Space Describer",
+            "Observatory Director",
+            "Master Of The Universe"
+          ],
+          "highlighted_job_name": "Telescope Operator"
+        },
+        {
+          "level": 3,
+          "job_track": "Space",
+          "job_names": [
+            "Astronaut",
+            "Starship Captain",
+            "Star Child",
+            "Space Surveyor",
+            "Star Searcher",
+            "Infinite Explorer",
+            "Interstellar Commandant",
+            "Solar Emperor",
+            "Galactic Overlord",
+            "Power Cosmic"
+          ],
+          "highlighted_job_name": "Star Child"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Space",
+        "money_per_second": 66150365,
+        "money_per_time_block_per_second": 6615036
+      },
+      {
+        "job_track": "Astrophysics",
+        "money_per_second": 4003276,
+        "money_per_time_block_per_second": 571896
+      },
+      {
+        "job_track": "Rockets",
+        "money_per_second": 2782481,
+        "money_per_time_block_per_second": 309164
+      },
+      {
+        "job_track": "Ship Repair",
+        "money_per_second": 744727,
+        "money_per_time_block_per_second": 186181
+      },
+      {
+        "job_track": "Bounty Hunter",
+        "money_per_second": 640128,
+        "money_per_time_block_per_second": 213376
+      },
+      {
+        "job_track": "Alien Ambassador",
+        "money_per_second": 317184,
+        "money_per_time_block_per_second": 52864
+      },
+      {
+        "job_track": "Asteroid Cleanup",
+        "money_per_second": 148480,
+        "money_per_time_block_per_second": 49493
+      },
+      {
+        "job_track": "Communications",
+        "money_per_second": 129877,
+        "money_per_time_block_per_second": 43292
+      },
+      {
+        "job_track": "Robotics",
+        "money_per_second": 51370,
+        "money_per_time_block_per_second": 25685
+      },
+      {
+        "job_track": "Computers",
+        "money_per_second": 10752,
+        "money_per_time_block_per_second": 10752
+      }
+    ]
+  },
+  "warnings": []
+}

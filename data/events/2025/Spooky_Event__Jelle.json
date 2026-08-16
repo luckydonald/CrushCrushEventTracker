@@ -1,0 +1,528 @@
+{
+  "name": "Spooky Event",
+  "year": 2025,
+  "main_girl": "Pamulzebub",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Jelle",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Exorcist"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 7,
+              "hobby_name": "Curiosity"
+            },
+            {
+              "kind": "money",
+              "amount": 1000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Devil Dog",
+              "total_price": 1000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 12,
+              "hobby_name": "Gentle"
+            },
+            {
+              "kind": "purchase",
+              "amount": 20,
+              "item_name": "Not Blood",
+              "total_price": 2500
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 2,
+              "job_name": "Creepy Doll Disposer",
+              "job_track": "Exorcist"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 15,
+              "hobby_name": "Communication"
+            },
+            {
+              "kind": "purchase",
+              "amount": 80,
+              "item_name": "Brains (in a Jar)",
+              "total_price": 20000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "work_at_job",
+              "job_track": "Mad Scientist"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 17,
+              "hobby_name": "Fearless"
+            },
+            {
+              "kind": "purchase",
+              "amount": 15,
+              "item_name": "Eyeball",
+              "total_price": 75000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 100,
+              "item_name": "Devil Dog",
+              "total_price": 5000
+            },
+            {
+              "kind": "date_activity",
+              "count": 5,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 1,
+              "item_name": "Cute Skull",
+              "total_price": 234375
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 55,
+              "item_name": "Hard Candy",
+              "total_price": 27500
+            },
+            {
+              "kind": "date_activity",
+              "count": 7,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 2,
+              "item_name": "Cranium Cup",
+              "total_price": 1406250
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 12,
+              "item_name": "Devil Dog",
+              "total_price": 600
+            },
+            {
+              "kind": "date_activity",
+              "count": 9,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Spider Plush",
+              "total_price": 6328125
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 33,
+              "item_name": "Hard Candy",
+              "total_price": 16500
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 3,
+              "item_name": "Spirits",
+              "total_price": 18984375
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Ghost Tour Guide",
+              "job_track": "Paranormal Investigator"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 45,
+              "hobby_name": "Fearless"
+            },
+            {
+              "kind": "purchase",
+              "amount": 4,
+              "item_name": "Wilted Bouquet",
+              "total_price": 75937500
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 61,
+        "hobby_name": "Creepy",
+        "unlock_character": "Charlotte Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Gentle",
+        "unlock_character": "Charlotte Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 70,
+        "hobby_name": "Curiosity",
+        "unlock_character": "Charlotte Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 73,
+        "hobby_name": "Trickery",
+        "unlock_character": "Charlotte Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 71,
+        "hobby_name": "Communication",
+        "unlock_character": "Charlotte Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Craftsmanship",
+        "unlock_character": "Charlotte Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Outgoing",
+        "unlock_character": "Spectrum Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Fearless",
+        "unlock_character": "Jelle Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 73,
+        "hobby_name": "Knife Skills",
+        "unlock_character": "Spectrum Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 41,
+        "hobby_name": "Creativity",
+        "unlock_character": "Bonchovy Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 59,
+        "hobby_name": "Reflexes",
+        "unlock_character": "Spectrum Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 62,
+        "hobby_name": "Culinary",
+        "unlock_character": "Quillzone Acquaintance",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 10,
+          "job_track": "Grave Digger",
+          "job_names": [
+            "Grave Digger",
+            "Cemetery Dredger",
+            "Burial Builder",
+            "Cemetery Settler",
+            "Crypt Keeper",
+            "Mausoleum Maker",
+            "Catacomb Crafter",
+            "Sepulcher Scooper",
+            "Ruin Revealer",
+            "Tomb Exhumer"
+          ],
+          "highlighted_job_name": "Tomb Exhumer"
+        },
+        {
+          "level": 4,
+          "job_track": "Exorcist",
+          "job_names": [
+            "Ectoplasm Cleaner",
+            "Creepy Doll Disposer",
+            "Orb Exterminator",
+            "Banshee Shusher",
+            "Cursed Object Advisor",
+            "Poltergeist Eradicator",
+            "Portal Destroyer",
+            "Ghost Removal Expert",
+            "Haunted House Flipper",
+            "Who You Gonna Call"
+          ],
+          "highlighted_job_name": "Banshee Shusher"
+        },
+        {
+          "level": 0,
+          "job_track": "Cryptozoologist",
+          "job_names": [
+            "Chimera Contemplator",
+            "Bigfoot Believer",
+            "Werewolf Witness",
+            "Ogopogo Observer",
+            "Chubacabra Chaser",
+            "Dragon Discoverer",
+            "Unicorn Unveiler",
+            "Jackalope Journalist",
+            "Sasquatch Scholar",
+            "Cryptid Connoisseur"
+          ],
+          "highlighted_job_name": null
+        },
+        {
+          "level": 8,
+          "job_track": "Fortune Teller",
+          "job_names": [
+            "Tarot Card Shuffler",
+            "Crystal Ball Polisher",
+            "Fortune Cookie Writer",
+            "Psychic Hotline Worker",
+            "Terrible Tasseographer",
+            "Mediocre Mentalist",
+            "Passable Palm Reader",
+            "Adept Astrologer",
+            "Flawless Forecaster",
+            "The Next Nostradamus"
+          ],
+          "highlighted_job_name": "Adept Astrologer"
+        },
+        {
+          "level": 1,
+          "job_track": "Mad Scientist",
+          "job_names": [
+            "Tin Foil Hat Maker",
+            "Test Tube Labeler",
+            "Weird Sample Analyzer",
+            "Laserbeam Advocate",
+            "Unethical Experimenter",
+            "Vivisectionist",
+            "Super-Plague Dabbler",
+            "Weather Controller",
+            "Killer Robot Creator",
+            "Corpse Reanimator"
+          ],
+          "highlighted_job_name": "Tin Foil Hat Maker"
+        },
+        {
+          "level": 5,
+          "job_track": "Paranormal Investigator",
+          "job_names": [
+            "Soul Searcher",
+            "Scary Story Researcher",
+            "Haunted Location Scout",
+            "EMF Meter Technician",
+            "Ghost Tour Guide",
+            "EVP Specialist",
+            "Spirit Photographer",
+            "Séance Host",
+            "Parapsychologist",
+            "Occult Museum Curator"
+          ],
+          "highlighted_job_name": "Ghost Tour Guide"
+        },
+        {
+          "level": 6,
+          "job_track": "Depraved Dentist",
+          "job_names": [
+            "Mouthwasher",
+            "Floss Police",
+            "Orifice Invader",
+            "Tongue Scraper",
+            "Tongue Twister",
+            "Cavity Driller",
+            "Tooth Extractor",
+            "Jawbreaker",
+            "Torture Technician",
+            "Leader of the Plaque"
+          ],
+          "highlighted_job_name": "Cavity Driller"
+        },
+        {
+          "level": 6,
+          "job_track": "Evil Electrician",
+          "job_names": [
+            "Light Bulb Changer",
+            "Bathtub Toast Enthusiast",
+            "Jumper Cable Detangler",
+            "Power Outlet Taster",
+            "Taser Test Subject",
+            "Electric Fence Assembler",
+            "Human Lightning Rod",
+            "Electric Eel Keeper",
+            "Electroshock Therapist",
+            "Electric Chairman"
+          ],
+          "highlighted_job_name": "Electric Fence Assembler"
+        },
+        {
+          "level": 7,
+          "job_track": "Corrupt Caterer",
+          "job_names": [
+            "Food Poisoner",
+            "Brain Freezer",
+            "Spoon Melter",
+            "Fly Soup Preparer",
+            "Griller of Strange Meat",
+            "Creepypasta Cook",
+            "Spit-Roaster",
+            "Flambé Fanatic",
+            "Expert Knife Wielder",
+            "Private Chef"
+          ],
+          "highlighted_job_name": "Spit-Roaster"
+        },
+        {
+          "level": 9,
+          "job_track": "Wizard",
+          "job_names": [
+            "Wizard",
+            "Hairy Wizard",
+            "Very Hairy Wizard",
+            "Sorcerer",
+            "More-cerer",
+            "Magus Awesomus",
+            "Grand Magus",
+            "Archmage",
+            "Arch Archmage",
+            "Sorcerer Supremo"
+          ],
+          "highlighted_job_name": "Arch Archmage"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Mad Scientist",
+        "money_per_second": 2304000,
+        "money_per_time_block_per_second": 329142
+      },
+      {
+        "job_track": "Wizard",
+        "money_per_second": 2016492,
+        "money_per_time_block_per_second": 201649
+      },
+      {
+        "job_track": "Corrupt Caterer",
+        "money_per_second": 512000,
+        "money_per_time_block_per_second": 64000
+      },
+      {
+        "job_track": "Evil Electrician",
+        "money_per_second": 409600,
+        "money_per_time_block_per_second": 204800
+      },
+      {
+        "job_track": "Depraved Dentist",
+        "money_per_second": 379264,
+        "money_per_time_block_per_second": 63210
+      },
+      {
+        "job_track": "Paranormal Investigator",
+        "money_per_second": 109714,
+        "money_per_time_block_per_second": 13714
+      },
+      {
+        "job_track": "Fortune Teller",
+        "money_per_second": 43885,
+        "money_per_time_block_per_second": 21942
+      },
+      {
+        "job_track": "Cryptozoologist",
+        "money_per_second": 25600,
+        "money_per_time_block_per_second": 5120
+      },
+      {
+        "job_track": "Exorcist",
+        "money_per_second": 6400,
+        "money_per_time_block_per_second": 1600
+      },
+      {
+        "job_track": "Grave Digger",
+        "money_per_second": 3072,
+        "money_per_time_block_per_second": 1024
+      }
+    ]
+  },
+  "warnings": []
+}
