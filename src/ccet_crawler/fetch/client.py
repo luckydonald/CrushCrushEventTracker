@@ -21,3 +21,10 @@ def fetch_guide_page(url: str) -> FetchedPage:
     response.raise_for_status()
     return FetchedPage(url=url, status_code=response.status_code, text=response.text)
 # end def
+
+
+def fetch_bytes(url: str) -> bytes:
+    response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT_SECONDS)
+    response.raise_for_status()
+    return response.content
+# end def
