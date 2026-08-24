@@ -11119,7 +11119,7 @@ Time Warp Event 2025 (Polly) Hobby & Job Info
 
 Hobbies
 
-Expected unlocks are estimates; you may unlock some hobbies from other girls. REMINDER: This event features resets! This is indicating when we think the first unlock of each hobby happens, but there's a lot we don't know at time of writing, so your mileage may vary in different resets.  
+Expected unlocks are estimates; you may unlock some hobbies from other girls. REMINDER: This event features resets! This is indicating when we think the first unlock of each hobby happens, but your mileage may vary in different resets.  
 NOTE: The girls in the August 2026 rerun are different, but the requirements are otherwise the same! We've just swapped in Vellatrix instead of Iro and Shibuki instead of Charlotte.  
 
 * 56 Observant - expected unlock Polly Adversary
