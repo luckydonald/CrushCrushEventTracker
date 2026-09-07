@@ -334,7 +334,8 @@ Here you can find a list of all past events. You can use it to get an idea of wh
 2026/06/03-2026/06/08: High Fantasy Event (Moonbeam)  
 2026/06/25-2026/06/29: Valentine's Event (Marybelle) (rerun #3)  
 2026/07/23-2026/07/29: Beach Bash (Nixie)  
-2026/08/13-2026/08/19: Time Warp Event (Polly) (rerun #1)
+2026/08/13-2026/08/19: Time Warp Event (Polly) (rerun #1)  
+2026/09/10-2026/09/16: School Spirit (Ling Ling)
 
 When do I unlock hobby X? (2022-2024)
 
@@ -730,6 +731,12 @@ Beach Bash 2026 (Nixie)
 * Shibuki Adversary: Brave
 * Shibuki Nuisance: Easygoing
 * Shibuki Frenemy: Cool
+
+  
+
+School Spirit 2026 (Ling Ling)
+
+Coming soon!
 
 Summarized completion reqs. (2022-2023)
 
@@ -1559,6 +1566,12 @@ Jobs
 * Lv 1 Snack Shack - Burger Flipper
 * Lv 2 Florist - Flower Picker
 
+  
+
+School Spirit 2026 (Ling Ling)
+
+Coming soon!
+
 Timelapse videos
 
 If you want to actually see a playthrough happening, we've been recording timelapses of all past events with textual commentary about what happens. All of these are played entirely as F2P, without sacrificing sleep or work.  
@@ -1619,7 +1632,9 @@ High Fantasy Event 2026 (Moonbeam)
 
 Beach Bash 2026 (Nixie)
 
-Coming soon! Refer to Kira's timelapse for now if you need it.
+School Spirit 2026 (Ling Ling)
+
+Coming soon!
 
 Detailed completion requirements
 
@@ -14349,6 +14364,14 @@ Skateboarder: $153,941/s ($51,313/time block/s)
 Metal Detector: $122,507/s ($30,626/time block/s)  
 Lemonade Stand: $50,176/s ($12,544/time block/s)  
 Ice Cream Vendor: $17,066/s ($8,533/time block/s)
+
+School Spirit 2026 (Ling Ling) Girl Reqs.
+
+Coming soon!
+
+School Spirit 2026 (Ling Ling) Hobby & Job Info
+
+Coming soon!
 
 What about...?
 
