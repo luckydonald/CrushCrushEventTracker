@@ -604,9 +604,7 @@ School Spirit 2025 (Kyoko)
 * Sawyer Friendzoned: Composure
 * Lake Nuisance: Funny
 * Ruri Frenemy: Foresight
-* Ruri Acquaintance: Impartial
-* Ruri Friendzoned: Smart
-* Ayeka Frenemy: Enthusiasm
+* Ayeka Nuisance: Impartial, Smart
 * Generica Nuisance: Joy
 * Generica Frenemy: Balance
 
@@ -736,7 +734,17 @@ Beach Bash 2026 (Nixie)
 
 School Spirit 2026 (Ling Ling)
 
-Coming soon!
+* Sawyer Adversary: Passion
+* Sawyer Nuisance: Stamina
+* Sawyer Frenemy: Insight
+* Lake Adversary: Helpful
+* Sawyer Friendzoned: Composure
+* Lake Nuisance: Funny
+* Ruri Frenemy: Foresight
+* Ayeka Nuisance: Impartial, Smart
+* Ayeka Frenemy: Enthusiasm
+* Generica Nuisance: Joy
+* Generica Frenemy: Balance
 
 Summarized completion reqs. (2022-2023)
 
@@ -1570,7 +1578,35 @@ Jobs
 
 School Spirit 2026 (Ling Ling)
 
-Coming soon!
+Hobbies
+
+* 71 Passion
+* 55 Stamina
+* 66 Insight
+* 68 Helpful
+* 55 Composure
+* 64 Funny
+* 64 Foresight
+* 66 Impartial
+* 68 Smart
+* 71 Enthusiasm
+* 72 Joy
+* 69 Balance
+
+  
+
+Jobs
+
+* Lv 5 Bus Driver - Fare Taker
+* Lv 7 Sports Coach - Penalty Pro
+* Lv 5 Librarian - Display Maker
+* Lv 3 Cafeteria - Tray Taker
+* Lv 5 Cleaner - Superintendant
+* Lv 7 Science Teacher - Peer Reviewer
+* Lv 7 History Teacher - Hawt Historian
+* Lv 9 English Teacher - Fiction Philosopher
+* Lv 4 PE Teacher - Cardio Commander
+* Lv 1 Administration - Chalk Cleaner
 
 Timelapse videos
 
@@ -1634,7 +1670,7 @@ Beach Bash 2026 (Nixie)
 
 School Spirit 2026 (Ling Ling)
 
-Coming soon!
+Coming soon! Refer to Karyn or Kyoko's event for now!
 
 Detailed completion requirements
 
@@ -10721,8 +10757,8 @@ Expected unlocks are estimates; you may unlock some hobbies from other girls.
 * 55 Composure - expected unlock Sawyer Friendzoned
 * 64 Funny - expected unlock Lake Nuisance
 * 64 Foresight - expected unlock Ruri Frenemy
-* 66 Impartial - expected unlock Ruri Acquaintance
-* 68 Smart - expected unlock Ruri Friendzoned
+* 66 Impartial - expected unlock Ayeka Nuisance
+* 68 Smart - expected unlock Ayeka Nuisance
 * 71 Enthusiasm - expected unlock Ayeka Frenemy
 * 72 Joy - expected unlock Generica Nuisance
 * 69 Balance - expected unlock Generica Frenemy
@@ -14367,11 +14403,570 @@ Ice Cream Vendor: $17,066/s ($8,533/time block/s)
 
 School Spirit 2026 (Ling Ling) Girl Reqs.
 
-Coming soon!
+Sawyer
+
+Adversary
+
+Lv 2 Seat Saver (Bus Driver)
+
+1 Passion
+
+$25
+
+Nuisance
+
+2 Stamina
+
+2 Backpack ($100)
+
+1 Textbooks ($150)
+
+Frenemy
+
+4 Insight
+
+4 Textbooks ($600)
+
+1 Eraser ($450)
+
+Acquaintance
+
+5 Passion
+
+2 Lunchbox ($2,700)
+
+5 Stamina
+
+Friendzoned
+
+6 Composure
+
+1 Moonlight Stroll
+
+14 Eraser ($6,300)
+
+Awkward Besties
+
+9 Passion
+
+1 Beach
+
+6 Lunchbox ($8,100)
+
+Crush
+
+21 Stamina
+
+1 Sightseeing
+
+7 Notebook ($33,075)
+
+Sweetheart
+
+24 Passion
+
+1 Movie Theater
+
+8 Pencil ($132,304)
+
+Girlfriend
+
+33 Insight
+
+6 Pencil Case ($347,298)
+
+8 Ruler ($1,852,256)
+
+Lake
+
+Adversary
+
+11 Textbooks ($1,650)
+
+7 Helpful
+
+Work at Sports Coach
+
+Nuisance
+
+8 Backpack ($400)
+
+8 Funny
+
+4 Lunchbox ($5,400)
+
+Frenemy
+
+Lv 2 Grass Painter (Sports Coach)
+
+12 Insight
+
+7 Notebook ($33,075)
+
+Acquaintance
+
+14 Textbooks ($2,100)
+
+16 Funny
+
+8 Pencil ($132,304)
+
+Friendzoned
+
+Lv 2 Dog Ear Unfolder (Librarian)
+
+2 Moonlight Stroll
+
+12 Pencil Case ($694,596)
+
+Awkward Besties
+
+8 Ruler ($1,852,256)
+
+4 Beach
+
+2 Stapler ($1,852,256)
+
+Crush
+
+23 Funny
+
+8 Sightseeing
+
+18 Stapler ($16,670,304)
+
+Sweetheart
+
+27 Helpful
+
+10 Movie Theater
+
+19 Apple ($70,385,728)
+
+Girlfriend
+
+Lv 5 Superintendant (Cleaner)
+
+42 Insight
+
+4 Crypto ($300,065,472)
+
+Ruri
+
+Adversary
+
+8 Backpack ($400)
+
+11 Helpful
+
+6 Notebook ($28,350)
+
+Nuisance
+
+Lv 2 Table Wiper (Cafeteria)
+
+14 Composure
+
+2 Pencil Case ($115,766)
+
+Frenemy
+
+Lv 3 Tray Taker (Cafeteria)
+
+18 Foresight
+
+3 Ruler ($694,596)
+
+Acquaintance
+
+8 Pencil ($132,304)
+
+18 Impartial
+
+2 Stapler ($1,852,256)
+
+Friendzoned
+
+Lv 2 Lab Tech (Science Teacher)
+
+8 Moonlight Stroll
+
+9 Stapler ($8,335,152)
+
+Awkward Besties
+
+1 Stapler ($926,128)
+
+8 Beach
+
+7 Apple ($25,931,584)
+
+Crush
+
+2 Girls at Lover
+
+8 Sightseeing
+
+9 Encyclopedia ($150,032,736)
+
+Sweetheart
+
+45 Composure
+
+8 Movie Theater
+
+29 Encyclopedia ($483,438,816)
+
+Girlfriend
+
+Lv 5 Lab Legend (Science Teacher)
+
+50 Smart
+
+36 Crypto ($2.7 Billion)
+
+Ayeka
+
+Adversary
+
+Lv 5 Fare Taker (Bus Driver)
+
+21 Foresight
+
+7 Pencil ($115,766)
+
+Nuisance
+
+Work at Science Teacher
+
+22 Smart
+
+16 Pencil Case ($926,128)
+
+Frenemy
+
+Work at History Teacher
+
+28 Composure
+
+8 Stapler ($7,409,024)
+
+Acquaintance
+
+10 Pencil Case ($578,830)
+
+40 Helpful
+
+12 Apple ($44,454,144)
+
+Friendzoned
+
+45 Foresight
+
+12 Moonlight Stroll
+
+16 Encyclopedia ($266,724,864)
+
+Awkward Besties
+
+43 Balance
+
+12 Beach
+
+280 Apple ($1.04 Billion)
+
+Crush
+
+42 Encyclopedia ($700,152,768)
+
+12 Sightseeing
+
+30 Crypto ($2.25 Billion)
+
+Sweetheart
+
+4 Crypto ($300,065,472)
+
+12 Movie Theater
+
+2 Coffee Pot ($4.13 Billion)
+
+Girlfriend
+
+Lv 7 Hawt Historian (History Teacher)
+
+50 Enthusiasm
+
+7 Coffee Pot ($14.44 Billion)
+
+Generica
+
+Adversary
+
+Lv 3 Hypothesizer (Science Teacher)
+
+30 Enthusiasm
+
+486 Notebook ($2,296,350)
+
+Nuisance
+
+Work at PE Teacher
+
+34 Joy
+
+9 Apple ($33,340,608)
+
+Frenemy
+
+Lv 5 Display Maker (Librarian)
+
+38 Balance
+
+18 Encyclopedia ($300,065,472)
+
+Acquaintance
+
+15 Encyclopedia ($250,054,560)
+
+48 Foresight
+
+18 Crypto ($1.35 Billion)
+
+Friendzoned
+
+Lv 4 Grammarian (English Teacher)
+
+16 Moonlight Stroll
+
+11 CD ($4.13 Billion)
+
+Awkward Besties
+
+51 Impartial
+
+16 Beach
+
+5 Coffee Pot ($10.31 Billion)
+
+Crush
+
+95,761 Notebook ($452,470,725)
+
+16 Sightseeing
+
+11 Coffee Pot ($22.69 Billion)
+
+Sweetheart
+
+27 CD ($10.13 Billion)
+
+16 Movie Theater
+
+2 Magnet ($24.76 Billion)
+
+Girlfriend
+
+Lv 7 Poetry Pundit (English Teacher)
+
+60 Foresight
+
+2 Microchip ($173.29 Billion)
+
+Miss Desirée
+
+Adversary
+
+11 Stapler ($10,187,408)
+
+50 Passion
+
+3 Apple ($11,113,536)
+
+Nuisance
+
+45 Smart
+
+50 Stamina
+
+84 Stapler ($77,794,752)
+
+Frenemy
+
+Work at Administration
+
+55 Passion
+
+62 Apple ($229,679,744)
+
+Acquaintance
+
+Lv 4 Grammarian (English Teacher)
+
+16 Encyclopedia ($266,724,864)
+
+7 Crypto ($525,114,576)
+
+Friendzoned
+
+64 Passion
+
+24 Moonlight Stroll
+
+6 CD ($2.25 Billion)
+
+Awkward Besties
+
+62 Smart
+
+24 Beach
+
+4 Coffee Pot ($8.25 Billion)
+
+Crush
+
+66 Impartial
+
+24 Sightseeing
+
+2 Magnet ($24.76 Billion)
+
+Sweetheart
+
+68 Smart
+
+24 Movie Theater
+
+6 Magnet ($74.27 Billion)
+
+Girlfriend
+
+Lv 7 Peer Reviewer (Science Teacher)
+
+71 Passion
+
+4 Microchip ($346.58 Billion)
+
+Ling Ling
+
+Adversary
+
+2,042 Pencil Case ($118,197,086)
+
+49 Foresight
+
+Lv 6 Sideline Strategist (Sports Coach)
+
+Nuisance
+
+24 Encyclopedia ($400,087,296)
+
+49 Balance
+
+Lv 4 Cardio Commander (PE Teacher)
+
+Frenemy
+
+428 Apple ($1.59 Billion)
+
+54 Balance
+
+Lv 7 Penalty Pro (Sports Coach)
+
+Acquaintance
+
+66 Insight
+
+All Hobbies level 55
+
+10 CD ($3.75 Billion)
+
+Friendzoned
+
+68 Helpful
+
+26 Moonlight Stroll
+
+1,557 Encyclopedia ($25.96 Billion)
+
+Awkward Besties
+
+Lv 8 Discourse Discusser (English Teacher)
+
+26 Beach
+
+139 CD ($52.14 Billion)
+
+Crush
+
+64 Foresight
+
+26 Sightseeing
+
+72 Coffee Pot ($148.53 Billion)
+
+Sweetheart
+
+71 Enthusiasm
+
+26 Movie Theater
+
+26 Magnet ($321.82 Billion)
+
+Girlfriend
+
+Lv 9 Fiction Philosopher (English Teacher)
+
+72 Joy
+
+9 Microchip ($779.8 Billion)
 
 School Spirit 2026 (Ling Ling) Hobby & Job Info
 
-Coming soon!
+Hobbies
+
+Expected unlocks are estimates; you may unlock some hobbies from other girls.  
+
+* 71 Passion - expected unlock Sawyer Adversary
+* 55 Stamina - expected unlock Sawyer Nuisance
+* 66 Insight - expected unlock Sawyer Frenemy
+* 68 Helpful - expected unlock Lake Adversary
+* 55 Composure - expected unlock Sawyer Friendzoned
+* 64 Funny - expected unlock Lake Nuisance
+* 64 Foresight - expected unlock Ruri Frenemy
+* 66 Impartial - expected unlock Ayeka Nuisance
+* 68 Smart - expected unlock Ayeka Nuisance
+* 71 Enthusiasm - expected unlock Ayeka Frenemy
+* 72 Joy - expected unlock Generica Nuisance
+* 69 Balance - expected unlock Generica Frenemy
+
+Jobs
+
+Bold text indicates highest rank required.  
+
+* Lv 5 Bus Driver: Crossing Guard, Seat Saver, Windshield Washer, Door Operator, **Fare Taker**, Stop Scheduler, Horn Beeper, Average Driver, Professional Driver, Golden Charioteer
+* Lv 7 Sports Coach: Bench Warmer, Grass Painter, Pylon Positioner, Ball Butler, Cheerleader, Sideline Strategist, **Penalty Pro**, Assistant Coach, Goal Guru, World Cup Winner
+* Lv 5 Librarian: Bookmark Collector, Dog Ear Unfolder, Shelf Duster, Page, **Display Maker**, Shusher, Card Checker, Exam Proctor, Archivist, Library Director
+* Lv 3 Cafeteria: Dish Washer, Table Wiper, **Tray Taker**, Slop Server, Dessert Distributor, Soup Supervisor, Menu Maker, Canteen Controller, Supreme Chef, Big Enchilada
+* Lv 5 Cleaner: Janitor, Custodial Engineer, Chief Sweeper, Vomitorius Maximus, **Superintendant**, Groundskeeper, Garbageman, Undertaker, Hazmat Specialist, Bomb Disposal
+* Lv 7 Science Teacher: Lab Rat, Lab Tech, Hypothesizer, Beaker Bae, Lab Legend, Science Sensei, **Peer Reviewer**, Sane Scientist, Mad Scientist, Nutty Professor
+* Lv 7 History Teacher: Timely Tutor, Research Assistant, Chronology Lecturer, Essay Assigner, Professor Of The Past, Yesteryear Scholar, **Hawt Historian**, Field Researcher, Adventuring Archaeologist, Dr. Jones
+* Lv 9 English Teacher: Voracious Reader, Book Club President, Book Reviewer, Grammarian, Thesis Judger, Prose Professor, Poetry Pundit, Discourse Discusser, **Fiction Philosopher**, Literary Pedagogue
+* Lv 4 PE Teacher: Fitness Fanatic, Stretching Specialist, Sweat Sergeant, **Cardio Commander**, Flexibility Fiend, Push-Up Prodigy, Weight Lifter, Gym Guru, Workout Wizard, Miracle Mentor
+* Lv 1 Administration: **Chalk Cleaner**, Teacher's Pet, Hall Monitor, Resident Advisor, Student Body President, Department Head, Curriculum Conductor, Academic Ace, The Registrar, The Dean
+
+Pay details (at max level and boost)
+
+Administration: $6,241,211/s ($520,100/time block/s)  
+Science Teacher: $6,005,691/s ($1,000,948/time block/s)  
+PE Teacher: $1,536,000/s ($192,000/time block/s)  
+History Teacher: $768,286/s ($128,047/time block/s)  
+English Teacher: $658,285/s ($219,428/time block/s)  
+Cleaner: $291,840/s ($36,480/time block/s)  
+Cafeteria: $153,941/s ($51,313/time block/s)  
+Librarian: $122,507/s ($30,626/time block/s)  
+Sports Coach: $50,176/s ($12,544/time block/s)  
+Bus Driver: $17,066/s ($8,533/time block/s)
 
 What about...?
 

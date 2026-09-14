@@ -1,19 +1,40 @@
 {
   "name": "School Spirit",
-  "year": 2025,
-  "main_girl": "Kyoko",
+  "year": 2026,
+  "main_girl": "Ling Ling",
   "description": {
     "text": "",
     "notes": null
   },
   "character_tables": [
     {
-      "girl_name": "Ruri",
+      "girl_name": "Lake",
       "variant": "main",
       "rows": [
         {
           "raw_level_label": "Adversary",
           "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 11,
+              "item_name": "Textbooks",
+              "total_price": 1650
+            },
+            {
+              "kind": "hobby_level",
+              "level": 7,
+              "hobby_name": "Helpful"
+            },
+            {
+              "kind": "work_at_job",
+              "job_track": "Sports Coach"
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
           "requirements": [
             {
               "kind": "purchase",
@@ -23,37 +44,14 @@
             },
             {
               "kind": "hobby_level",
-              "level": 11,
-              "hobby_name": "Helpful"
+              "level": 8,
+              "hobby_name": "Funny"
             },
             {
               "kind": "purchase",
-              "amount": 6,
-              "item_name": "Notebook",
-              "total_price": 28350
-            }
-          ]
-        },
-        {
-          "raw_level_label": "Nuisance",
-          "resolved_level": "Nuisance",
-          "requirements": [
-            {
-              "kind": "job_level",
-              "level": 2,
-              "job_name": "Table Wiper",
-              "job_track": "Cafeteria"
-            },
-            {
-              "kind": "hobby_level",
-              "level": 14,
-              "hobby_name": "Composure"
-            },
-            {
-              "kind": "purchase",
-              "amount": 2,
-              "item_name": "Pencil Case",
-              "total_price": 115766
+              "amount": 4,
+              "item_name": "Lunchbox",
+              "total_price": 5400
             }
           ]
         },
@@ -63,20 +61,20 @@
           "requirements": [
             {
               "kind": "job_level",
-              "level": 3,
-              "job_name": "Tray Taker",
-              "job_track": "Cafeteria"
+              "level": 2,
+              "job_name": "Grass Painter",
+              "job_track": "Sports Coach"
             },
             {
               "kind": "hobby_level",
-              "level": 18,
-              "hobby_name": "Foresight"
+              "level": 12,
+              "hobby_name": "Insight"
             },
             {
               "kind": "purchase",
-              "amount": 3,
-              "item_name": "Ruler",
-              "total_price": 694596
+              "amount": 7,
+              "item_name": "Notebook",
+              "total_price": 33075
             }
           ]
         },
@@ -86,20 +84,20 @@
           "requirements": [
             {
               "kind": "purchase",
-              "amount": 8,
-              "item_name": "Pencil",
-              "total_price": 132304
+              "amount": 14,
+              "item_name": "Textbooks",
+              "total_price": 2100
             },
             {
               "kind": "hobby_level",
-              "level": 18,
-              "hobby_name": "Impartial"
+              "level": 16,
+              "hobby_name": "Funny"
             },
             {
               "kind": "purchase",
-              "amount": 2,
-              "item_name": "Stapler",
-              "total_price": 1852256
+              "amount": 8,
+              "item_name": "Pencil",
+              "total_price": 132304
             }
           ]
         },
@@ -110,20 +108,20 @@
             {
               "kind": "job_level",
               "level": 2,
-              "job_name": "Lab Tech",
-              "job_track": "Science Teacher"
+              "job_name": "Dog Ear Unfolder",
+              "job_track": "Librarian"
             },
             {
               "kind": "date_activity",
-              "count": 8,
+              "count": 2,
               "activity_name": "Moonlight Stroll",
               "price_per_date": 500
             },
             {
               "kind": "purchase",
-              "amount": 9,
-              "item_name": "Stapler",
-              "total_price": 8335152
+              "amount": 12,
+              "item_name": "Pencil Case",
+              "total_price": 694596
             }
           ]
         },
@@ -133,21 +131,21 @@
           "requirements": [
             {
               "kind": "purchase",
-              "amount": 1,
-              "item_name": "Stapler",
-              "total_price": 926128
+              "amount": 8,
+              "item_name": "Ruler",
+              "total_price": 1852256
             },
             {
               "kind": "date_activity",
-              "count": 8,
+              "count": 4,
               "activity_name": "Beach",
               "price_per_date": 2500
             },
             {
               "kind": "purchase",
-              "amount": 7,
-              "item_name": "Apple",
-              "total_price": 25931584
+              "amount": 2,
+              "item_name": "Stapler",
+              "total_price": 1852256
             }
           ]
         },
@@ -156,9 +154,9 @@
           "resolved_level": "Crush",
           "requirements": [
             {
-              "kind": "girls_at_level",
-              "count": 2,
-              "level_label": "Lover"
+              "kind": "hobby_level",
+              "level": 23,
+              "hobby_name": "Funny"
             },
             {
               "kind": "date_activity",
@@ -168,9 +166,9 @@
             },
             {
               "kind": "purchase",
-              "amount": 9,
-              "item_name": "Encyclopedia",
-              "total_price": 150032736
+              "amount": 18,
+              "item_name": "Stapler",
+              "total_price": 16670304
             }
           ]
         },
@@ -180,20 +178,20 @@
           "requirements": [
             {
               "kind": "hobby_level",
-              "level": 45,
-              "hobby_name": "Composure"
+              "level": 27,
+              "hobby_name": "Helpful"
             },
             {
               "kind": "date_activity",
-              "count": 8,
+              "count": 10,
               "activity_name": "Movie Theater",
               "price_per_date": 25000
             },
             {
               "kind": "purchase",
-              "amount": 29,
-              "item_name": "Encyclopedia",
-              "total_price": 483438816
+              "amount": 19,
+              "item_name": "Apple",
+              "total_price": 70385728
             }
           ]
         },
@@ -204,19 +202,19 @@
             {
               "kind": "job_level",
               "level": 5,
-              "job_name": "Lab Legend",
-              "job_track": "Science Teacher"
+              "job_name": "Superintendant",
+              "job_track": "Cleaner"
             },
             {
               "kind": "hobby_level",
-              "level": 50,
-              "hobby_name": "Smart"
+              "level": 42,
+              "hobby_name": "Insight"
             },
             {
               "kind": "purchase",
-              "amount": 36,
+              "amount": 4,
               "item_name": "Crypto",
-              "total_price": 2700000000
+              "total_price": 300065472
             }
           ]
         }
