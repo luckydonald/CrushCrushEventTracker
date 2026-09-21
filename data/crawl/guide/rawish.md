@@ -1670,8 +1670,6 @@ Beach Bash 2026 (Nixie)
 
 School Spirit 2026 (Ling Ling)
 
-Coming soon! Refer to Karyn or Kyoko's event for now!
-
 Detailed completion requirements
 
 These next sections contain the detailed requirements for each girl at each level, as well as detailed information about the jobs available in the event.  
