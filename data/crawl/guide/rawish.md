@@ -335,7 +335,8 @@ Here you can find a list of all past events. You can use it to get an idea of wh
 2026/06/25-2026/06/29: Valentine's Event (Marybelle) (rerun #3)  
 2026/07/23-2026/07/29: Beach Bash (Nixie)  
 2026/08/13-2026/08/19: Time Warp Event (Polly) (rerun #1)  
-2026/09/10-2026/09/16: School Spirit (Ling Ling)
+2026/09/10-2026/09/16: School Spirit (Ling Ling)  
+2026/10/15-2026/10/19: Wild West Event (Dakota)
 
 When do I unlock hobby X? (2022-2024)
 
@@ -745,6 +746,12 @@ School Spirit 2026 (Ling Ling)
 * Ayeka Frenemy: Enthusiasm
 * Generica Nuisance: Joy
 * Generica Frenemy: Balance
+
+  
+
+Wild West Event 2026 (Dakota)
+
+Coming soon!
 
 Summarized completion reqs. (2022-2023)
 
@@ -1608,6 +1615,12 @@ Jobs
 * Lv 4 PE Teacher - Cardio Commander
 * Lv 1 Administration - Chalk Cleaner
 
+  
+
+Wild West Event 2026 (Dakota)
+
+Coming soon!
+
 Timelapse videos
 
 If you want to actually see a playthrough happening, we've been recording timelapses of all past events with textual commentary about what happens. All of these are played entirely as F2P, without sacrificing sleep or work.  
@@ -1669,6 +1682,10 @@ High Fantasy Event 2026 (Moonbeam)
 Beach Bash 2026 (Nixie)
 
 School Spirit 2026 (Ling Ling)
+
+Wild West Event 2026 (Dakota)
+
+Coming soon!
 
 Detailed completion requirements
 
@@ -14965,6 +14982,14 @@ Cafeteria: $153,941/s ($51,313/time block/s)
 Librarian: $122,507/s ($30,626/time block/s)  
 Sports Coach: $50,176/s ($12,544/time block/s)  
 Bus Driver: $17,066/s ($8,533/time block/s)
+
+Wild West Event 2026 (Dakota) Girl Reqs.
+
+Coming soon!
+
+Wild West Event 2026 (Dakota) Hobby & Job Info
+
+Coming soon!
 
 What about...?
 
