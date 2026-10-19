@@ -751,7 +751,17 @@ School Spirit 2026 (Ling Ling)
 
 Wild West Event 2026 (Dakota)
 
-Coming soon!
+* Isabelle Adversary: Improvisation
+* Isabelle Nuisance: Charisma
+* Isabelle Frenemy: Reliability
+* Isabelle Acquaintance: Sweet Tooth
+* Isabelle Friendzoned: Ruggedness
+* Isabelle Awkward Besties: Bravery
+* Jessie Acquaintance: Precision, Speed
+* Jessie Sweetheart: Patience
+* Harriet Adversary: Creativity
+* Harriet Nuisance: Whimsy
+* Harriet Frenemy: Green Thumb
 
 Summarized completion reqs. (2022-2023)
 
@@ -1619,7 +1629,35 @@ Jobs
 
 Wild West Event 2026 (Dakota)
 
-Coming soon!
+Hobbies
+
+* 55 Improvisation
+* 70 Charisma
+* 65 Reliability
+* 69 Sweet Tooth
+* 68 Ruggedness
+* 63 Bravery
+* 73 Precision
+* 72 Speed
+* 72 Patience
+* 56 Creativity
+* 69 Whimsy
+* 65 Green Thumb
+
+  
+
+Jobs
+
+* Lv 6 Saloon Hand - Pint Pourer
+* Lv 2 Farmer - Garden Guru
+* Lv 1 Dairy Deliverer - Bottle Sorter
+* Lv 3 Train Conductor - Track Builder
+* Lv 1 Bandit - Petty Pickpocket
+* Lv 6 Inventor - Automation Advocate
+* Lv 4 Demolitions Expert - TNT Transporter
+* Lv 7 Wrangler - Keen-Eyed Cowpolk
+* Lv 5 Melon Rancher - Green Thumb
+* Lv 8 Sheriff - Billy the Kid's Kid
 
 Timelapse videos
 
@@ -14985,11 +15023,422 @@ Bus Driver: $17,066/s ($8,533/time block/s)
 
 Wild West Event 2026 (Dakota) Girl Reqs.
 
-Coming soon!
+Isabelle
+
+Adversary
+
+Lv 2 Glass Polisher (Saloon Hand)
+
+1 Improvisation
+
+$15
+
+Nuisance
+
+3 Charisma
+
+2 Tin Cup ($80)
+
+1 Beans ($120)
+
+Frenemy
+
+4 Reliability
+
+3 Beans ($360)
+
+2 Horseshoe ($480)
+
+Acquaintance
+
+5 Sweet Tooth
+
+5 Iced Tea ($2,400)
+
+$550
+
+Friendzoned
+
+6 Ruggedness
+
+3 Moonlight Stroll
+
+3 Sheriff Star ($2,880)
+
+Awkward Besties
+
+9 Bravery
+
+1 Beach
+
+4 Cactus ($7,680)
+
+Crush
+
+Lv 4 Lemon Slicer (Saloon Hand)
+
+1 Sightseeing
+
+7 Cornbread ($26,880)
+
+Sweetheart
+
+Lv 5 Rim Salter (Saloon Hand)
+
+1 Movie Theater
+
+60 Sheriff Star ($57,600)
+
+Girlfriend
+
+23 Precision
+
+2 Boot ($122,880)
+
+12 Horse Brush ($184,320)
+
+Jessie
+
+Adversary
+
+Work at Farmer
+
+8 Improvisation
+
+$1,000
+
+Nuisance
+
+20 Tin Cup ($800)
+
+12 Charisma
+
+20 Beans ($2,400)
+
+Frenemy
+
+Lv 2 Garden Guru (Farmer)
+
+13 Sweet Tooth
+
+25 Iced Tea ($12,000)
+
+Acquaintance
+
+100 Tin Cup ($4,000)
+
+15 Speed
+
+10 Cornbread ($38,400)
+
+Friendzoned
+
+Work at Bandit
+
+5 Moonlight Stroll
+
+7 Hay Bale ($215,040)
+
+Awkward Besties
+
+100 Cactus ($192,000)
+
+7 Beach
+
+1 Halter ($491,520)
+
+Crush
+
+400 Cornbread ($1,536,000)
+
+9 Sightseeing
+
+1 Hobby Horse ($1,966,080)
+
+Sweetheart
+
+40 Patience
+
+12 Movie Theater
+
+2 Lasso ($7,864,320)
+
+Girlfriend
+
+Lv 4 TNT Transporter (Demolitions Expert)
+
+44 Speed
+
+2 Pitchfork ($33,030,144)
+
+Vivienne
+
+Adversary
+
+15 Sheriff Star ($14,400)
+
+15 Charisma
+
+2 Cornbread ($7,680)
+
+Nuisance
+
+25 Horseshoe ($6,000)
+
+17 Improvisation
+
+2 Hay Bale ($61,440)
+
+Frenemy
+
+Lv 3 Track Builder (Train Conductor)
+
+30 Bravery
+
+40 Horse Brush ($614,400)
+
+Acquaintance
+
+Lv 2 Stallion Startler (Wrangler)
+
+40 Patience
+
+60 Boot ($3,686,400)
+
+Friendzoned
+
+100 Boot ($6,144,000)
+
+6 Moonlight Stroll
+
+1 Milk Jug ($7,864,320)
+
+Awkward Besties
+
+1,500 Boot ($92,160,000)
+
+8 Beach
+
+41 Charisma
+
+Crush
+
+44 Bravery
+
+10 Sightseeing
+
+20 Milk Jug ($157,286,400)
+
+Sweetheart
+
+5,000 Boot ($307,200,000)
+
+14 Movie Theater
+
+7 Peach Cobbler ($265,892,662)
+
+Girlfriend
+
+Lv 5 Green Thumb (Melon Rancher)
+
+58 Whimsy
+
+4 Cow Skull ($2.37 Billion)
+
+Harriet
+
+Adversary
+
+Lv 2 Lightbulb Illuminator (Inventor)
+
+43 Improvisation
+
+80 Cactus ($153,600)
+
+Nuisance
+
+Lv 6 Pint Pourer (Saloon Hand)
+
+37 Whimsy
+
+185 Boot ($11,366,400)
+
+Frenemy
+
+Lv 4 Colt Coraller (Wrangler)
+
+40 Green Thumb
+
+45 Hobby Horse ($88,473,600)
+
+Acquaintance
+
+12 Pitchfork ($198,180,864)
+
+1,000 Hay Bale ($30,720,000)
+
+10,000 Tin Cup ($400,000)
+
+Friendzoned
+
+Lv 5 Mare Manager (Wrangler)
+
+8 Moonlight Stroll
+
+40,000 Hay Bale ($1.23 Billion)
+
+Awkward Besties
+
+65 Reliability
+
+9 Beach
+
+14 Belt Buckle ($1.33 Billion)
+
+Crush
+
+68 Ruggedness
+
+10 Sightseeing
+
+8 Cow Skull ($4.75 Billion)
+
+Sweetheart
+
+70 Charisma
+
+15 Movie Theater
+
+8 Fool's Gold ($11.87 Billion)
+
+Girlfriend
+
+Lv 8 Billy the Kid's Kid (Sheriff)
+
+72 Patience
+
+20 Fool's Gold ($29.68 Billion)
+
+Dakota
+
+Adversary
+
+$100,000,000
+
+55 Improvisation
+
+800 Hay Bale ($24,576,000)
+
+Nuisance
+
+Lv 5 Jailhouse Jockey (Sheriff)
+
+All Hobbies level 51
+
+30,000 Cornbread ($115,200,000)
+
+Frenemy
+
+Lv 6 Automation Advocate (Inventor)
+
+56 Creativity
+
+900 Wagon Wheel ($221,184,000)
+
+Acquaintance
+
+7 Milk Jug ($55,050,240)
+
+63 Bravery
+
+900 Halter ($442,368,000)
+
+Friendzoned
+
+66 Precision
+
+9 Moonlight Stroll
+
+140 Milk Jug ($1.1 Billion)
+
+Awkward Besties
+
+69 Sweet Tooth
+
+12 Beach
+
+2,000 Hobby Horse ($3.93 Billion)
+
+Crush
+
+65 Green Thumb
+
+14 Sightseeing
+
+540 Pitchfork ($8.92 Billion)
+
+Sweetheart
+
+69 Whimsy
+
+20 Movie Theater
+
+43 Cow Skull ($25.52 Billion)
+
+Girlfriend
+
+Lv 7 Keen-Eyed Cowpolk (Wrangler)
+
+73 Precision
+
+44 Fool's Gold ($65.29 Billion)
 
 Wild West Event 2026 (Dakota) Hobby & Job Info
 
-Coming soon!
+Hobbies
+
+Expected unlocks are estimates; you may unlock some hobbies from other girls.  
+
+* 55 Improvisation - expected unlock Isabelle Adversary
+* 70 Charisma - expected unlock Isabelle Nuisance
+* 65 Reliability - expected unlock Isabelle Frenemy
+* 69 Sweet Tooth - expected unlock Isabelle Acquaintance
+* 68 Ruggedness - expected unlock Isabelle Friendzoned
+* 63 Bravery - expected unlock Isabelle Awkward Besties
+* 73 Precision - expected unlock Jessie Acquaintance
+* 72 Speed - expected unlock Jessie Acquaintance
+* 72 Patience - expected unlock Jessie Sweetheart
+* 56 Creativity - expected unlock Harriet Adversary
+* 69 Whimsy - expected unlock Harriet Nuisance
+* 65 Green Thumb - expected unlock Harriet Frenemy
+
+Jobs
+
+Bold text indicates highest rank required.  
+
+* Lv 6 Saloon Hand: Bar Wiper, Glass Polisher, Ice Cube Maker, Lemon Slicer, Rim Salter, **Pint Pourer**, Regular Consoler, Soda Jerker, Mocktail Maker, Magnificent Mixologist
+* Lv 2 Farmer: Grower Shower, **Garden Guru**, Till Tender, Branch Rancher, Harvest Loon, Agriculturalist, Plant Enchanter, Sweeper Reaper, Cosmic Cultivator, The Green Thumb
+* Lv 1 Dairy Deliverer: **Bottle Sorter**, Passive Pasteurizer, Almond Milker, Savvy Skimmer, Crate Stacker, Lid Tightener, Freshness Assessor, Ice Box Stocker, Choccy Milk Taster, Milk Magnate
+* Lv 3 Train Conductor: Trainhopper, Trainspotter, **Track Builder**, Coal Shoveler, Station Porter, Ticket Inspector, Coach Attendant, Train Engineer, Train Conductor, Trainmaster
+* Lv 1 Bandit: **Petty Pickpocket**, Fall Guy, Getaway Driver, Heist Henchman, Devious Desperado, Bank Robber, Safe Cracker, Stagecoach Scourge, Master of Misdeeds, The Next Robin Hood
+* Lv 6 Inventor: Gadget Gatherer, Lightbulb Illuminator, Telephone Technician, Industrial Catalyst, Steam Power Pusher, **Automation Advocate**, Technology Wizard, Illustrious Inventor, Free Energy Radical, Mechanical Mastermind
+* Lv 4 Demolitions Expert: Cap Popper, Fuse Lighter, Ear Plugger, **TNT Transporter**, Dynamite Bundler, Unflinching Exploder, Charge Placer, Plunger Pusher, Cave Collapser, Dean of Destruction
+* Lv 7 Wrangler: Saddle Shiner, Stallion Startler, Filly Fetcher, Colt Coraller, Mare Manager, Lead Lassoist, **Keen-Eyed Cowpolk**, Horse Whisperer, Trail Tracker, Home on the Range
+* Lv 5 Melon Rancher: Melon Muncher, Seed Spitter, Sprout Noticer, Vine Tender, **Green Thumb**, Melon Picker, Melon Smasher, Melon Baller, Slice Of Lifer, One In A Melon
+* Lv 8 Sheriff: Wyatt Oops, Dunderhead Deputy, Badge Buffer, Hat Tipper, Jailhouse Jockey, Revolver Rookie, Bylaw Busybody, **Billy the Kid's Kid**, LawMallow, High Noon Hero
+
+Pay details (at max level and boost)
+
+Sheriff: $781,233/s ($78,123/time block/s)  
+Melon Rancher: $512,000/s ($64,000/time block/s)  
+Wrangler: $409,600/s ($204,800/time block/s)  
+Demolitions Expert: $379,264/s ($63,210/time block/s)  
+Bandit: $230,400/s ($32,914/time block/s)  
+Inventor: $109,714/s ($13,714/time block/s)  
+Train Conductor: $43,885/s ($10,971/time block/s)  
+Dairy Deliverer: $25,600/s ($5,120/time block/s)  
+Farmer: $6,400/s ($2,133/time block/s)  
+Saloon Hand: $3,072/s ($1,536/time block/s)
 
 What about...?
 

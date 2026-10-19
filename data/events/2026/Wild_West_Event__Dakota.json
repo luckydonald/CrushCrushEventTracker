@@ -1,0 +1,527 @@
+{
+  "name": "Wild West Event",
+  "year": 2026,
+  "main_girl": "Dakota",
+  "description": {
+    "text": "",
+    "notes": null
+  },
+  "character_tables": [
+    {
+      "girl_name": "Dakota",
+      "variant": "main",
+      "rows": [
+        {
+          "raw_level_label": "Adversary",
+          "resolved_level": "Adversary",
+          "requirements": [
+            {
+              "kind": "money",
+              "amount": 100000000
+            },
+            {
+              "kind": "hobby_level",
+              "level": 55,
+              "hobby_name": "Improvisation"
+            },
+            {
+              "kind": "purchase",
+              "amount": 800,
+              "item_name": "Hay Bale",
+              "total_price": 24576000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Nuisance",
+          "resolved_level": "Nuisance",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 5,
+              "job_name": "Jailhouse Jockey",
+              "job_track": "Sheriff"
+            },
+            {
+              "kind": "all_hobbies_level",
+              "level": 51
+            },
+            {
+              "kind": "purchase",
+              "amount": 30000,
+              "item_name": "Cornbread",
+              "total_price": 115200000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Frenemy",
+          "resolved_level": "Frenemy",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 6,
+              "job_name": "Automation Advocate",
+              "job_track": "Inventor"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 56,
+              "hobby_name": "Creativity"
+            },
+            {
+              "kind": "purchase",
+              "amount": 900,
+              "item_name": "Wagon Wheel",
+              "total_price": 221184000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Acquaintance",
+          "resolved_level": "Acquaintance",
+          "requirements": [
+            {
+              "kind": "purchase",
+              "amount": 7,
+              "item_name": "Milk Jug",
+              "total_price": 55050240
+            },
+            {
+              "kind": "hobby_level",
+              "level": 63,
+              "hobby_name": "Bravery"
+            },
+            {
+              "kind": "purchase",
+              "amount": 900,
+              "item_name": "Halter",
+              "total_price": 442368000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Friendzoned",
+          "resolved_level": "Friendzoned",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 66,
+              "hobby_name": "Precision"
+            },
+            {
+              "kind": "date_activity",
+              "count": 9,
+              "activity_name": "Moonlight Stroll",
+              "price_per_date": 500
+            },
+            {
+              "kind": "purchase",
+              "amount": 140,
+              "item_name": "Milk Jug",
+              "total_price": 1100000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Awkward Besties",
+          "resolved_level": "Awkward Besties",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 69,
+              "hobby_name": "Sweet Tooth"
+            },
+            {
+              "kind": "date_activity",
+              "count": 12,
+              "activity_name": "Beach",
+              "price_per_date": 2500
+            },
+            {
+              "kind": "purchase",
+              "amount": 2000,
+              "item_name": "Hobby Horse",
+              "total_price": 3930000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Crush",
+          "resolved_level": "Crush",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 65,
+              "hobby_name": "Green Thumb"
+            },
+            {
+              "kind": "date_activity",
+              "count": 14,
+              "activity_name": "Sightseeing",
+              "price_per_date": 5000
+            },
+            {
+              "kind": "purchase",
+              "amount": 540,
+              "item_name": "Pitchfork",
+              "total_price": 8920000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Sweetheart",
+          "resolved_level": "Sweetheart",
+          "requirements": [
+            {
+              "kind": "hobby_level",
+              "level": 69,
+              "hobby_name": "Whimsy"
+            },
+            {
+              "kind": "date_activity",
+              "count": 20,
+              "activity_name": "Movie Theater",
+              "price_per_date": 25000
+            },
+            {
+              "kind": "purchase",
+              "amount": 43,
+              "item_name": "Cow Skull",
+              "total_price": 25520000000
+            }
+          ]
+        },
+        {
+          "raw_level_label": "Girlfriend",
+          "resolved_level": "Girlfriend",
+          "requirements": [
+            {
+              "kind": "job_level",
+              "level": 7,
+              "job_name": "Keen-Eyed Cowpolk",
+              "job_track": "Wrangler"
+            },
+            {
+              "kind": "hobby_level",
+              "level": 73,
+              "hobby_name": "Precision"
+            },
+            {
+              "kind": "purchase",
+              "amount": 44,
+              "item_name": "Fool's Gold",
+              "total_price": 65290000000
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "hobby_job_info": {
+    "hobbies_description": "Expected unlocks are estimates; you may unlock some hobbies from other girls.",
+    "hobbies": [
+      {
+        "max_level": 55,
+        "hobby_name": "Improvisation",
+        "unlock_character": "Isabelle Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 70,
+        "hobby_name": "Charisma",
+        "unlock_character": "Isabelle Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 65,
+        "hobby_name": "Reliability",
+        "unlock_character": "Isabelle Frenemy",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Sweet Tooth",
+        "unlock_character": "Isabelle Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 68,
+        "hobby_name": "Ruggedness",
+        "unlock_character": "Isabelle Friendzoned",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 63,
+        "hobby_name": "Bravery",
+        "unlock_character": "Isabelle Awkward Besties",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 73,
+        "hobby_name": "Precision",
+        "unlock_character": "Jessie Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Speed",
+        "unlock_character": "Jessie Acquaintance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 72,
+        "hobby_name": "Patience",
+        "unlock_character": "Jessie Sweetheart",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 56,
+        "hobby_name": "Creativity",
+        "unlock_character": "Harriet Adversary",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 69,
+        "hobby_name": "Whimsy",
+        "unlock_character": "Harriet Nuisance",
+        "gild_required_count": null
+      },
+      {
+        "max_level": 65,
+        "hobby_name": "Green Thumb",
+        "unlock_character": "Harriet Frenemy",
+        "gild_required_count": null
+      }
+    ],
+    "jobs_description": "Bold text indicates highest rank required.",
+    "jobs": {
+      "groups": [
+        {
+          "level": 6,
+          "job_track": "Saloon Hand",
+          "job_names": [
+            "Bar Wiper",
+            "Glass Polisher",
+            "Ice Cube Maker",
+            "Lemon Slicer",
+            "Rim Salter",
+            "Pint Pourer",
+            "Regular Consoler",
+            "Soda Jerker",
+            "Mocktail Maker",
+            "Magnificent Mixologist"
+          ],
+          "highlighted_job_name": "Pint Pourer"
+        },
+        {
+          "level": 2,
+          "job_track": "Farmer",
+          "job_names": [
+            "Grower Shower",
+            "Garden Guru",
+            "Till Tender",
+            "Branch Rancher",
+            "Harvest Loon",
+            "Agriculturalist",
+            "Plant Enchanter",
+            "Sweeper Reaper",
+            "Cosmic Cultivator",
+            "The Green Thumb"
+          ],
+          "highlighted_job_name": "Garden Guru"
+        },
+        {
+          "level": 1,
+          "job_track": "Dairy Deliverer",
+          "job_names": [
+            "Bottle Sorter",
+            "Passive Pasteurizer",
+            "Almond Milker",
+            "Savvy Skimmer",
+            "Crate Stacker",
+            "Lid Tightener",
+            "Freshness Assessor",
+            "Ice Box Stocker",
+            "Choccy Milk Taster",
+            "Milk Magnate"
+          ],
+          "highlighted_job_name": "Bottle Sorter"
+        },
+        {
+          "level": 3,
+          "job_track": "Train Conductor",
+          "job_names": [
+            "Trainhopper",
+            "Trainspotter",
+            "Track Builder",
+            "Coal Shoveler",
+            "Station Porter",
+            "Ticket Inspector",
+            "Coach Attendant",
+            "Train Engineer",
+            "Train Conductor",
+            "Trainmaster"
+          ],
+          "highlighted_job_name": "Track Builder"
+        },
+        {
+          "level": 1,
+          "job_track": "Bandit",
+          "job_names": [
+            "Petty Pickpocket",
+            "Fall Guy",
+            "Getaway Driver",
+            "Heist Henchman",
+            "Devious Desperado",
+            "Bank Robber",
+            "Safe Cracker",
+            "Stagecoach Scourge",
+            "Master of Misdeeds",
+            "The Next Robin Hood"
+          ],
+          "highlighted_job_name": "Petty Pickpocket"
+        },
+        {
+          "level": 6,
+          "job_track": "Inventor",
+          "job_names": [
+            "Gadget Gatherer",
+            "Lightbulb Illuminator",
+            "Telephone Technician",
+            "Industrial Catalyst",
+            "Steam Power Pusher",
+            "Automation Advocate",
+            "Technology Wizard",
+            "Illustrious Inventor",
+            "Free Energy Radical",
+            "Mechanical Mastermind"
+          ],
+          "highlighted_job_name": "Automation Advocate"
+        },
+        {
+          "level": 4,
+          "job_track": "Demolitions Expert",
+          "job_names": [
+            "Cap Popper",
+            "Fuse Lighter",
+            "Ear Plugger",
+            "TNT Transporter",
+            "Dynamite Bundler",
+            "Unflinching Exploder",
+            "Charge Placer",
+            "Plunger Pusher",
+            "Cave Collapser",
+            "Dean of Destruction"
+          ],
+          "highlighted_job_name": "TNT Transporter"
+        },
+        {
+          "level": 7,
+          "job_track": "Wrangler",
+          "job_names": [
+            "Saddle Shiner",
+            "Stallion Startler",
+            "Filly Fetcher",
+            "Colt Coraller",
+            "Mare Manager",
+            "Lead Lassoist",
+            "Keen-Eyed Cowpolk",
+            "Horse Whisperer",
+            "Trail Tracker",
+            "Home on the Range"
+          ],
+          "highlighted_job_name": "Keen-Eyed Cowpolk"
+        },
+        {
+          "level": 5,
+          "job_track": "Melon Rancher",
+          "job_names": [
+            "Melon Muncher",
+            "Seed Spitter",
+            "Sprout Noticer",
+            "Vine Tender",
+            "Green Thumb",
+            "Melon Picker",
+            "Melon Smasher",
+            "Melon Baller",
+            "Slice Of Lifer",
+            "One In A Melon"
+          ],
+          "highlighted_job_name": "Green Thumb"
+        },
+        {
+          "level": 8,
+          "job_track": "Sheriff",
+          "job_names": [
+            "Wyatt Oops",
+            "Dunderhead Deputy",
+            "Badge Buffer",
+            "Hat Tipper",
+            "Jailhouse Jockey",
+            "Revolver Rookie",
+            "Bylaw Busybody",
+            "Billy the Kid's Kid",
+            "LawMallow",
+            "High Noon Hero"
+          ],
+          "highlighted_job_name": "Billy the Kid's Kid"
+        }
+      ],
+      "gild_required_count": null
+    },
+    "pay_details": [
+      {
+        "job_track": "Sheriff",
+        "money_per_second": 781233,
+        "money_per_time_block_per_second": 78123
+      },
+      {
+        "job_track": "Melon Rancher",
+        "money_per_second": 512000,
+        "money_per_time_block_per_second": 64000
+      },
+      {
+        "job_track": "Wrangler",
+        "money_per_second": 409600,
+        "money_per_time_block_per_second": 204800
+      },
+      {
+        "job_track": "Demolitions Expert",
+        "money_per_second": 379264,
+        "money_per_time_block_per_second": 63210
+      },
+      {
+        "job_track": "Bandit",
+        "money_per_second": 230400,
+        "money_per_time_block_per_second": 32914
+      },
+      {
+        "job_track": "Inventor",
+        "money_per_second": 109714,
+        "money_per_time_block_per_second": 13714
+      },
+      {
+        "job_track": "Train Conductor",
+        "money_per_second": 43885,
+        "money_per_time_block_per_second": 10971
+      },
+      {
+        "job_track": "Dairy Deliverer",
+        "money_per_second": 25600,
+        "money_per_time_block_per_second": 5120
+      },
+      {
+        "job_track": "Farmer",
+        "money_per_second": 6400,
+        "money_per_time_block_per_second": 2133
+      },
+      {
+        "job_track": "Saloon Hand",
+        "money_per_second": 3072,
+        "money_per_time_block_per_second": 1536
+      }
+    ]
+  },
+  "warnings": []
+}
