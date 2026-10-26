@@ -336,7 +336,8 @@ Here you can find a list of all past events. You can use it to get an idea of wh
 2026/07/23-2026/07/29: Beach Bash (Nixie)  
 2026/08/13-2026/08/19: Time Warp Event (Polly) (rerun #1)  
 2026/09/10-2026/09/16: School Spirit (Ling Ling)  
-2026/10/15-2026/10/19: Wild West Event (Dakota)
+2026/10/15-2026/10/19: Wild West Event (Dakota)  
+2026/10/29-2026/11/02: Spooky Event (Cassia) (rerun #4)
 
 When do I unlock hobby X? (2022-2024)
 
